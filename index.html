@@ -208,6 +208,7 @@ details.box[open]>summary::after{content:"–"}
   </details>
 
   <p class="note" data-i18n="footer"></p>
+  <p class="note" data-i18n="footer2"></p>
   <div class="row note" id="verRow" hidden><span id="verTxt"></span><button class="btn ghost" id="updCheck" type="button" data-i18n="upd_check"></button><span id="updRes"></span></div>
 </div>
 
@@ -237,11 +238,13 @@ var PR = (function () {
   function defaultSettings() {
     return {
       rank: 'PU', level: 1, levelMode: 'date', since: '', contract: 100, base: 'PMI',
-      isTrainer: false, trainerPlus: 0, uniform: 66.66, irpf: 15, ss: 6.5, configured: false,
+      isTrainer: false, isCT: false, uniform: 66.66, irpf: 15, ss: 6.5, configured: false,
       salesEstimate: 0, minDietas: false,
       absenceCodes: 'U, UL, URL, VAC, SICK, KRANK, PERM, PR',
       earlyCheckin: 30,
-      trainingIncluded: 1, trainingDayPay: 0, trainingCodes: 'DT_TRNG'
+      trainingCodes: 'DT_TRNG', ctCodes: 'DT_CT, DT_COMP, CT',
+      // Works Agreement Cabin Trainers (Eurowings Europe Spain), 1.1.1.2
+      tBase: 270, tTwo: 340, tExtra: 105, ctBase: 80, ctExtra: 80
     };
   }
 
@@ -422,12 +425,12 @@ var PR = (function () {
   function compute(roster, s, extras) {
     extras = extras || {};
     s = Object.assign({}, s, { level: levelFor(s, roster.year, roster.month) });
-    if (!s.isTrainer) s = Object.assign({}, s, { trainerPlus: 0 });
     const R = rates(s);
     const base = s.base || roster.base || 'PMI';
     const absenceSet = new Set(String(s.absenceCodes || '').split(/[,\s]+/).filter(Boolean).map(x => x.toUpperCase()));
     const trainSet = new Set(String(s.trainingCodes || '').split(/[,\s]+/).filter(Boolean).map(x => x.toUpperCase()));
-    let trainSeen = 0;
+    const ctSet = new Set(String(s.ctCodes || '').split(/[,\s]+/).filter(Boolean).map(x => x.toUpperCase()));
+    let trainSeen = 0, ctSeen = 0;
     let loc = base; // where you wake up
     const days = roster.days.map(d => {
       const kind = classify(d);
@@ -466,9 +469,14 @@ var PR = (function () {
       const pct = R.base / 100;
       const extraFix = (ex.buy === 'full' ? 9 * pct : ex.buy === 'half' ? 4.5 * pct : 0) + (ex.omDefer ? 4.5 * pct : 0);
       const sales = +ex.sales || 0;
+      // trainer / competence team days: the monthly allowance covers the first day;
+      // each further day adds what the works agreement table adds. Both on one day → the trainer day only.
       const isTrain = !!s.isTrainer && codes.some(c => trainSet.has(c));
-      let trainPay = 0, trainNo = 0;
-      if (isTrain) { trainSeen++; trainNo = trainSeen; if (trainSeen > (+s.trainingIncluded || 0)) trainPay = +s.trainingDayPay || 0; }
+      const isCTday = !isTrain && !!(s.isCT || s.isTrainer) && codes.some(c => ctSet.has(c));
+      let trainPay = 0, trainNo = 0, ctNo = 0;
+      if (isTrain) { trainSeen++; trainNo = trainSeen;
+        trainPay = trainSeen === 1 ? 0 : trainSeen === 2 ? (+s.tTwo - +s.tBase) : +s.tExtra; }
+      if (isCTday) { ctSeen++; ctNo = ctSeen; trainPay = ctSeen === 1 ? 0 : +s.ctExtra; }
       // route
       const legs = d.events.filter(e => e.type === 'flt' || e.type === 'dh');
       const route = legs.length ? [legs[0].dep, ...legs.map(l => l.arr)].join('–') : '';
@@ -477,7 +485,7 @@ var PR = (function () {
       const codeEv = d.events.find(e => e.type === 'code' && !/^TAXI/.test(e.code));
       return {
         date: d.date, day: d.day, kind, codes, absence, F, A, H: F + A, startLoc, endLoc, away, dieta, dietaType, early,
-        extraFix: r2(extraFix), sales, isTrain, trainNo, trainPay, buy: ex.buy || null, omDefer: !!ex.omDefer,
+        extraFix: r2(extraFix), sales, isTrain, isCTday, trainNo, ctNo, trainPay, buy: ex.buy || null, omDefer: !!ex.omDefer,
         legs, route, ci: ciEv ? ciEv.t1 : (codeEv ? codeEv.t1 : null),
         co: coEv ? coEv.t1 : (legs.length ? legs[legs.length - 1].t2 : (codeEv ? codeEv.t2 : null)),
         label: codeEv ? codeEv.code : (legs.length ? '' : (codes[0] || '')), hotel: d.hotel, events: d.events
@@ -517,10 +525,13 @@ var PR = (function () {
     const extraFix = r2(days.reduce((a, d) => a + d.extraFix, 0));
     const trainPay = r2(days.reduce((a, d) => a + d.trainPay, 0));
     const trainDays = days.filter(d => d.isTrain).length;
+    const ctDays = days.filter(d => d.isCTday).length;
+    // monthly allowance: the higher table entry applies once (trainer 270 € beats competence team 80 €)
+    const allowBase = s.isTrainer ? +s.tBase : (s.isCT ? +s.ctBase : 0);
     const salesDays = r2(days.reduce((a, d) => a + d.sales, 0));
     const sales = salesDays > 0 ? salesDays : (+s.salesEstimate || 0);
     const baseSalary = r2(R.base * s.contract / 100);
-    const fixed = r2(baseSalary + (+s.trainerPlus || 0) + (+s.uniform || 0));
+    const fixed = r2(baseSalary + allowBase + (+s.uniform || 0));
     const taxable = r2(fixed + hourPay + topUp + early + extraFix + sales + trainPay);
     const ss = r2(taxable * s.ss / 100);
     const irpf = r2(taxable * s.irpf / 100);
@@ -528,7 +539,7 @@ var PR = (function () {
     const count = k => days.filter(d => d.dietaType === k).length;
     return {
       level: s.level, days, rates: R, TF, TA, T, r, tiers, hourPay: r2(hourPay), minGuarantee, topUp, dietas, dietasPaid, early, extraFix, sales,
-      salesFromDays: salesDays > 0, trainPay, trainDays, baseSalary, fixed, taxable, ss, irpf, net,
+      salesFromDays: salesDays > 0, trainPay, trainDays, ctDays, allowBase, allowTotal: r2(allowBase + trainPay), baseSalary, fixed, taxable, ss, irpf, net,
       variable: r2(hourPay + topUp + dietasPaid + early + extraFix + sales + trainPay),
       dietaCounts: { intlNight: count('intlNight'), intlDay: count('intlDay'), natNight: count('natNight'), natDay: count('natDay') },
       blockHours: days.reduce((a, d) => a + d.legs.filter(l => l.type === 'flt').reduce((b, l) => b + blockLen(l), 0), 0)
@@ -606,6 +617,18 @@ var I18N = {
   names: { es: 'Español', ca: 'Català', en: 'English', de: 'Deutsch', fr: 'Français', hu: 'Magyar', sk: 'Slovenčina', cs: 'Čeština' },
   locales: { es: 'es-ES', ca: 'ca-ES', en: 'en-GB', de: 'de-DE', fr: 'fr-FR', hu: 'hu-HU', sk: 'sk-SK', cs: 'cs-CZ' },
   es: {
+    footer2: 'Plus de trainer y Competence Team según el acuerdo de empresa «Works Agreement Cabin Trainers» (1.1.1.2): 270 € al mes con 1 día incluido, 340 € con 2 días y 105 € por cada día más; Competence Team 80 € con 1 día y 80 € por día más. Si tienes las dos funciones, se cobra una sola vez el plus mensual más alto.',
+    ps_ct: ', Competence Team',
+    ps_trainer: ', trainer',
+    slip_trainerInfo: '{n} d trainer · {c} d CT',
+    ctDay: 'Competence Team · día {n} del mes',
+    f_ctCodes: 'Códigos de Competence Team',
+    f_ctExtra: 'Competence Team: cada día más €',
+    f_ctBase: 'Competence Team: plus mensual (incluye 1 día) €',
+    f_tExtra: 'Trainer: cada día más €',
+    f_tTwo: 'Trainer: total con 2 días €',
+    f_tBase: 'Trainer: plus mensual (incluye 1 día) €',
+    f_isCT: 'Soy miembro del Competence Team',
     upd_available: 'Hay una versión nueva de Payroster.', upd_button: 'Actualizar ahora', upd_check: 'Buscar actualizaciones', upd_latest: 'Tienes la última versión.', upd_offline: 'Sin conexión: no se puede comprobar ahora.', version: 'Versión {v}',
     prevMonth: 'Mes anterior', nextMonth: 'Mes siguiente', importTitle: 'Importar roster o nómina en PDF',
     dayByDay: 'Día a día',
@@ -625,7 +648,7 @@ var I18N = {
     dc_intlNight: '{n} int. con noche', dc_intlDay: '{n} int. sin noche', dc_natNight: '{n} nac. con noche', dc_natDay: '{n} nac. sin noche', noAway: 'sin días fuera',
     variableIn: 'Variable generado en {m}', variableSub: 'Horas, dietas y pluses del mes. Sin sueldo base.',
     dutyTime: 'Tiempo de servicio ({h} h)', perDiems: 'Dietas', earlyOff: 'Early check-in fuera de base',
-    trainDaysLine: 'Días de formación como trainer ({n}, {i} en el plus)', daysBought: 'Días libres comprados / aplazados',
+    trainDaysLine: 'Días de trainer ({n}) y Competence Team ({c})', daysBought: 'Días libres comprados / aplazados',
     sales: 'Comisión ventas', estimated: '(estimada)', gaugeAria: 'Horas en tramos de pago',
     netTitle: 'Neto aproximado del mes',
     netSub: 'Base + plus de trainer + uniforme + variable, menos SS {ss} % e IRPF {irpf} %. Dietas exentas.',
@@ -635,7 +658,7 @@ var I18N = {
     buyDefer: 'Compra / aplazamiento de día libre', dayTotal: 'Total del día', salesEur: 'Comisión ventas €',
     dayBought: 'Día libre comprado', no: 'No', full: 'Completo (9 %)', half: 'Medio (4,5 %)', omDeferred: 'O_M aplazado (4,5 %)',
     noExtras: 'Sin extras para este tipo de día.',
-    slip_base: 'Salario base ({r} nivel {l})', slip_trainer: 'Plus de trainer', slip_uniform: 'Uniforme / limpieza',
+    slip_base: 'Salario base ({r} nivel {l})', slip_trainer: 'Formación de cabina', slip_uniform: 'Uniforme / limpieza',
     slip_fdp: 'Tiempo de vuelo {t}', slip_add: 'Tpo vuelo adicional {t}', slip_min: 'Complemento mínimo 49+21 h',
     slip_trainExtra: 'Formación adicional trainer', slip_buy: 'Compra / aplazamiento días libres', slip_sales: 'Comisión de ventas', estimatedW: 'estimada',
     slip_taxable: 'Base cotización / IRPF', slip_ss: 'Seguridad Social trabajador', slip_irpf: 'Retención IRPF',
@@ -645,7 +668,7 @@ var I18N = {
     f_lang: 'Idioma', f_rank: 'Categoría', optPU: 'Sobrecargo (C)', optCA: 'Auxiliar de vuelo (D)',
     f_levelMode: 'Nivel salarial', lm_date: 'Sube solo cada año', lm_manual: 'Fijo, lo elijo yo',
     f_since: 'Inicio en la categoría (nivel 1)', levelToday: 'Nivel hoy: <b>{l}</b>. Sube cada año en esta fecha.', f_level: 'Nivel',
-    f_contract: 'Jornada', f_base: 'Base', f_isTrainer: 'Soy trainer', f_trainerPlus: 'Plus de trainer €/mes',
+    f_contract: 'Jornada', f_base: 'Base', f_isTrainer: 'Soy trainer (safety / service / CRM)', f_trainerPlus: 'Plus de trainer €/mes',
     f_uniform: 'Uniforme €/mes', f_irpf: 'IRPF %', f_ss: 'Seguridad Social %',
     f_trainIncl: 'Días de formación incluidos en el plus', f_trainPay: 'Pago por día de formación adicional €', f_trainCodes: 'Códigos de formación como trainer',
     f_salesEst: 'Comisión ventas estimada €/mes', f_early: 'Early check-in €',
@@ -671,6 +694,18 @@ var I18N = {
     e_noPeriod: 'No encuentro el periodo del roster. ¿Es el «Individual duty plan» de IDP en PDF?'
   },
   ca: {
+    footer2: 'Plus de trainer i Competence Team segons l’acord d’empresa «Works Agreement Cabin Trainers» (1.1.1.2): 270 € al mes amb 1 dia inclòs, 340 € amb 2 dies i 105 € per cada dia més; Competence Team 80 € amb 1 dia i 80 € per dia més. Si tens les dues funcions, es cobra una sola vegada el plus mensual més alt.',
+    ps_ct: ', Competence Team',
+    ps_trainer: ', trainer',
+    slip_trainerInfo: '{n} d trainer · {c} d CT',
+    ctDay: 'Competence Team · dia {n} del mes',
+    f_ctCodes: 'Codis de Competence Team',
+    f_ctExtra: 'Competence Team: cada dia més €',
+    f_ctBase: 'Competence Team: plus mensual (inclou 1 dia) €',
+    f_tExtra: 'Trainer: cada dia més €',
+    f_tTwo: 'Trainer: total amb 2 dies €',
+    f_tBase: 'Trainer: plus mensual (inclou 1 dia) €',
+    f_isCT: 'Soc membre del Competence Team',
     upd_available: 'Hi ha una versió nova de Payroster.', upd_button: 'Actualitzar ara', upd_check: 'Cercar actualitzacions', upd_latest: 'Tens l’última versió.', upd_offline: 'Sense connexió: ara no es pot comprovar.', version: 'Versió {v}',
     prevMonth: 'Mes anterior', nextMonth: 'Mes següent', importTitle: 'Importar roster o nòmina en PDF',
     dayByDay: 'Dia a dia',
@@ -690,7 +725,7 @@ var I18N = {
     dc_intlNight: '{n} int. amb nit', dc_intlDay: '{n} int. sense nit', dc_natNight: '{n} nac. amb nit', dc_natDay: '{n} nac. sense nit', noAway: 'cap dia fora',
     variableIn: 'Variable generat · {m}', variableSub: 'Hores, dietes i plusos del mes. Sense sou base.',
     dutyTime: 'Temps de servei ({h} h)', perDiems: 'Dietes', earlyOff: 'Early check-in fora de base',
-    trainDaysLine: 'Dies de formació com a trainer ({n}, {i} dins del plus)', daysBought: 'Dies lliures comprats / ajornats',
+    trainDaysLine: 'Dies de trainer ({n}) i Competence Team ({c})', daysBought: 'Dies lliures comprats / ajornats',
     sales: 'Comissió vendes', estimated: '(estimada)', gaugeAria: 'Hores en trams de pagament',
     netTitle: 'Net aproximat del mes',
     netSub: 'Base + plus de trainer + uniforme + variable, menys SS {ss} % i IRPF {irpf} %. Dietes exemptes.',
@@ -700,7 +735,7 @@ var I18N = {
     buyDefer: 'Compra / ajornament de dia lliure', dayTotal: 'Total del dia', salesEur: 'Comissió vendes €',
     dayBought: 'Dia lliure comprat', no: 'No', full: 'Complet (9 %)', half: 'Mig (4,5 %)', omDeferred: 'O_M ajornat (4,5 %)',
     noExtras: 'Sense extres per a aquest tipus de dia.',
-    slip_base: 'Salari base ({r} nivell {l})', slip_trainer: 'Plus de trainer', slip_uniform: 'Uniforme / neteja',
+    slip_base: 'Salari base ({r} nivell {l})', slip_trainer: 'Formació de cabina', slip_uniform: 'Uniforme / neteja',
     slip_fdp: 'Temps de vol {t}', slip_add: 'Temps de vol addicional {t}', slip_min: 'Complement mínim 49+21 h',
     slip_trainExtra: 'Formació addicional trainer', slip_buy: 'Compra / ajornament de dies lliures', slip_sales: 'Comissió de vendes', estimatedW: 'estimada',
     slip_taxable: 'Base de cotització / IRPF', slip_ss: 'Seguretat Social treballador', slip_irpf: 'Retenció IRPF',
@@ -710,7 +745,7 @@ var I18N = {
     f_lang: 'Idioma', f_rank: 'Categoria', optPU: 'Sobrecàrrec (C)', optCA: 'Auxiliar de vol (D)',
     f_levelMode: 'Nivell salarial', lm_date: 'Puja sol cada any', lm_manual: 'Fix, el trio jo',
     f_since: 'Inici a la categoria (nivell 1)', levelToday: 'Nivell avui: <b>{l}</b>. Puja cada any en aquesta data.', f_level: 'Nivell',
-    f_contract: 'Jornada', f_base: 'Base', f_isTrainer: 'Soc trainer', f_trainerPlus: 'Plus de trainer €/mes',
+    f_contract: 'Jornada', f_base: 'Base', f_isTrainer: 'Soc trainer (safety / service / CRM)', f_trainerPlus: 'Plus de trainer €/mes',
     f_uniform: 'Uniforme €/mes', f_irpf: 'IRPF %', f_ss: 'Seguretat Social %',
     f_trainIncl: 'Dies de formació inclosos al plus', f_trainPay: 'Pagament per dia de formació addicional €', f_trainCodes: 'Codis de formació com a trainer',
     f_salesEst: 'Comissió vendes estimada €/mes', f_early: 'Early check-in €',
@@ -736,6 +771,18 @@ var I18N = {
     e_noPeriod: 'No trobo el període del roster. És l’«Individual duty plan» d’IDP en PDF?'
   },
   en: {
+    footer2: 'Trainer and Competence Team pay under the Works Agreement Cabin Trainers (1.1.1.2): 270 € a month with 1 day included, 340 € with 2 days and 105 € for each further day; Competence Team 80 € with 1 day and 80 € per further day. With both functions, only the higher monthly allowance is paid, once.',
+    ps_ct: ', Competence Team',
+    ps_trainer: ', trainer',
+    slip_trainerInfo: '{n} d trainer · {c} d CT',
+    ctDay: 'Competence Team · day {n} of the month',
+    f_ctCodes: 'Competence Team duty codes',
+    f_ctExtra: 'Competence Team: each further day €',
+    f_ctBase: 'Competence Team: monthly allowance (1 day included) €',
+    f_tExtra: 'Trainer: each further day €',
+    f_tTwo: 'Trainer: total with 2 days €',
+    f_tBase: 'Trainer: monthly allowance (1 day included) €',
+    f_isCT: 'I am a Competence Team member',
     upd_available: 'A new version of Payroster is available.', upd_button: 'Update now', upd_check: 'Check for updates', upd_latest: 'You have the latest version.', upd_offline: 'Offline: can’t check right now.', version: 'Version {v}',
     prevMonth: 'Previous month', nextMonth: 'Next month', importTitle: 'Import roster or payslip PDF',
     dayByDay: 'Day by day',
@@ -755,7 +802,7 @@ var I18N = {
     dc_intlNight: '{n} intl with night', dc_intlDay: '{n} intl no night', dc_natNight: '{n} dom. with night', dc_natDay: '{n} dom. no night', noAway: 'no days away',
     variableIn: 'Variable pay earned in {m}', variableSub: 'Hours, per diems and allowances this month. Excludes base salary.',
     dutyTime: 'Duty time ({h} h)', perDiems: 'Per diems', earlyOff: 'Early check-in off base',
-    trainDaysLine: 'Training days as trainer ({n}, {i} covered by allowance)', daysBought: 'Days off bought / deferred',
+    trainDaysLine: 'Trainer days ({n}) and Competence Team days ({c})', daysBought: 'Days off bought / deferred',
     sales: 'Sales commission', estimated: '(estimated)', gaugeAria: 'Hours across pay tiers',
     netTitle: 'Approximate net pay',
     netSub: 'Base + trainer allowance + uniform + variable, minus social security {ss} % and IRPF tax {irpf} %. Per diems are tax-free.',
@@ -765,7 +812,7 @@ var I18N = {
     buyDefer: 'Day off bought / deferred', dayTotal: 'Day total', salesEur: 'Sales commission €',
     dayBought: 'Day off bought', no: 'No', full: 'Full (9 %)', half: 'Half (4.5 %)', omDeferred: 'O_M deferred (4.5 %)',
     noExtras: 'No extras for this type of day.',
-    slip_base: 'Base salary ({r} level {l})', slip_trainer: 'Trainer allowance', slip_uniform: 'Uniform / cleaning',
+    slip_base: 'Base salary ({r} level {l})', slip_trainer: 'Cabin training (Formación de cabina)', slip_uniform: 'Uniform / cleaning',
     slip_fdp: 'Flight time {t}', slip_add: 'Additional duty time {t}', slip_min: 'Minimum top-up 49+21 h',
     slip_trainExtra: 'Extra trainer days', slip_buy: 'Days off bought / deferred', slip_sales: 'Sales commission', estimatedW: 'estimated',
     slip_taxable: 'Contribution / tax base', slip_ss: 'Employee social security', slip_irpf: 'IRPF tax withholding',
@@ -775,7 +822,7 @@ var I18N = {
     f_lang: 'Language', f_rank: 'Category', optPU: 'Purser (C)', optCA: 'Cabin attendant (D)',
     f_levelMode: 'Pay level', lm_date: 'Goes up every year', lm_manual: 'Fixed, I choose it',
     f_since: 'Start in category (level 1)', levelToday: 'Level today: <b>{l}</b>. It goes up every year on this date.', f_level: 'Level',
-    f_contract: 'Contract', f_base: 'Base', f_isTrainer: 'I am a trainer', f_trainerPlus: 'Trainer allowance €/month',
+    f_contract: 'Contract', f_base: 'Base', f_isTrainer: 'I am a trainer (safety / service / CRM)', f_trainerPlus: 'Trainer allowance €/month',
     f_uniform: 'Uniform €/month', f_irpf: 'IRPF tax %', f_ss: 'Social security %',
     f_trainIncl: 'Training days covered by the allowance', f_trainPay: 'Pay per extra training day €', f_trainCodes: 'Trainer duty codes',
     f_salesEst: 'Estimated sales commission €/month', f_early: 'Early check-in €',
@@ -801,6 +848,18 @@ var I18N = {
     e_noPeriod: 'I can’t find the roster period. Is this the IDP “Individual duty plan” PDF?'
   },
   de: {
+    footer2: 'Trainer- und Competence-Team-Zulage nach der Betriebsvereinbarung „Works Agreement Cabin Trainers“ (1.1.1.2): 270 € im Monat mit 1 Tag inklusive, 340 € mit 2 Tagen und 105 € für jeden weiteren Tag; Competence Team 80 € mit 1 Tag und 80 € je weiteren Tag. Bei beiden Funktionen wird nur die höhere Monatszulage einmal gezahlt.',
+    ps_ct: ', Competence Team',
+    ps_trainer: ', Trainer',
+    slip_trainerInfo: '{n} T Trainer · {c} T CT',
+    ctDay: 'Competence Team · Tag {n} im Monat',
+    f_ctCodes: 'Codes für Competence Team',
+    f_ctExtra: 'Competence Team: jeder weitere Tag €',
+    f_ctBase: 'Competence Team: Monatszulage (1 Tag inklusive) €',
+    f_tExtra: 'Trainer: jeder weitere Tag €',
+    f_tTwo: 'Trainer: Gesamt mit 2 Tagen €',
+    f_tBase: 'Trainer: Monatszulage (1 Tag inklusive) €',
+    f_isCT: 'Ich bin im Competence Team',
     upd_available: 'Eine neue Version von Payroster ist verfügbar.', upd_button: 'Jetzt aktualisieren', upd_check: 'Nach Updates suchen', upd_latest: 'Du hast die neueste Version.', upd_offline: 'Offline: Prüfung gerade nicht möglich.', version: 'Version {v}',
     prevMonth: 'Vorheriger Monat', nextMonth: 'Nächster Monat', importTitle: 'Dienstplan oder Abrechnung als PDF importieren',
     dayByDay: 'Tag für Tag',
@@ -820,7 +879,7 @@ var I18N = {
     dc_intlNight: '{n} Ausl. mit Nacht', dc_intlDay: '{n} Ausl. ohne Nacht', dc_natNight: '{n} Inl. mit Nacht', dc_natDay: '{n} Inl. ohne Nacht', noAway: 'keine Tage auswärts',
     variableIn: 'Variable Vergütung im {m}', variableSub: 'Stunden, Spesen und Zulagen des Monats. Ohne Grundgehalt.',
     dutyTime: 'Dienstzeit ({h} h)', perDiems: 'Spesen', earlyOff: 'Early Check-in außerhalb der Basis',
-    trainDaysLine: 'Schulungstage als Trainer ({n}, davon {i} in der Zulage)', daysBought: 'Freie Tage abgekauft / verschoben',
+    trainDaysLine: 'Trainertage ({n}) und Competence-Team-Tage ({c})', daysBought: 'Freie Tage abgekauft / verschoben',
     sales: 'Verkaufsprovision', estimated: '(geschätzt)', gaugeAria: 'Stunden in den Vergütungsstufen',
     netTitle: 'Ungefähres Netto des Monats',
     netSub: 'Grundgehalt + Trainerzulage + Uniform + Variables, abzüglich SV {ss} % und IRPF {irpf} %. Spesen steuerfrei.',
@@ -830,7 +889,7 @@ var I18N = {
     buyDefer: 'Freier Tag abgekauft / verschoben', dayTotal: 'Tagessumme', salesEur: 'Verkaufsprovision €',
     dayBought: 'Freier Tag abgekauft', no: 'Nein', full: 'Voll (9 %)', half: 'Halb (4,5 %)', omDeferred: 'O_M verschoben (4,5 %)',
     noExtras: 'Keine Extras für diese Art von Tag.',
-    slip_base: 'Grundgehalt ({r} Stufe {l})', slip_trainer: 'Trainerzulage', slip_uniform: 'Uniform / Reinigung',
+    slip_base: 'Grundgehalt ({r} Stufe {l})', slip_trainer: 'Kabinenschulung (Formación de cabina)', slip_uniform: 'Uniform / Reinigung',
     slip_fdp: 'Flugzeit {t}', slip_add: 'Zusätzliche Dienstzeit {t}', slip_min: 'Mindestausgleich 49+21 h',
     slip_trainExtra: 'Zusätzliche Trainertage', slip_buy: 'Abkauf / Verschiebung freier Tage', slip_sales: 'Verkaufsprovision', estimatedW: 'geschätzt',
     slip_taxable: 'Beitrags- / Steuerbasis', slip_ss: 'Sozialversicherung Arbeitnehmer', slip_irpf: 'Lohnsteuer IRPF',
@@ -840,7 +899,7 @@ var I18N = {
     f_lang: 'Sprache', f_rank: 'Kategorie', optPU: 'Purser (C)', optCA: 'Flugbegleiter/in (D)',
     f_levelMode: 'Gehaltsstufe', lm_date: 'Steigt jedes Jahr automatisch', lm_manual: 'Fest, ich wähle sie',
     f_since: 'Beginn in der Kategorie (Stufe 1)', levelToday: 'Stufe heute: <b>{l}</b>. Steigt jedes Jahr an diesem Datum.', f_level: 'Stufe',
-    f_contract: 'Arbeitszeit', f_base: 'Basis', f_isTrainer: 'Ich bin Trainer/in', f_trainerPlus: 'Trainerzulage €/Monat',
+    f_contract: 'Arbeitszeit', f_base: 'Basis', f_isTrainer: 'Ich bin Trainer/in (Safety / Service / CRM)', f_trainerPlus: 'Trainerzulage €/Monat',
     f_uniform: 'Uniform €/Monat', f_irpf: 'IRPF %', f_ss: 'Sozialversicherung %',
     f_trainIncl: 'Schulungstage in der Zulage enthalten', f_trainPay: 'Vergütung pro zusätzlichem Schulungstag €', f_trainCodes: 'Codes für Trainereinsätze',
     f_salesEst: 'Geschätzte Verkaufsprovision €/Monat', f_early: 'Early Check-in €',
@@ -866,6 +925,18 @@ var I18N = {
     e_noPeriod: 'Ich finde den Zeitraum des Dienstplans nicht. Ist das der „Individual duty plan“ aus IDP als PDF?'
   },
   fr: {
+    footer2: 'Primes formateur et Competence Team selon l’accord d’entreprise « Works Agreement Cabin Trainers » (1.1.1.2) : 270 € par mois avec 1 jour inclus, 340 € avec 2 jours et 105 € par jour supplémentaire ; Competence Team 80 € avec 1 jour et 80 € par jour supplémentaire. Avec les deux fonctions, seule la prime mensuelle la plus élevée est versée, une fois.',
+    ps_ct: ', Competence Team',
+    ps_trainer: ', formateur',
+    slip_trainerInfo: '{n} j formateur · {c} j CT',
+    ctDay: 'Competence Team · jour {n} du mois',
+    f_ctCodes: 'Codes Competence Team',
+    f_ctExtra: 'Competence Team : chaque jour en plus €',
+    f_ctBase: 'Competence Team : prime mensuelle (1 jour inclus) €',
+    f_tExtra: 'Formateur : chaque jour en plus €',
+    f_tTwo: 'Formateur : total avec 2 jours €',
+    f_tBase: 'Formateur : prime mensuelle (1 jour inclus) €',
+    f_isCT: 'Je suis membre du Competence Team',
     upd_available: 'Une nouvelle version de Payroster est disponible.', upd_button: 'Mettre à jour', upd_check: 'Rechercher des mises à jour', upd_latest: 'Tu as la dernière version.', upd_offline: 'Hors ligne : vérification impossible pour l’instant.', version: 'Version {v}',
     prevMonth: 'Mois précédent', nextMonth: 'Mois suivant', importTitle: 'Importer un planning ou une fiche de paie en PDF',
     dayByDay: 'Jour par jour',
@@ -885,7 +956,7 @@ var I18N = {
     dc_intlNight: '{n} int. avec nuit', dc_intlDay: '{n} int. sans nuit', dc_natNight: '{n} nat. avec nuit', dc_natDay: '{n} nat. sans nuit', noAway: 'aucun jour en déplacement',
     variableIn: 'Variable gagné en {m}', variableSub: 'Heures, indemnités et primes du mois. Hors salaire de base.',
     dutyTime: 'Temps de service ({h} h)', perDiems: 'Indemnités', earlyOff: 'Early check-in hors base',
-    trainDaysLine: 'Jours de formation comme formateur ({n}, dont {i} dans la prime)', daysBought: 'Jours de repos rachetés / reportés',
+    trainDaysLine: 'Jours de formateur ({n}) et de Competence Team ({c})', daysBought: 'Jours de repos rachetés / reportés',
     sales: 'Commission ventes', estimated: '(estimée)', gaugeAria: 'Heures par palier de rémunération',
     netTitle: 'Net approximatif du mois',
     netSub: 'Base + prime de formateur + uniforme + variable, moins sécurité sociale {ss} % et IRPF {irpf} %. Indemnités exonérées.',
@@ -895,7 +966,7 @@ var I18N = {
     buyDefer: 'Jour de repos racheté / reporté', dayTotal: 'Total du jour', salesEur: 'Commission ventes €',
     dayBought: 'Jour de repos racheté', no: 'Non', full: 'Complet (9 %)', half: 'Moitié (4,5 %)', omDeferred: 'O_M reporté (4,5 %)',
     noExtras: 'Pas d’extras pour ce type de jour.',
-    slip_base: 'Salaire de base ({r} niveau {l})', slip_trainer: 'Prime de formateur', slip_uniform: 'Uniforme / nettoyage',
+    slip_base: 'Salaire de base ({r} niveau {l})', slip_trainer: 'Formation cabine (Formación de cabina)', slip_uniform: 'Uniforme / nettoyage',
     slip_fdp: 'Temps de vol {t}', slip_add: 'Temps de service additionnel {t}', slip_min: 'Complément minimum 49+21 h',
     slip_trainExtra: 'Jours de formateur supplémentaires', slip_buy: 'Rachat / report de jours de repos', slip_sales: 'Commission ventes', estimatedW: 'estimée',
     slip_taxable: 'Base de cotisation / IRPF', slip_ss: 'Sécurité sociale salarié', slip_irpf: 'Retenue IRPF',
@@ -905,7 +976,7 @@ var I18N = {
     f_lang: 'Langue', f_rank: 'Catégorie', optPU: 'Chef de cabine (C)', optCA: 'PNC (D)',
     f_levelMode: 'Échelon salarial', lm_date: 'Augmente chaque année', lm_manual: 'Fixe, je le choisis',
     f_since: 'Début dans la catégorie (niveau 1)', levelToday: 'Niveau aujourd’hui : <b>{l}</b>. Il augmente chaque année à cette date.', f_level: 'Niveau',
-    f_contract: 'Temps de travail', f_base: 'Base', f_isTrainer: 'Je suis formateur/formatrice', f_trainerPlus: 'Prime de formateur €/mois',
+    f_contract: 'Temps de travail', f_base: 'Base', f_isTrainer: 'Je suis formateur/formatrice (safety / service / CRM)', f_trainerPlus: 'Prime de formateur €/mois',
     f_uniform: 'Uniforme €/mois', f_irpf: 'IRPF %', f_ss: 'Sécurité sociale %',
     f_trainIncl: 'Jours de formation inclus dans la prime', f_trainPay: 'Paiement par jour de formation supplémentaire €', f_trainCodes: 'Codes de formation comme formateur',
     f_salesEst: 'Commission ventes estimée €/mois', f_early: 'Early check-in €',
@@ -931,6 +1002,18 @@ var I18N = {
     e_noPeriod: 'Je ne trouve pas la période du planning. Est-ce bien l’« Individual duty plan » d’IDP en PDF ?'
   },
   hu: {
+    footer2: 'Tréner- és Competence Team-pótlék a „Works Agreement Cabin Trainers” üzemi megállapodás szerint (1.1.1.2): havi 270 € 1 nappal, 340 € 2 nappal, és minden további napért 105 €; Competence Team 80 € 1 nappal és további naponként 80 €. Mindkét funkció esetén csak a magasabb havi pótlék jár, egyszer.',
+    ps_ct: ', Competence Team',
+    ps_trainer: ', tréner',
+    slip_trainerInfo: '{n} nap tréner · {c} nap CT',
+    ctDay: 'Competence Team · a hónap {n}. napja',
+    f_ctCodes: 'Competence Team kódjai',
+    f_ctExtra: 'Competence Team: minden további nap €',
+    f_ctBase: 'Competence Team: havi pótlék (1 nap benne) €',
+    f_tExtra: 'Tréner: minden további nap €',
+    f_tTwo: 'Tréner: összesen 2 nappal €',
+    f_tBase: 'Tréner: havi pótlék (1 nap benne) €',
+    f_isCT: 'A Competence Team tagja vagyok',
     upd_available: 'Elérhető a Payroster új verziója.', upd_button: 'Frissítés most', upd_check: 'Frissítések keresése', upd_latest: 'A legújabb verziót használod.', upd_offline: 'Nincs kapcsolat: most nem ellenőrizhető.', version: 'Verzió: {v}',
     prevMonth: 'Előző hónap', nextMonth: 'Következő hónap', importTitle: 'Beosztás vagy bérjegyzék importálása PDF-ből',
     dayByDay: 'Napról napra',
@@ -950,7 +1033,7 @@ var I18N = {
     dc_intlNight: '{n} külf. éjszakával', dc_intlDay: '{n} külf. éjszaka nélkül', dc_natNight: '{n} belf. éjszakával', dc_natDay: '{n} belf. éjszaka nélkül', noAway: 'nincs távollét',
     variableIn: 'Változó jövedelem: {m}', variableSub: 'A hónap órái, napidíjai és pótlékai. Alapbér nélkül.',
     dutyTime: 'Szolgálati idő ({h} óra)', perDiems: 'Napidíjak', earlyOff: 'Early check-in bázison kívül',
-    trainDaysLine: 'Képzési napok trénerként ({n}, ebből {i} a pótlékban)', daysBought: 'Megváltott / halasztott szabadnapok',
+    trainDaysLine: 'Trénernapok ({n}) és Competence Team napok ({c})', daysBought: 'Megváltott / halasztott szabadnapok',
     sales: 'Értékesítési jutalék', estimated: '(becsült)', gaugeAria: 'Órák a fizetési sávokban',
     netTitle: 'A hónap becsült nettója',
     netSub: 'Alapbér + trénerpótlék + egyenruha + változó rész, levonva a TB {ss} %-ot és az IRPF {irpf} %-ot. A napidíj adómentes.',
@@ -960,7 +1043,7 @@ var I18N = {
     buyDefer: 'Megváltott / halasztott szabadnap', dayTotal: 'Napi összesen', salesEur: 'Értékesítési jutalék €',
     dayBought: 'Megváltott szabadnap', no: 'Nem', full: 'Teljes (9 %)', half: 'Fél (4,5 %)', omDeferred: 'O_M halasztva (4,5 %)',
     noExtras: 'Ennél a naptípusnál nincs extra.',
-    slip_base: 'Alapbér ({r}, {l}. szint)', slip_trainer: 'Trénerpótlék', slip_uniform: 'Egyenruha / tisztítás',
+    slip_base: 'Alapbér ({r}, {l}. szint)', slip_trainer: 'Kabinképzés (Formación de cabina)', slip_uniform: 'Egyenruha / tisztítás',
     slip_fdp: 'Repülési idő {t}', slip_add: 'Kiegészítő szolgálati idő {t}', slip_min: 'Minimum-kiegészítés 49+21 óra',
     slip_trainExtra: 'További trénernapok', slip_buy: 'Szabadnapok megváltása / halasztása', slip_sales: 'Értékesítési jutalék', estimatedW: 'becsült',
     slip_taxable: 'Járulék- / adóalap', slip_ss: 'Munkavállalói TB-járulék', slip_irpf: 'IRPF adóelőleg',
@@ -970,7 +1053,7 @@ var I18N = {
     f_lang: 'Nyelv', f_rank: 'Kategória', optPU: 'Purser (C)', optCA: 'Légiutas-kísérő (D)',
     f_levelMode: 'Bérszint', lm_date: 'Évente magától nő', lm_manual: 'Fix, én választom',
     f_since: 'Kezdés a kategóriában (1. szint)', levelToday: 'Mai szint: <b>{l}</b>. Minden évben ezen a napon nő.', f_level: 'Szint',
-    f_contract: 'Munkaidő', f_base: 'Bázis', f_isTrainer: 'Tréner vagyok', f_trainerPlus: 'Trénerpótlék €/hó',
+    f_contract: 'Munkaidő', f_base: 'Bázis', f_isTrainer: 'Tréner vagyok (safety / service / CRM)', f_trainerPlus: 'Trénerpótlék €/hó',
     f_uniform: 'Egyenruha €/hó', f_irpf: 'IRPF %', f_ss: 'TB-járulék %',
     f_trainIncl: 'A pótlékban foglalt képzési napok', f_trainPay: 'Díj további képzési naponként €', f_trainCodes: 'Trénerszolgálat kódjai',
     f_salesEst: 'Becsült értékesítési jutalék €/hó', f_early: 'Early check-in €',
@@ -996,6 +1079,18 @@ var I18N = {
     e_noPeriod: 'Nem találom a beosztás időszakát. Ez az IDP „Individual duty plan” PDF-je?'
   },
   sk: {
+    footer2: 'Trénerský príplatok a Competence Team podľa podnikovej dohody „Works Agreement Cabin Trainers“ (1.1.1.2): 270 € mesačne s 1 dňom, 340 € s 2 dňami a 105 € za každý ďalší deň; Competence Team 80 € s 1 dňom a 80 € za každý ďalší deň. Pri oboch funkciách sa vypláca raz iba vyšší mesačný príplatok.',
+    ps_ct: ', Competence Team',
+    ps_trainer: ', tréner',
+    slip_trainerInfo: '{n} d tréner · {c} d CT',
+    ctDay: 'Competence Team · {n}. deň v mesiaci',
+    f_ctCodes: 'Kódy Competence Team',
+    f_ctExtra: 'Competence Team: každý ďalší deň €',
+    f_ctBase: 'Competence Team: mesačný príplatok (1 deň v cene) €',
+    f_tExtra: 'Tréner: každý ďalší deň €',
+    f_tTwo: 'Tréner: spolu s 2 dňami €',
+    f_tBase: 'Tréner: mesačný príplatok (1 deň v cene) €',
+    f_isCT: 'Som členom Competence Team',
     upd_available: 'Je k dispozícii nová verzia Payroster.', upd_button: 'Aktualizovať teraz', upd_check: 'Hľadať aktualizácie', upd_latest: 'Máš najnovšiu verziu.', upd_offline: 'Offline: teraz sa to nedá overiť.', version: 'Verzia {v}',
     prevMonth: 'Predchádzajúci mesiac', nextMonth: 'Nasledujúci mesiac', importTitle: 'Importovať rozpis alebo výplatnú pásku v PDF',
     dayByDay: 'Deň po dni',
@@ -1015,7 +1110,7 @@ var I18N = {
     dc_intlNight: '{n} zahr. s nocou', dc_intlDay: '{n} zahr. bez noci', dc_natNight: '{n} tuz. s nocou', dc_natDay: '{n} tuz. bez noci', noAway: 'žiadne dni mimo',
     variableIn: 'Pohyblivá zložka za {m}', variableSub: 'Hodiny, diéty a príplatky za mesiac. Bez základnej mzdy.',
     dutyTime: 'Čas služby ({h} h)', perDiems: 'Diéty', earlyOff: 'Early check-in mimo základne',
-    trainDaysLine: 'Dni školenia ako tréner ({n}, z toho {i} v príplatku)', daysBought: 'Odkúpené / presunuté voľné dni',
+    trainDaysLine: 'Trénerské dni ({n}) a dni Competence Team ({c})', daysBought: 'Odkúpené / presunuté voľné dni',
     sales: 'Provízia z predaja', estimated: '(odhad)', gaugeAria: 'Hodiny v platových pásmach',
     netTitle: 'Približná čistá mzda za mesiac',
     netSub: 'Základ + trénerský príplatok + uniforma + pohyblivá zložka, mínus sociálne poistenie {ss} % a IRPF {irpf} %. Diéty sú oslobodené od dane.',
@@ -1025,7 +1120,7 @@ var I18N = {
     buyDefer: 'Odkúpený / presunutý voľný deň', dayTotal: 'Spolu za deň', salesEur: 'Provízia z predaja €',
     dayBought: 'Odkúpený voľný deň', no: 'Nie', full: 'Celý (9 %)', half: 'Polovičný (4,5 %)', omDeferred: 'O_M presunutý (4,5 %)',
     noExtras: 'Pre tento typ dňa nie sú žiadne extra položky.',
-    slip_base: 'Základná mzda ({r}, stupeň {l})', slip_trainer: 'Trénerský príplatok', slip_uniform: 'Uniforma / čistenie',
+    slip_base: 'Základná mzda ({r}, stupeň {l})', slip_trainer: 'Kabínové školenie (Formación de cabina)', slip_uniform: 'Uniforma / čistenie',
     slip_fdp: 'Letový čas {t}', slip_add: 'Doplnkový čas služby {t}', slip_min: 'Doplatok do minima 49+21 h',
     slip_trainExtra: 'Ďalšie trénerské dni', slip_buy: 'Odkúpenie / presun voľných dní', slip_sales: 'Provízia z predaja', estimatedW: 'odhad',
     slip_taxable: 'Vymeriavací / daňový základ', slip_ss: 'Sociálne poistenie zamestnanca', slip_irpf: 'Zrážka IRPF',
@@ -1035,7 +1130,7 @@ var I18N = {
     f_lang: 'Jazyk', f_rank: 'Kategória', optPU: 'Purser (C)', optCA: 'Palubný sprievodca (D)',
     f_levelMode: 'Platový stupeň', lm_date: 'Stúpa automaticky každý rok', lm_manual: 'Pevný, vyberiem si ho',
     f_since: 'Začiatok v kategórii (stupeň 1)', levelToday: 'Stupeň dnes: <b>{l}</b>. Každý rok k tomuto dátumu stúpne.', f_level: 'Stupeň',
-    f_contract: 'Úväzok', f_base: 'Základňa', f_isTrainer: 'Som tréner', f_trainerPlus: 'Trénerský príplatok €/mesiac',
+    f_contract: 'Úväzok', f_base: 'Základňa', f_isTrainer: 'Som tréner (safety / service / CRM)', f_trainerPlus: 'Trénerský príplatok €/mesiac',
     f_uniform: 'Uniforma €/mesiac', f_irpf: 'IRPF %', f_ss: 'Sociálne poistenie %',
     f_trainIncl: 'Dni školenia zahrnuté v príplatku', f_trainPay: 'Platba za ďalší deň školenia €', f_trainCodes: 'Kódy trénerských služieb',
     f_salesEst: 'Odhadovaná provízia z predaja €/mesiac', f_early: 'Early check-in €',
@@ -1061,6 +1156,18 @@ var I18N = {
     e_noPeriod: 'Nenachádzam obdobie rozpisu. Je to „Individual duty plan“ z IDP v PDF?'
   },
   cs: {
+    footer2: 'Trenérský příplatek a Competence Team podle podnikové dohody „Works Agreement Cabin Trainers“ (1.1.1.2): 270 € měsíčně s 1 dnem, 340 € se 2 dny a 105 € za každý další den; Competence Team 80 € s 1 dnem a 80 € za každý další den. Při obou funkcích se vyplácí jednou jen vyšší měsíční příplatek.',
+    ps_ct: ', Competence Team',
+    ps_trainer: ', trenér',
+    slip_trainerInfo: '{n} d trenér · {c} d CT',
+    ctDay: 'Competence Team · {n}. den v měsíci',
+    f_ctCodes: 'Kódy Competence Team',
+    f_ctExtra: 'Competence Team: každý další den €',
+    f_ctBase: 'Competence Team: měsíční příplatek (1 den v ceně) €',
+    f_tExtra: 'Trenér: každý další den €',
+    f_tTwo: 'Trenér: celkem se 2 dny €',
+    f_tBase: 'Trenér: měsíční příplatek (1 den v ceně) €',
+    f_isCT: 'Jsem členem Competence Team',
     upd_available: 'Je k dispozici nová verze Payroster.', upd_button: 'Aktualizovat teď', upd_check: 'Hledat aktualizace', upd_latest: 'Máš nejnovější verzi.', upd_offline: 'Offline: teď to nelze ověřit.', version: 'Verze {v}',
     prevMonth: 'Předchozí měsíc', nextMonth: 'Další měsíc', importTitle: 'Importovat rozpis nebo výplatní pásku v PDF',
     dayByDay: 'Den po dni',
@@ -1080,7 +1187,7 @@ var I18N = {
     dc_intlNight: '{n} zahr. s nocí', dc_intlDay: '{n} zahr. bez noci', dc_natNight: '{n} tuz. s nocí', dc_natDay: '{n} tuz. bez noci', noAway: 'žádné dny mimo',
     variableIn: 'Pohyblivá složka za {m}', variableSub: 'Hodiny, diety a příplatky za měsíc. Bez základní mzdy.',
     dutyTime: 'Doba služby ({h} h)', perDiems: 'Diety', earlyOff: 'Early check-in mimo základnu',
-    trainDaysLine: 'Dny školení jako trenér ({n}, z toho {i} v příplatku)', daysBought: 'Odkoupené / přesunuté volné dny',
+    trainDaysLine: 'Trenérské dny ({n}) a dny Competence Team ({c})', daysBought: 'Odkoupené / přesunuté volné dny',
     sales: 'Provize z prodeje', estimated: '(odhad)', gaugeAria: 'Hodiny v platových pásmech',
     netTitle: 'Přibližná čistá mzda za měsíc',
     netSub: 'Základ + trenérský příplatek + uniforma + pohyblivá složka, minus sociální pojištění {ss} % a IRPF {irpf} %. Diety jsou osvobozené od daně.',
@@ -1090,7 +1197,7 @@ var I18N = {
     buyDefer: 'Odkoupený / přesunutý volný den', dayTotal: 'Celkem za den', salesEur: 'Provize z prodeje €',
     dayBought: 'Odkoupený volný den', no: 'Ne', full: 'Celý (9 %)', half: 'Poloviční (4,5 %)', omDeferred: 'O_M přesunut (4,5 %)',
     noExtras: 'Pro tento typ dne nejsou žádné extra položky.',
-    slip_base: 'Základní mzda ({r}, stupeň {l})', slip_trainer: 'Trenérský příplatek', slip_uniform: 'Uniforma / čištění',
+    slip_base: 'Základní mzda ({r}, stupeň {l})', slip_trainer: 'Kabinové školení (Formación de cabina)', slip_uniform: 'Uniforma / čištění',
     slip_fdp: 'Letový čas {t}', slip_add: 'Doplňková doba služby {t}', slip_min: 'Doplatek do minima 49+21 h',
     slip_trainExtra: 'Další trenérské dny', slip_buy: 'Odkup / přesun volných dnů', slip_sales: 'Provize z prodeje', estimatedW: 'odhad',
     slip_taxable: 'Vyměřovací / daňový základ', slip_ss: 'Sociální pojištění zaměstnance', slip_irpf: 'Srážka IRPF',
@@ -1100,7 +1207,7 @@ var I18N = {
     f_lang: 'Jazyk', f_rank: 'Kategorie', optPU: 'Purser (C)', optCA: 'Palubní průvodčí (D)',
     f_levelMode: 'Platový stupeň', lm_date: 'Stoupá automaticky každý rok', lm_manual: 'Pevný, vyberu si ho',
     f_since: 'Začátek v kategorii (stupeň 1)', levelToday: 'Stupeň dnes: <b>{l}</b>. Každý rok k tomuto datu stoupne.', f_level: 'Stupeň',
-    f_contract: 'Úvazek', f_base: 'Základna', f_isTrainer: 'Jsem trenér', f_trainerPlus: 'Trenérský příplatek €/měsíc',
+    f_contract: 'Úvazek', f_base: 'Základna', f_isTrainer: 'Jsem trenér (safety / service / CRM)', f_trainerPlus: 'Trenérský příplatek €/měsíc',
     f_uniform: 'Uniforma €/měsíc', f_irpf: 'IRPF %', f_ss: 'Sociální pojištění %',
     f_trainIncl: 'Dny školení zahrnuté v příplatku', f_trainPay: 'Platba za další den školení €', f_trainCodes: 'Kódy trenérských služeb',
     f_salesEst: 'Odhadovaná provize z prodeje €/měsíc', f_early: 'Early check-in €',
@@ -1131,7 +1238,7 @@ var I18N = {
 <script>
 const SEED = null;
 const SEED_SETTINGS = null;
-const APP_VERSION = '2026.11.05-1348';
+const APP_VERSION = '2026.11.05-1401';
 const IS_PWA_BUILD = true;
 const LS = 'payroster.v1';
 const KC = { flight:'--k-flight', deadhead:'--k-dh', training:'--k-train', standby:'--k-sby', reserve:'--k-sby', ground:'--k-ground', off:'--k-off', empty:'--k-off', other:'--k-ground' };
@@ -1217,7 +1324,7 @@ function renderHero(c, ro){
       <dt>${t('dutyTime',{h:hhmm(c.T)})}</dt><dd>${eur.format(c.hourPay + c.topUp)}</dd>
       <dt>${t('perDiems')} · ${dietLine}</dt><dd>${eur.format(c.dietasPaid)}</dd>
       ${c.early?`<dt>${t('earlyOff')}</dt><dd>${eur.format(c.early)}</dd>`:''}
-      ${c.trainDays>1||c.trainPay?`<dt>${t('trainDaysLine',{n:c.trainDays,i:Math.min(c.trainDays,+state.settings.trainingIncluded||0)})}</dt><dd>${eur.format(c.trainPay)}</dd>`:''}
+      ${c.trainDays+c.ctDays>0?`<dt>${t('trainDaysLine',{n:c.trainDays,c:c.ctDays})}</dt><dd>${eur.format(c.trainPay)}</dd>`:''}
       ${c.extraFix?`<dt>${t('daysBought')}</dt><dd>${eur.format(c.extraFix)}</dd>`:''}
       ${c.sales?`<dt>${t('sales')} ${c.salesFromDays?'':t('estimated')}</dt><dd>${eur.format(c.sales)}</dd>`:''}
     </dl>
@@ -1284,7 +1391,8 @@ function renderDays(c, ro){
           ${d.H?`<dt>${t('payHours',{f:hhmm(d.F),a:hhmm(d.A)})}${d.absence?t('absenceCredit'):''} · ${tier}</dt><dd>${eur.format(d.hourPay)}</dd>`:''}
           ${d.dieta?`<dt>${t('d_'+d.dietaType)}</dt><dd>${eur.format(d.dieta)}</dd>`:''}
           ${d.early?`<dt>${t('earlyAt',{t:t4(d.ci)})}</dt><dd>${eur.format(d.early)}</dd>`:''}
-          ${d.isTrain?`<dt>${t('trainDay',{n:d.trainNo})}${d.trainNo<=(+state.settings.trainingIncluded||0)?t('inPlus'):''}</dt><dd>${eur.format(d.trainPay)}</dd>`:''}
+          ${d.isTrain?`<dt>${t('trainDay',{n:d.trainNo})}${d.trainNo===1?t('inPlus'):''}</dt><dd>${eur.format(d.trainPay)}</dd>`:''}
+          ${d.isCTday?`<dt>${t('ctDay',{n:d.ctNo})}${d.ctNo===1?t('inPlus'):''}</dt><dd>${eur.format(d.trainPay)}</dd>`:''}
           ${d.extraFix?`<dt>${t('buyDefer')}</dt><dd>${eur.format(d.extraFix)}</dd>`:''}
           ${d.sales?`<dt>${t('sales')}</dt><dd>${eur.format(d.sales)}</dd>`:''}
           <dt class="t">${t('dayTotal')}</dt><dd class="t">${eur.format(d.total)}</dd>
@@ -1305,14 +1413,13 @@ function renderSlip(c, ro){
   const rows = [];
   const add = (name, info, val, cls='') => rows.push(`<tr class="${cls}"><td>${name}</td><td>${info||''}</td><td>${val}</td></tr>`);
   add(t('slip_base',{r:rankName(s.rank),l:c.level}), s.contract!==100?s.contract+' %':'', eur.format(c.baseSalary));
-  if(s.isTrainer && +s.trainerPlus) add(t('slip_trainer'),'',eur.format(+s.trainerPlus));
+  if(c.allowTotal) add(t('slip_trainer'), t('slip_trainerInfo',{n:c.trainDays,c:c.ctDays}), eur.format(c.allowTotal));
   if(+s.uniform) add(t('slip_uniform'),'',eur.format(+s.uniform));
   const tn = ['<70','70–110','>110'];
   c.tiers.forEach(tr=>{ if(tr.h<=0) return;
     add(t('slip_fdp',{t:tn[tr.i]}), `${n2.format(tr.hF)} h × ${n2.format(tr.rateF)}`, eur.format(tr.payF));
     add(t('slip_add',{t:tn[tr.i]}), `${n2.format(tr.hA)} h × ${n2.format(tr.rateA)}`, eur.format(tr.payA)); });
   if(c.topUp) add(t('slip_min'),'',eur.format(c.topUp));
-  if(c.trainDays>(+s.trainingIncluded||0)) add(t('slip_trainExtra'), `${c.trainDays-(+s.trainingIncluded||0)} × ${n2.format(+s.trainingDayPay||0)}`, eur.format(c.trainPay));
   if(c.early) add('Early check-in', `${c.early/s.earlyCheckin} × ${s.earlyCheckin} €`, eur.format(c.early));
   if(c.extraFix) add(t('slip_buy'),'',eur.format(c.extraFix));
   if(c.sales) add(t('slip_sales'), c.salesFromDays?'':t('estimatedW'), eur.format(c.sales));
@@ -1345,13 +1452,17 @@ function renderForm(){
     <label>${t('f_contract')}<select id="f-contract">${[100,95,90,85,80,75,70,65,60,55,50].map(p=>`<option value="${p}"${p==s.contract?' selected':''}>${p} %</option>`).join('')}</select></label>
     <label>${t('f_base')}<input type="text" id="f-base" maxlength="3" value="${esc(s.base)}"></label>
     <label class="chk"><input type="checkbox" id="f-isTrainer"${s.isTrainer?' checked':''}> ${t('f_isTrainer')}</label>
-    ${s.isTrainer?`<label>${t('f_trainerPlus')}<input type="number" step="0.01" id="f-trainerPlus" value="${s.trainerPlus}"></label>`:''}
+    <label class="chk"><input type="checkbox" id="f-isCT"${s.isCT?' checked':''}> ${t('f_isCT')}</label>
     <label>${t('f_uniform')}<input type="number" step="0.01" id="f-uniform" value="${s.uniform}"></label>
     <label>${t('f_irpf')}<input type="number" step="0.01" id="f-irpf" value="${s.irpf}"></label>
     <label>${t('f_ss')}<input type="number" step="0.01" id="f-ss" value="${s.ss}"></label>
-    ${s.isTrainer?`<label>${t('f_trainIncl')}<input type="number" step="1" min="0" id="f-trainingIncluded" value="${s.trainingIncluded}"></label>
-    <label>${t('f_trainPay')}<input type="number" step="0.01" id="f-trainingDayPay" value="${s.trainingDayPay}"></label>
+    ${s.isTrainer?`<label>${t('f_tBase')}<input type="number" step="0.01" id="f-tBase" value="${s.tBase}"></label>
+    <label>${t('f_tTwo')}<input type="number" step="0.01" id="f-tTwo" value="${s.tTwo}"></label>
+    <label>${t('f_tExtra')}<input type="number" step="0.01" id="f-tExtra" value="${s.tExtra}"></label>
     <label>${t('f_trainCodes')}<input type="text" id="f-trainingCodes" value="${esc(s.trainingCodes)}"></label>`:''}
+    ${(s.isCT||s.isTrainer)?`${s.isCT&&!s.isTrainer?`<label>${t('f_ctBase')}<input type="number" step="0.01" id="f-ctBase" value="${s.ctBase}"></label>`:''}
+    <label>${t('f_ctExtra')}<input type="number" step="0.01" id="f-ctExtra" value="${s.ctExtra}"></label>
+    <label>${t('f_ctCodes')}<input type="text" id="f-ctCodes" value="${esc(s.ctCodes)}"></label>`:''}
     <label>${t('f_salesEst')}<input type="number" step="0.01" id="f-salesEstimate" value="${s.salesEstimate}"></label>
     <label>${t('f_early')}<input type="number" step="0.01" id="f-earlyCheckin" value="${s.earlyCheckin}"></label>
     <label class="wide">${t('f_absence')}<input type="text" id="f-absenceCodes" value="${esc(s.absenceCodes)}"></label>
@@ -1378,7 +1489,7 @@ function renderSetup(){
       <label>${t('su_irpf')}<input type="number" step="0.01" id="p-irpf" value="${s.irpf}"></label>
       <label>${t('f_contract')}<select id="p-contract">${[100,95,90,85,80,75,70,65,60,55,50].map(p=>`<option value="${p}"${p==s.contract?' selected':''}>${p} %</option>`).join('')}</select></label>
       <label class="chk"><input type="checkbox" id="p-trainer"${s.isTrainer?' checked':''}> ${t('f_isTrainer')}</label>
-      <label>${t('f_trainerPlus')}<input type="number" step="0.01" id="p-tplus" value="${s.trainerPlus||''}" placeholder="${t('su_tplusPh')}"></label>
+      <label class="chk"><input type="checkbox" id="p-ct"${s.isCT?' checked':''}> ${t('f_isCT')}</label>
       <div class="wide row"><button class="btn" id="p-save" type="button">${t('su_save')}</button><span id="p-err" class="note"></span></div>
     </div>`;
 }
@@ -1387,7 +1498,8 @@ function applyPayslip(p){
   if(!p.rank || p.level==null){ showMsg(t('e_noCat'), true); return; }
   s.rank = p.rank; s.level = p.level; s.contract = p.contract || 100;
   if(p.since){ s.levelMode='date'; s.since=p.since; } else s.levelMode='manual';
-  s.isTrainer = p.trainerPlus>0; s.trainerPlus = p.trainerPlus||0;
+  // concept 1046 «Formación de cabina»: 270 € or more = trainer, 80–269 € = competence team only
+  s.isTrainer = p.trainerPlus >= (+s.tBase||270); s.isCT = !s.isTrainer && p.trainerPlus > 0;
   if(p.uniform) s.uniform = p.uniform;
   if(p.irpf!=null) s.irpf = p.irpf;
   if(p.ss) s.ss = PR.r2(p.ss);
@@ -1396,7 +1508,7 @@ function applyPayslip(p){
   const expected = (PR.BASE[p.rank][p.level]||0) * s.contract/100;
   const mes = p.period ? monthName(p.period.year,p.period.month,{month:'long',year:'numeric'}) : '';
   let html = t('ps_read',{m: mes?t('ps_of',{m:mes}):'', r: rankName(p.rank), l: p.level, c: s.contract!==100?t('ps_at',{c:s.contract}):'', irpf: n2.format(s.irpf),
-    t: s.isTrainer?t('ps_plus',{v:eur.format(s.trainerPlus)}):'', n: p.nextIncrease?t('ps_next',{d:new Date(p.nextIncrease+'T12:00').toLocaleDateString(LOC)}):''});
+    t: s.isTrainer?t('ps_trainer'):(s.isCT?t('ps_ct'):''), n: p.nextIncrease?t('ps_next',{d:new Date(p.nextIncrease+'T12:00').toLocaleDateString(LOC)}):''});
   if(p.basePay && Math.abs(p.basePay-expected)>1) html += ' <br>'+t('ps_mismatch',{a:eur.format(p.basePay),b:eur.format(expected)});
   if(!Object.keys(state.months).length) html += ' '+t('ps_nowRoster');
   showMsg(html, p.basePay && Math.abs(p.basePay-expected)>1);
@@ -1413,7 +1525,7 @@ function saveSetup(){
   } else if(lv!==''){ s.levelMode='manual'; s.level=+lv; s.since=''; }
   else { $('p-err').textContent = t('e_fill'); return; }
   s.rank = rank; s.irpf = parseFloat(String(v('p-irpf')).replace(',','.'))||0; s.contract = +v('p-contract');
-  s.isTrainer = $('p-trainer').checked; s.trainerPlus = s.isTrainer ? (parseFloat(String(v('p-tplus')).replace(',','.'))||0) : 0;
+  s.isTrainer = $('p-trainer').checked; s.isCT = $('p-ct').checked;
   s.configured = true; $('form').dataset.ready=''; save(); render();
 }
 
@@ -1453,10 +1565,10 @@ document.addEventListener('change', e=>{
   if(el.id && el.id.startsWith('f-')){
     const f = el.id.slice(2), s = state.settings;
     if(el.type==='checkbox') s[f]=el.checked;
-    else if(['level','contract','trainerPlus','uniform','irpf','ss','salesEstimate','earlyCheckin','trainingIncluded','trainingDayPay'].includes(f)) s[f]=parseFloat(String(el.value).replace(',','.'))||0;
+    else if(['level','contract','uniform','irpf','ss','salesEstimate','earlyCheckin','tBase','tTwo','tExtra','ctBase','ctExtra'].includes(f)) s[f]=parseFloat(String(el.value).replace(',','.'))||0;
     else s[f]=f==='base'?el.value.toUpperCase().trim():el.value;
     if(f==='base') s.baseSetByUser = true;
-    if(['rank','levelMode','isTrainer','since'].includes(f)){ if(f==='rank') s.level=1; $('form').dataset.ready=''; }
+    if(['rank','levelMode','isTrainer','isCT','since'].includes(f)){ if(f==='rank') s.level=1; $('form').dataset.ready=''; }
     save(); render();
   }
 });
