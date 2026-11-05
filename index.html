@@ -1,0 +1,803 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#161a2c">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Payroster">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<link rel="icon" href="icons/icon-192.png">
+<style>:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0}img{max-width:100%}[hidden]{display:none!important}</style>
+<title>Payroster</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@75..100,500..800&family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<style>
+/* Layout: duty-plan ledger — month figure + tier gauge on top, a NetLine-style day strip, then one row per day that opens into its pay breakdown. */
+:root{
+  --bg:#f3f4f7; --surface:#ffffff; --sunk:#e9ebf1; --ink:#161a2c; --muted:#5d6379; --line:#d8dbe5;
+  --accent:#2c4fd6; --accent-soft:#e3e8fb; --pay:#0b7650; --pay-soft:#dcf1e7; --warn:#a85a00; --warn-soft:#fbecd6;
+  --k-flight:#2c4fd6; --k-dh:#7d8bd6; --k-train:#c48a00; --k-sby:#8e4fb8; --k-off:#c9ccd7; --k-ground:#3a8a9a;
+  --f-display:"Archivo", "Arial Narrow", system-ui, sans-serif;
+  --f-body:"IBM Plex Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --f-mono:"IBM Plex Mono", ui-monospace, "SF Mono", Menlo, monospace;
+}
+@media (prefers-color-scheme: dark){ :root:not([data-theme="light"]){
+  --bg:#0f1220; --surface:#171b2d; --sunk:#1f2438; --ink:#e8eaf3; --muted:#9aa0b8; --line:#2b3150;
+  --accent:#8fa6ff; --accent-soft:#232c55; --pay:#5fd3a2; --pay-soft:#163a2c; --warn:#f0b35e; --warn-soft:#3b2a12;
+  --k-flight:#7f99ff; --k-dh:#5e6aa8; --k-train:#d9a520; --k-sby:#b583d9; --k-off:#3a4060; --k-ground:#5bb3c4; color-scheme:dark } }
+:root[data-theme="dark"]{
+  --bg:#0f1220; --surface:#171b2d; --sunk:#1f2438; --ink:#e8eaf3; --muted:#9aa0b8; --line:#2b3150;
+  --accent:#8fa6ff; --accent-soft:#232c55; --pay:#5fd3a2; --pay-soft:#163a2c; --warn:#f0b35e; --warn-soft:#3b2a12;
+  --k-flight:#7f99ff; --k-dh:#5e6aa8; --k-train:#d9a520; --k-sby:#b583d9; --k-off:#3a4060; --k-ground:#5bb3c4; color-scheme:dark }
+
+*{box-sizing:border-box}
+html,body{background:var(--bg)}
+body{color:var(--ink);font-family:var(--f-body);font-size:15px;line-height:1.45;
+  padding-left:max(16px, env(safe-area-inset-left, 0px));padding-right:max(16px, env(safe-area-inset-right, 0px));padding-block:0 40px}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top, 0px);z-index:10;background:var(--bg)}
+.wrap{max-width:760px;margin:0 auto;display:flex;flex-direction:column;gap:18px}
+.mono{font-family:var(--f-mono);font-variant-numeric:tabular-nums}
+.num{font-variant-numeric:tabular-nums}
+button,select,input{font:inherit;color:inherit}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+
+/* top bar */
+.bar{position:sticky;top:env(safe-area-inset-top, 0px);z-index:5;background:var(--bg);
+  display:flex;align-items:center;gap:10px;padding-block:12px 10px;border-bottom:1px solid var(--line)}
+.brand{font-family:var(--f-display);font-weight:800;font-stretch:80%;font-size:22px;letter-spacing:.01em;margin-right:auto}
+.brand span{color:var(--accent)}
+.monthnav{display:flex;align-items:center;gap:2px}
+.iconbtn{border:1px solid var(--line);background:var(--surface);border-radius:8px;min-width:36px;height:36px;padding:0 10px;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;gap:6px;font-size:14px}
+.iconbtn:hover{border-color:var(--accent)}
+.iconbtn:disabled{opacity:.35;cursor:default}
+.mlabel{font-family:var(--f-display);font-weight:700;font-stretch:85%;font-size:17px;min-width:96px;text-align:center;text-transform:capitalize}
+
+/* summary */
+.hero{display:grid;grid-template-columns:1.3fr 1fr;gap:12px}
+@media (max-width:560px){.hero{grid-template-columns:1fr}}
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:16px}
+.eyebrow{font-size:11.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);font-weight:600}
+.big{font-family:var(--f-display);font-weight:800;font-stretch:78%;font-size:46px;line-height:1;margin:6px 0 4px;letter-spacing:-.01em}
+.big small{font-size:22px;font-weight:600;color:var(--muted);margin-left:2px}
+.sub{color:var(--muted);font-size:13px}
+.kv{display:grid;grid-template-columns:1fr auto;gap:6px 12px;font-size:14px;margin-top:10px}
+.kv dt{color:var(--muted)} .kv dd{margin:0;text-align:right;font-variant-numeric:tabular-nums;font-weight:500}
+.kv .tot{border-top:1px solid var(--line);padding-top:6px;font-weight:700;color:var(--ink)}
+.netfig{font-family:var(--f-display);font-weight:800;font-stretch:80%;font-size:32px;color:var(--pay);line-height:1.05;margin-top:4px}
+
+/* tier gauge */
+.gauge{margin-top:14px}
+.gtrack{position:relative;height:14px;border-radius:7px;background:var(--sunk);overflow:hidden;display:flex}
+.gseg{height:100%}
+.gscale{position:relative;height:16px;font-size:11px;color:var(--muted);margin-top:3px}
+.gscale span{position:absolute;transform:translateX(-50%);font-family:var(--f-mono)}
+.gnote{font-size:13px;color:var(--muted);margin-top:4px}
+.gnote b{color:var(--ink)}
+
+/* strip calendar */
+.strip{display:grid;grid-template-columns:repeat(7,1fr);gap:4px}
+.dow{font-size:11px;color:var(--muted);text-align:center;letter-spacing:.06em;text-transform:uppercase}
+.cell{border:1px solid var(--line);border-radius:8px;background:var(--surface);min-height:58px;padding:4px 5px;cursor:pointer;display:flex;flex-direction:column;gap:1px;text-align:left;position:relative;overflow:hidden}
+.cell::before{content:"";position:absolute;inset:0 0 auto;height:4px;background:var(--kc, transparent)}
+.cell .d{font-family:var(--f-mono);font-size:12px;font-weight:600;margin-top:2px}
+.cell .c{font-size:10.5px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-family:var(--f-mono)}
+.cell .e{font-size:11.5px;font-weight:600;color:var(--pay);margin-top:auto;font-variant-numeric:tabular-nums;white-space:nowrap}
+.cell.today{border-color:var(--accent);box-shadow:inset 0 0 0 1px var(--accent)}
+.cell.blank{visibility:hidden}
+.legend{display:flex;flex-wrap:wrap;gap:6px 14px;font-size:12px;color:var(--muted);margin-top:8px}
+.legend i{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:5px;vertical-align:-1px}
+
+/* day list */
+h2{font-family:var(--f-display);font-weight:750;font-stretch:85%;font-size:20px;margin:6px 0 0;text-wrap:balance}
+.days{display:flex;flex-direction:column;border:1px solid var(--line);border-radius:12px;background:var(--surface);overflow:hidden}
+.day{border-top:1px solid var(--line)}
+.day:first-child{border-top:0}
+.day>summary{list-style:none;display:grid;grid-template-columns:54px 1fr auto;gap:10px;align-items:center;padding:10px 12px;cursor:pointer}
+.day>summary::-webkit-details-marker{display:none}
+.day[open]>summary{background:var(--sunk)}
+.day.isToday>summary{box-shadow:inset 3px 0 0 var(--accent)}
+.dd{display:flex;flex-direction:column;align-items:flex-start;line-height:1.1}
+.dd .wd{font-size:11px;text-transform:uppercase;letter-spacing:.07em;color:var(--muted)}
+.dd .n{font-family:var(--f-display);font-weight:800;font-stretch:80%;font-size:24px}
+.what{min-width:0}
+.what .r{font-family:var(--f-mono);font-size:13.5px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.what .m{font-size:12.5px;color:var(--muted);display:flex;gap:8px;flex-wrap:wrap;margin-top:2px}
+.tag{display:inline-flex;align-items:center;gap:5px;font-size:11.5px;font-weight:600;letter-spacing:.02em}
+.tag i{width:8px;height:8px;border-radius:2px;background:var(--kc)}
+.amt{text-align:right;font-variant-numeric:tabular-nums}
+.amt .v{font-family:var(--f-display);font-weight:750;font-stretch:85%;font-size:19px;color:var(--pay)}
+.amt .v.zero{color:var(--muted);font-weight:500}
+.amt .h{font-size:11.5px;color:var(--muted);font-family:var(--f-mono)}
+.detail{padding:4px 12px 14px 76px;display:grid;gap:12px}
+@media (max-width:520px){.detail{padding-left:12px}}
+.legs{font-family:var(--f-mono);font-size:12.5px;display:grid;grid-template-columns:auto auto auto auto 1fr;gap:3px 12px;overflow-x:auto}
+.legs .dhl{color:var(--muted)}
+.brk{display:grid;grid-template-columns:1fr auto;gap:4px 12px;font-size:13.5px}
+.brk dt{color:var(--muted)} .brk dd{margin:0;text-align:right;font-variant-numeric:tabular-nums}
+.brk .t{font-weight:700;color:var(--ink);border-top:1px solid var(--line);padding-top:4px}
+.extras{display:flex;flex-wrap:wrap;gap:8px 14px;align-items:center;font-size:13px;background:var(--sunk);border-radius:8px;padding:10px}
+.extras label{display:flex;align-items:center;gap:6px}
+.extras input[type=number]{width:84px}
+input[type=number],input[type=text],select{background:var(--surface);border:1px solid var(--line);border-radius:6px;padding:5px 7px;font-size:14px}
+
+/* payslip */
+.slip{font-size:13.5px;border-collapse:collapse;width:100%}
+.slip td{padding:5px 4px;border-bottom:1px solid var(--line);vertical-align:top}
+.slip td:nth-child(2),.slip td:nth-child(3){text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
+.slip td:nth-child(2){color:var(--muted);font-family:var(--f-mono);font-size:12px}
+.slip tr.sum td{font-weight:700;border-bottom:0;border-top:2px solid var(--ink)}
+.slip tr.ded td:nth-child(3){color:var(--warn)}
+.slip tr.ex td:nth-child(3){color:var(--pay)}
+.tablewrap{overflow-x:auto}
+
+/* settings / import */
+details.box>summary{cursor:pointer;font-family:var(--f-display);font-weight:700;font-stretch:85%;font-size:17px;list-style:none;display:flex;justify-content:space-between;align-items:center}
+details.box>summary::-webkit-details-marker{display:none}
+details.box>summary::after{content:"+";color:var(--muted);font-family:var(--f-mono)}
+details.box[open]>summary::after{content:"–"}
+.form{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:12px;margin-top:14px}
+.form label{display:flex;flex-direction:column;gap:4px;font-size:12.5px;color:var(--muted)}
+.form label.chk{flex-direction:row;align-items:center;color:var(--ink);font-size:13.5px}
+.form input,.form select{width:100%}
+.form .wide{grid-column:1/-1}
+.btn{border:0;border-radius:8px;background:var(--accent);color:var(--surface);padding:9px 14px;font-weight:600;cursor:pointer}
+.btn.ghost{background:transparent;color:var(--ink);border:1px solid var(--line)}
+.btn.danger{background:transparent;color:var(--warn);border:1px solid var(--warn)}
+.row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+.msg{font-size:13.5px;padding:10px 12px;border-radius:8px;background:var(--accent-soft)}
+.msg.err{background:var(--warn-soft);color:var(--warn)}
+.note{font-size:12.5px;color:var(--muted);max-width:65ch}
+.note b{color:var(--ink);font-weight:600}
+.confirm{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
+@media (prefers-reduced-motion: reduce){*{scroll-behavior:auto!important;transition:none!important}}
+</style>
+
+</head>
+<body>
+<div class="wrap">
+  <header class="bar">
+    <div class="brand">Pay<span>roster</span></div>
+    <div class="monthnav">
+      <button class="iconbtn" id="prevM" aria-label="Mes anterior">‹</button>
+      <div class="mlabel" id="mLabel">—</div>
+      <button class="iconbtn" id="nextM" aria-label="Mes siguiente">›</button>
+    </div>
+    <label class="iconbtn" for="pdfIn" title="Importar roster PDF">＋ PDF</label>
+    <input type="file" id="pdfIn" accept="application/pdf,.pdf" class="sr">
+  </header>
+
+  <div id="importMsg" hidden></div>
+
+  <section class="hero" id="hero"></section>
+
+  <section>
+    <div class="strip" id="strip"></div>
+    <div class="legend" id="legend"></div>
+  </section>
+
+  <section>
+    <h2>Día a día</h2>
+    <p class="note">Lo que generas cada día por horas de servicio, dietas y pluses. El sueldo base y los pluses fijos van aparte, en la nómina estimada.</p>
+    <div class="days" id="days"></div>
+  </section>
+
+  <section class="panel">
+    <h2 style="margin-top:0">Nómina estimada del mes</h2>
+    <p class="note" id="slipNote"></p>
+    <div class="tablewrap"><table class="slip" id="slip"></table></div>
+  </section>
+
+  <details class="box panel" id="setBox">
+    <summary>Mis datos de contrato</summary>
+    <div class="form" id="form"></div>
+  </details>
+
+  <details class="box panel">
+    <summary>Meses guardados</summary>
+    <div id="stored" style="margin-top:12px;display:grid;gap:8px"></div>
+    <p class="note" style="margin-top:12px">Los rosters se guardan solo en este navegador. Para añadir un mes, exporta el <b>Individual duty plan</b> en PDF desde IDP y pulsa <b>＋ PDF</b>.</p>
+  </details>
+
+  <p class="note">Cálculo según el Convenio TCP Eurowings Europe (bases en España): art. 11 h (dietas), 24.5 y 24.7 (tiempo relevante para el pago, tramos 70/110 h y regla de proporción FDP/servicio adicional), 24.7.2 c (mínimo 49 + 21 h), 24.9 (early check-in), 18.1 (compra y aplazamiento de días libres). Es una estimación: la nómina oficial manda.</p>
+</div>
+
+<script>
+// Payroster engine: roster parser + pay rules (Convenio TCP Eurowings Europe, bases España)
+// Pure functions; no DOM. Used by the page and by node tests.
+var PR = (function () {
+  const MONTHS = { Jan: 1, Feb: 2, Mar: 3, Apr: 4, May: 5, Jun: 6, Jul: 7, Aug: 8, Sep: 9, Oct: 10, Nov: 11, Dec: 12 };
+  const ES_AIRPORTS = new Set(('PMI IBZ MAH MAD BCN AGP ALC VLC SVQ BIO SCQ VGO OVD SDR LPA TFS TFN ACE FUE SPC GMZ VDE ' +
+    'GRX XRY LEI REU GRO ZAZ VIT PNA LCG MJV RMU VLL SLM LEN BJZ EAS SDR HSK ODB RGS CDT MLN JCU').split(' '));
+
+  // ---------- convenio tables ----------
+  const BASE = {
+    PU: [null, 2150, 2175, 2200, 2225, 2250, 2275, 2300, 2325, 2350, 2375, 2400, 2425, 2450, 2475, 2500],
+    CA: [1260, 1740, 1781, 1822, 1863, 1904, 1945, 1986, 2027, 2068, 2109, 2150]
+  };
+  const PCT = { // % of monthly base per hour, art. 24.7.2
+    PU: { fdp: [0.105, 0.2, 0.32], add: [0.053, 0.1, 0.16] },
+    CA: { fdp: [0.065, 0.2, 0.33], add: [0.033, 0.1, 0.165] }
+  };
+  const TIER_LIMITS = { // art. 30.7.7.2, by contract %
+    100: [70, 110], 95: [67, 105], 90: [63, 99], 85: [60, 94], 80: [56, 88], 75: [53, 83], 70: [49, 77], 65: [46, 72], 60: [42, 66], 55: [39, 61], 50: [35, 55]
+  };
+  const DIETA = { intlDay: 66.11, natDay: 36.06, intlNight: 91.35, natNight: 53.34 };
+  const r2 = x => Math.round((x + Number.EPSILON) * 100) / 100;
+
+  function defaultSettings() {
+    return {
+      rank: 'PU', level: 5, contract: 100, base: 'PMI',
+      trainerPlus: 270, uniform: 66.66, irpf: 19.87, ss: 6.5,
+      salesEstimate: 0, minDietas: false,
+      absenceCodes: 'U, UL, URL, VAC, SICK, KRANK, PERM, PR',
+      earlyCheckin: 30,
+      trainingIncluded: 1, trainingDayPay: 0, trainingCodes: 'DT_TRNG'
+    };
+  }
+
+  function rates(s) {
+    const base = BASE[s.rank][s.level] || 0;
+    const p = PCT[s.rank];
+    return {
+      base,
+      fdp: p.fdp.map(x => r2(base * x / 100)),
+      add: p.add.map(x => r2(base * x / 100)),
+      limits: TIER_LIMITS[s.contract] || interpLimits(s.contract)
+    };
+  }
+  function interpLimits(c) {
+    const keys = Object.keys(TIER_LIMITS).map(Number).sort((a, b) => a - b);
+    let lo = keys[0], hi = keys[keys.length - 1];
+    for (const k of keys) { if (k <= c) lo = k; if (k >= c && hi > k) hi = k; }
+    if (lo === hi) return TIER_LIMITS[lo];
+    const f = (c - lo) / (hi - lo);
+    return [0, 1].map(i => Math.round(TIER_LIMITS[lo][i] + f * (TIER_LIMITS[hi][i] - TIER_LIMITS[lo][i])));
+  }
+
+  // ---------- helpers ----------
+  const hm = s => { const m = /^(\d{1,3}):(\d{2})/.exec(s || ''); return m ? (+m[1]) + (+m[2]) / 60 : 0; };
+  const isTime = s => /^\d{4}$/.test(s);
+  const isStation = s => /^[A-Z]{3}$/.test(s);
+  const dateRe = /^(Mon|Tue|Wed|Thu|Fri|Sat|Sun)(\d{2})$/;
+
+  // ---------- parser ----------
+  // pages: [{items:[{x,y,str}]}] in page orientation (y grows downward)
+  function parseRoster(pages) {
+    const raw = pages.flatMap((p, i) => p.items.map(it => ({ ...it, page: i })));
+    // The duty detail ends where the summary block ("Flight time", "Crew Information…") starts
+    const stop = raw.filter(i => /^(Flight time|Crew Information|Hotels)/.test(i.str.trim()))
+      .sort((a, b) => a.page - b.page || a.y - b.y)[0];
+    const all = raw.filter(i => !stop || i.page < stop.page || (i.page === stop.page && i.y < stop.y - 4) || /Period:|Individual duty plan|contract:/.test(i.str));
+    const text = raw.map(i => i.str).join(' ');
+    const per = /Period:\s*(\d{2})([A-Z][a-z]{2})(\d{2})\s*-\s*(\d{2})([A-Z][a-z]{2})(\d{2})/.exec(text);
+    if (!per) throw new Error('No encuentro el periodo del roster. ¿Es el "Individual duty plan" de IDP en PDF?');
+    const year = 2000 + (+per[3]), month = MONTHS[per[2]];
+    const endDay = +per[4];
+    const nameM = /Individual duty plan\s+for\s+(.+?)\s*\((\d+)\)/.exec(text);
+    const contract = (/contract:\s*(\S+)/.exec(text) || [])[1] || '';
+
+    // header: rank + base under "CRM"
+    let rank = null, base = null;
+    const crm = all.find(i => i.str === 'CRM' && i.page === 0);
+    if (crm) {
+      const under = all.filter(i => i.page === 0 && Math.abs(i.x - crm.x) < 6 && i.y > crm.y + 3 && i.y < crm.y + 30).sort((a, b) => a.y - b.y);
+      for (const u of under) { const t = u.str.trim(); if (/^(PU|CA|ST|SC|FA|CM)$/.test(t) && !rank) rank = t; else if (isStation(t) && !base) base = t; }
+    }
+
+    // detail blocks: dates like "Mon09" at the left of a column
+    const days = {};
+    const dayAnchors = all.filter(i => dateRe.test(i.str.trim()) && i.y > 60);
+    const colXs = [...new Set(dayAnchors.map(a => Math.round(a.x / 10)))].map(v => v * 10).sort((a, b) => a - b);
+    const colOf = x => { let c = -1; for (let k = 0; k < colXs.length; k++) if (x >= colXs[k] - 12) c = k; return c; };
+
+    const byPageCol = {};
+    for (const it of all) {
+      if (it.y < 60 && it.page === 0) continue; // header grid
+      const c = colOf(it.x); if (c < 0) continue;
+      const key = it.page + ':' + c;
+      (byPageCol[key] = byPageCol[key] || []).push({ ...it, rx: it.x - colXs[c], s: it.str.trim() });
+    }
+    const pageKeys = Object.keys(byPageCol).sort((a, b) => { const [pa, ca] = a.split(':').map(Number), [pb, cb] = b.split(':').map(Number); return pa - pb || ca - cb; });
+    for (const key of pageKeys) {
+      const items = byPageCol[key].filter(i => i.s).sort((a, b) => a.y - b.y || a.x - b.x);
+      if (!items.some(i => dateRe.test(i.s) && i.rx < 8)) continue;
+      // group into lines
+      const lines = [];
+      for (const it of items) {
+        const last = lines[lines.length - 1];
+        if (last && Math.abs(last.y - it.y) <= 1.5) last.items.push(it); else lines.push({ y: it.y, items: [it] });
+      }
+      let cur = null;
+      for (const ln of lines) {
+        ln.items.sort((a, b) => a.x - b.x);
+        // brackets live at rx >= 205; split them off
+        const main = ln.items.filter(i => i.rx < 205);
+        const br = ln.items.filter(i => i.rx >= 205);
+        if (main.length && dateRe.test(main[0].s) && main[0].rx < 8) {
+          const d = +dateRe.exec(main[0].s)[2];
+          cur = days[d] = days[d] || { day: d, events: [], dt: null, fdp: null, bt: null, hotel: null, notes: [] };
+          main.shift();
+        }
+        if (!cur) continue;
+        if (br.length) {
+          const t = br.map(b => b.s).join(' ');
+          const m = /\[(DT|BT|DP|FDP)\s*(\d{1,3}:\d{2})\]?/.exec(t);
+          if (m) cur[m[1].toLowerCase()] = hm(m[2]);
+        }
+        if (!main.length) continue;
+        const toks = main.map(i => ({ s: i.s, rx: i.rx }));
+        const words = toks.map(t => t.s);
+        const first = words.join(' ');
+        if (/^To\b|^Ref:|^c\/m/.test(first)) continue;
+        if (/^H\d$/.test(words[0]) && toks[0].rx < 30) { cur.hotel = words.find(isStation) || null; continue; }
+        // bucket by relative x
+        const at = (lo, hi) => toks.filter(t => t.rx >= lo && t.rx < hi).map(t => t.s);
+        const label = at(25, 95).join(' ');
+        const dep = at(98, 118).find(isStation) || null;
+        const t1 = at(118, 138).find(isTime) || null;
+        const t2 = at(138, 158).find(isTime) || null;
+        const arr = at(158, 182).find(isStation) || null;
+        const info = at(182, 205).join(' ');
+        const reserveMark = at(88, 100).includes('R');
+        if (!label && !dep && !t1) { if (main.length) cur.notes.push(first); continue; }
+        if (/^Pick Up/.test(label)) { cur.events.push({ type: 'pickup', t1 }); continue; }
+        if (!label && (dep || t1)) { cur.notes.push(first); continue; }
+        let m;
+        if ((m = /^(DH\/)?([A-Z0-9]{2})\s*(\d{1,4}[A-Z]?)$/.exec(label)) && dep && arr && t1 && t2) {
+          cur.events.push({ type: m[1] ? 'dh' : 'flt', flight: m[2] + ' ' + m[3], dep, arr, t1, t2, ac: info });
+        } else if (/^C\/I$/.test(label)) {
+          cur.events.push({ type: 'ci', st: dep, t1 });
+        } else if (/^C\/O$/.test(label)) {
+          cur.events.push({ type: 'co', st: arr || dep, t1: t2 || t1 });
+        } else if (/^S\/U$/.test(label)) {
+          cur.events.push({ type: 'su', st: dep, t1 });
+        } else {
+          cur.events.push({ type: 'code', code: label.split(' ')[0], label, st: dep || arr, t1, t2, arr, reserveMark });
+        }
+      }
+    }
+
+    // DT limit values (page with "Value for DT Limit Calc")
+    const dtl = {};
+    const re = /(\d{2})([A-Z][a-z]{2})(\d{2})\s+(\d{1,2}:\d{2})/g;
+    const p3 = pages.map(p => p.items.slice().sort((a, b) => a.y - b.y || a.x - b.x).map(i => i.str).join(' ')).join(' ');
+    if (/Limit Calc/.test(p3)) {
+      const after = p3.slice(p3.indexOf('Limit Calc'));
+      let m; while ((m = re.exec(after))) { if (MONTHS[m[2]] === month) dtl[+m[1]] = hm(m[4]); }
+    }
+    const summary = {
+      flightTime: hm((/Flight time\s+(\d+:\d{2})/.exec(text) || [])[1]),
+      fdp: hm((/Alt\.\s*flight duty period\s+(\d+:\d{2})/.exec(text) || [])[1])
+    };
+
+    const out = [];
+    for (let d = 1; d <= endDay; d++) {
+      const x = days[d] || { day: d, events: [], dt: null, fdp: null, hotel: null, notes: [] };
+      x.dtLimit = dtl[d] != null ? dtl[d] : null;
+      x.date = `${year}-${String(month).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+      out.push(x);
+    }
+    return { year, month, crew: nameM ? nameM[1] : '', crewId: nameM ? nameM[2] : '', contract, rank, base, days: out, summary };
+  }
+
+  // ---------- classification ----------
+  const OFF_CODES = /^(O_|OFF|FREI|U_OFF|LV_OFF)/;
+  function classify(day) {
+    const ev = day.events;
+    const codes = ev.filter(e => e.type === 'code').map(e => e.code);
+    if (ev.some(e => e.type === 'flt')) return 'flight';
+    if (codes.some(c => /^STBY|^SBY|^RES(?!ERVE)/.test(c))) return 'standby';
+    if (codes.some(c => /^RESERVE/.test(c))) return 'reserve';
+    if (codes.some(c => /TRNG|SIM|CRS|^DT_/.test(c)) && !codes.some(c => /MEET/.test(c))) return 'training';
+    if (codes.some(c => /MEET|OFFICE|DT_/.test(c))) return 'ground';
+    if (ev.some(e => e.type === 'dh')) return 'deadhead';
+    if (codes.length && codes.every(c => OFF_CODES.test(c))) return 'off';
+    if (!ev.length) return 'empty';
+    return 'other';
+  }
+
+  // ---------- pay computation ----------
+  function compute(roster, s, extras) {
+    extras = extras || {};
+    const R = rates(s);
+    const base = s.base || roster.base || 'PMI';
+    const absenceSet = new Set(String(s.absenceCodes || '').split(/[,\s]+/).filter(Boolean).map(x => x.toUpperCase()));
+    const trainSet = new Set(String(s.trainingCodes || '').split(/[,\s]+/).filter(Boolean).map(x => x.toUpperCase()));
+    let trainSeen = 0;
+    let loc = base; // where you wake up
+    const days = roster.days.map(d => {
+      const kind = classify(d);
+      const codes = d.events.filter(e => e.type === 'code').map(e => e.code.toUpperCase());
+      const absence = codes.some(c => absenceSet.has(c));
+      // hours
+      let F = d.fdp || 0;
+      let DT = d.dtLimit != null ? d.dtLimit : (d.dt || 0);
+      let A = Math.max(0, DT - F);
+      if (absence) { F = 3.5; A = 1.2; }
+      // locations
+      const startLoc = loc;
+      const stations = [];
+      for (const e of d.events) {
+        if (e.type === 'flt' || e.type === 'dh') { stations.push(e.dep, e.arr); }
+        else if (e.st) stations.push(e.st);
+        if (e.type === 'code' && e.arr) stations.push(e.arr);
+      }
+      let endLoc = d.hotel || (stations.length ? stations[stations.length - 1] : startLoc);
+      if (d.hotel) endLoc = d.hotel;
+      loc = endLoc;
+      const visited = [startLoc, ...stations, endLoc].filter(Boolean);
+      const away = visited.some(st => st !== base);
+      let dieta = 0, dietaType = null;
+      if (away) {
+        const intl = visited.some(st => !ES_AIRPORTS.has(st));
+        const night = endLoc !== base;
+        dietaType = (intl ? 'intl' : 'nat') + (night ? 'Night' : 'Day');
+        dieta = DIETA[dietaType];
+      }
+      // early check-in off base (00:00–05:00 local)
+      let early = 0;
+      const ci = d.events.find(e => e.type === 'ci' || e.type === 'su');
+      if (ci && ci.st && ci.st !== base && startLoc !== base && ci.t1 && +ci.t1 < 500) early = s.earlyCheckin;
+      const ex = extras[d.date] || {};
+      const pct = R.base / 100;
+      const extraFix = (ex.buy === 'full' ? 9 * pct : ex.buy === 'half' ? 4.5 * pct : 0) + (ex.omDefer ? 4.5 * pct : 0);
+      const sales = +ex.sales || 0;
+      const isTrain = codes.some(c => trainSet.has(c));
+      let trainPay = 0, trainNo = 0;
+      if (isTrain) { trainSeen++; trainNo = trainSeen; if (trainSeen > (+s.trainingIncluded || 0)) trainPay = +s.trainingDayPay || 0; }
+      // route
+      const legs = d.events.filter(e => e.type === 'flt' || e.type === 'dh');
+      const route = legs.length ? [legs[0].dep, ...legs.map(l => l.arr)].join('–') : '';
+      const ciEv = d.events.find(e => e.type === 'ci' || e.type === 'su');
+      const coEv = [...d.events].reverse().find(e => e.type === 'co');
+      const codeEv = d.events.find(e => e.type === 'code' && !/^TAXI/.test(e.code));
+      return {
+        date: d.date, day: d.day, kind, codes, absence, F, A, H: F + A, startLoc, endLoc, away, dieta, dietaType, early,
+        extraFix: r2(extraFix), sales, isTrain, trainNo, trainPay, buy: ex.buy || null, omDefer: !!ex.omDefer,
+        legs, route, ci: ciEv ? ciEv.t1 : (codeEv ? codeEv.t1 : null),
+        co: coEv ? coEv.t1 : (legs.length ? legs[legs.length - 1].t2 : (codeEv ? codeEv.t2 : null)),
+        label: codeEv ? codeEv.code : (legs.length ? '' : (codes[0] || '')), hotel: d.hotel, events: d.events
+      };
+    });
+
+    // monthly hour pay with tier ratio rule (art. 24.5.1 d)
+    const TF = days.reduce((a, d) => a + d.F, 0), TA = days.reduce((a, d) => a + d.A, 0), T = TF + TA;
+    const r = T > 0 ? TF / T : 0;
+    const [L1, L2] = R.limits;
+    const tierRate = i => r * R.fdp[i] + (1 - r) * R.add[i];
+    let cum = 0;
+    for (const d of days) {
+      let h = d.H, pay = 0, start = cum;
+      const parts = [[0, L1], [L1, L2], [L2, Infinity]];
+      parts.forEach(([lo, hi], i) => {
+        const a = Math.max(start, lo), b = Math.min(start + h, hi);
+        if (b > a) pay += (b - a) * tierRate(i);
+      });
+      cum += h;
+      d.hourPay = pay;
+      d.tierEnd = cum;
+      d.total = pay + d.dieta + d.early + d.extraFix + d.sales + d.trainPay;
+    }
+    const tiers = [[0, L1], [L1, L2], [L2, Infinity]].map(([lo, hi], i) => {
+      const h = Math.max(0, Math.min(T, hi) - lo);
+      const hF = r2(h * r), hA = r2(h * (1 - r));
+      return { i, h, hF, hA, payF: r2(hF * R.fdp[i]), payA: r2(hA * R.add[i]), rateF: R.fdp[i], rateA: R.add[i] };
+    });
+    let hourPay = tiers.reduce((a, t) => a + t.payF + t.payA, 0);
+    const minGuarantee = r2(49 * (s.contract / 100) * R.fdp[0] + 21 * (s.contract / 100) * R.add[0]);
+    const topUp = hourPay < minGuarantee ? r2(minGuarantee - hourPay) : 0;
+    const dietas = r2(days.reduce((a, d) => a + d.dieta, 0));
+    const dietaFloor = s.minDietas ? (s.rank === 'PU' ? 500 : 400) : 0;
+    const dietasPaid = Math.max(dietas, dietaFloor);
+    const early = days.reduce((a, d) => a + d.early, 0);
+    const extraFix = r2(days.reduce((a, d) => a + d.extraFix, 0));
+    const trainPay = r2(days.reduce((a, d) => a + d.trainPay, 0));
+    const trainDays = days.filter(d => d.isTrain).length;
+    const salesDays = r2(days.reduce((a, d) => a + d.sales, 0));
+    const sales = salesDays > 0 ? salesDays : (+s.salesEstimate || 0);
+    const baseSalary = r2(R.base * s.contract / 100);
+    const fixed = r2(baseSalary + (+s.trainerPlus || 0) + (+s.uniform || 0));
+    const taxable = r2(fixed + hourPay + topUp + early + extraFix + sales + trainPay);
+    const ss = r2(taxable * s.ss / 100);
+    const irpf = r2(taxable * s.irpf / 100);
+    const net = r2(taxable - ss - irpf + dietasPaid);
+    const count = k => days.filter(d => d.dietaType === k).length;
+    return {
+      days, rates: R, TF, TA, T, r, tiers, hourPay: r2(hourPay), minGuarantee, topUp, dietas, dietasPaid, early, extraFix, sales,
+      salesFromDays: salesDays > 0, trainPay, trainDays, baseSalary, fixed, taxable, ss, irpf, net,
+      variable: r2(hourPay + topUp + dietasPaid + early + extraFix + sales + trainPay),
+      dietaCounts: { intlNight: count('intlNight'), intlDay: count('intlDay'), natNight: count('natNight'), natDay: count('natDay') },
+      blockHours: days.reduce((a, d) => a + d.legs.filter(l => l.type === 'flt').reduce((b, l) => b + blockLen(l), 0), 0)
+    };
+  }
+  function blockLen(l) {
+    const m = t => Math.floor(+t / 100) * 60 + (+t % 100);
+    let x = m(l.t2) - m(l.t1); if (x < 0) x += 1440; return x / 60;
+  }
+
+  return { parseRoster, compute, rates, defaultSettings, classify, DIETA, BASE, hm, r2, ES_AIRPORTS };
+})();
+if (typeof module !== 'undefined') module.exports = PR;
+
+</script>
+<script>
+const SEED = null;
+const LS = 'payroster.v1';
+const KIND = {
+  flight:{n:'Vuelo',c:'--k-flight'}, deadhead:{n:'Posicionamiento',c:'--k-dh'}, training:{n:'Formación',c:'--k-train'},
+  standby:{n:'Imaginaria',c:'--k-sby'}, reserve:{n:'Franco',c:'--k-sby'}, ground:{n:'Tierra',c:'--k-ground'},
+  off:{n:'Libre',c:'--k-off'}, empty:{n:'—',c:'--k-off'}, other:{n:'Otro',c:'--k-ground'}
+};
+const DIETA_N = {intlNight:'Dieta internacional con pernocta', intlDay:'Dieta internacional sin pernocta', natNight:'Dieta nacional con pernocta', natDay:'Dieta nacional sin pernocta'};
+const eur = new Intl.NumberFormat('es-ES',{style:'currency',currency:'EUR'});
+const eur0 = new Intl.NumberFormat('es-ES',{style:'currency',currency:'EUR',maximumFractionDigits:0});
+const n2 = new Intl.NumberFormat('es-ES',{minimumFractionDigits:2,maximumFractionDigits:2});
+const hhmm = h => { const m = Math.round(h*60); return Math.floor(m/60)+':'+String(m%60).padStart(2,'0'); };
+const t4 = t => t ? t.slice(0,2)+':'+t.slice(2) : '';
+const $ = id => document.getElementById(id);
+const esc = s => String(s==null?'':s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+
+let state = load();
+function load(){
+  let s=null; try{ s = JSON.parse(localStorage.getItem(LS)||'null'); }catch(e){}
+  if(!s || !s.months) s = { months:{}, extras:{}, settings: PR.defaultSettings(), current:null, example:true };
+  s.settings = Object.assign(PR.defaultSettings(), s.settings||{});
+  if(!Object.keys(s.months).length && SEED){ s.months[key(SEED)] = SEED; s.current = key(SEED); }
+  if(!s.current || !s.months[s.current]) s.current = Object.keys(s.months).sort().pop();
+  return s;
+}
+function save(){ try{ localStorage.setItem(LS, JSON.stringify(state)); }catch(e){} }
+function key(r){ return r.year+'-'+String(r.month).padStart(2,'0'); }
+function todayISO(){ const d=new Date(); return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'); }
+
+function render(){
+  const keys = Object.keys(state.months).sort();
+  const i = keys.indexOf(state.current);
+  $('prevM').disabled = i<=0; $('nextM').disabled = i<0 || i>=keys.length-1;
+  const ro = state.months[state.current];
+  if(!ro){ $('mLabel').textContent='Sin datos'; $('hero').innerHTML='<div class="panel"><div class="eyebrow">Empieza aquí</div><p style="margin:8px 0 0">Descarga tu <b>Individual duty plan</b> en PDF desde IDP y pulsa <b>＋ PDF</b> arriba. Verás cada día con lo que generas.</p></div>'; ['strip','legend','days','slip'].forEach(i=>$(i).innerHTML=''); renderForm(); renderStored(); return; }
+  const s = state.settings;
+  if(ro.base && !s.baseSetByUser) s.base = ro.base;
+  const c = PR.compute(ro, s, state.extras);
+  const mDate = new Date(ro.year, ro.month-1, 1);
+  $('mLabel').textContent = mDate.toLocaleDateString('es-ES',{month:'short',year:'numeric'}).replace('.','');
+  renderHero(c, ro); renderStrip(c, ro); renderDays(c, ro); renderSlip(c, ro); renderForm(); renderStored();
+}
+
+function renderHero(c, ro){
+  const [L1,L2] = c.rates.limits;
+  const max = Math.max(L2+20, Math.ceil((c.T+10)/10)*10);
+  const seg = (lo,hi,color) => { const w = Math.max(0, Math.min(c.T,hi)-lo)/max*100; return w>0?`<div class="gseg" style="width:${w}%;background:${color}"></div>`:''; };
+  const tierNow = c.T>L2?3:c.T>L1?2:1;
+  const nextMsg = tierNow===1 ? `Te faltan <b>${hhmm(L1-c.T)} h</b> para el tramo 2 (cada hora vale más del doble).`
+               : tierNow===2 ? `Estás en el tramo 2. Te faltan <b>${hhmm(L2-c.T)} h</b> para el tramo 3.` : `Estás en el tramo 3, el mejor pagado.`;
+  const dc = c.dietaCounts;
+  const dietLine = [dc.intlNight&&`${dc.intlNight} int. con noche`, dc.intlDay&&`${dc.intlDay} int. sin noche`, dc.natNight&&`${dc.natNight} nac. con noche`, dc.natDay&&`${dc.natDay} nac. sin noche`].filter(Boolean).join(' · ') || 'sin días fuera';
+  $('hero').innerHTML = `
+  <div class="panel">
+    <div class="eyebrow">Variable generado en ${new Date(ro.year,ro.month-1,1).toLocaleDateString('es-ES',{month:'long'})}</div>
+    <div class="big num">${eur0.format(c.variable).replace(/\s?€/,'')}<small>€</small></div>
+    <div class="sub">Horas, dietas y pluses del mes. Sin sueldo base.</div>
+    <dl class="kv">
+      <dt>Tiempo de servicio (${hhmm(c.T)} h)</dt><dd>${eur.format(c.hourPay + c.topUp)}</dd>
+      <dt>Dietas · ${dietLine}</dt><dd>${eur.format(c.dietasPaid)}</dd>
+      ${c.early?`<dt>Early check-in fuera de base</dt><dd>${eur.format(c.early)}</dd>`:''}
+      ${c.trainDays>1||c.trainPay?`<dt>Días de formación como trainer (${c.trainDays}, ${Math.min(c.trainDays,+state.settings.trainingIncluded||0)} en el plus)</dt><dd>${eur.format(c.trainPay)}</dd>`:''}
+      ${c.extraFix?`<dt>Días libres comprados / aplazados</dt><dd>${eur.format(c.extraFix)}</dd>`:''}
+      ${c.sales?`<dt>Comisión ventas ${c.salesFromDays?'':'(estimada)'}</dt><dd>${eur.format(c.sales)}</dd>`:''}
+    </dl>
+    <div class="gauge" aria-label="Horas en tramos de pago">
+      <div class="gtrack">${seg(0,L1,'var(--accent)')}${seg(L1,L2,'var(--pay)')}${seg(L2,Infinity,'var(--warn)')}</div>
+      <div class="gscale"><span style="left:0;transform:none">0</span><span style="left:${L1/max*100}%">${L1} h</span><span style="left:${L2/max*100}%">${L2} h</span></div>
+      <div class="gnote">${nextMsg}</div>
+    </div>
+  </div>
+  <div class="panel">
+    <div class="eyebrow">Neto aproximado del mes</div>
+    <div class="netfig num">${eur.format(c.net)}</div>
+    <div class="sub">Base + plus formación + uniforme + variable, menos SS ${n2.format(state.settings.ss)} % e IRPF ${n2.format(state.settings.irpf)} %. Dietas exentas.</div>
+    <dl class="kv">
+      <dt>FDP</dt><dd class="mono">${hhmm(c.TF)} h</dd>
+      <dt>Servicio adicional</dt><dd class="mono">${hhmm(c.TA)} h</dd>
+      <dt>Block</dt><dd class="mono">${hhmm(c.blockHours)} h</dd>
+      <dt>Proporción FDP</dt><dd class="mono">${Math.round(c.r*100)} %</dd>
+      ${c.topUp?`<dt>Mínimo garantizado (49+21 h)</dt><dd>+${eur.format(c.topUp)}</dd>`:''}
+    </dl>
+  </div>`;
+}
+
+function renderStrip(c, ro){
+  const dows = ['L','M','X','J','V','S','D'];
+  const first = (new Date(ro.year, ro.month-1, 1).getDay()+6)%7;
+  const today = todayISO();
+  let h = dows.map(d=>`<div class="dow">${d}</div>`).join('') + '<div class="cell blank"></div>'.repeat(first);
+  for(const d of c.days){
+    const k = KIND[d.kind]||KIND.other;
+    const code = d.kind==='flight' ? (d.legs.filter(l=>l.type==='flt').map(l=>l.arr).filter(a=>a!==d.startLoc).filter((v,i,a)=>a.indexOf(v)===i).slice(0,2).join(' ')||'FLT')
+              : d.kind==='deadhead' ? 'DH '+(d.legs[0]?d.legs[d.legs.length-1].arr:'')
+              : (d.label||'').replace(/^DT_/,'').replace(/^STBY_/,'SB ').replace('RESERVE72','RES');
+    h += `<button class="cell${d.date===today?' today':''}" style="--kc:var(${k.c})" data-go="${d.date}" aria-label="${d.day}: ${esc(k.n)} ${d.total?eur.format(d.total):''}">
+      <span class="d">${d.day}</span><span class="c">${esc(code)}</span>${d.total>0.005?`<span class="e">${eur0.format(d.total)}</span>`:''}</button>`;
+  }
+  $('strip').innerHTML = h;
+  const used = [...new Set(c.days.map(d=>d.kind))].filter(k=>k!=='empty');
+  $('legend').innerHTML = used.map(k=>`<span><i style="background:var(${KIND[k].c})"></i>${KIND[k].n}</span>`).join('');
+}
+
+function renderDays(c, ro){
+  const today = todayISO();
+  const open = new Set([...document.querySelectorAll('.day[open]')].map(e=>e.dataset.date));
+  $('days').innerHTML = c.days.map(d=>{
+    const k = KIND[d.kind]||KIND.other;
+    const wd = new Date(d.date+'T12:00').toLocaleDateString('es-ES',{weekday:'short'}).replace('.','');
+    const main = d.route ? d.route : (d.label || k.n);
+    const times = d.ci ? `${t4(d.ci)}${d.co?'–'+t4(d.co):''}` : '';
+    const tier = d.H>0 ? `tramo ${d.tierEnd>c.rates.limits[1]?3:d.tierEnd>c.rates.limits[0]?2:1}` : '';
+    const legs = d.legs.length ? `<div class="legs">${d.legs.map(l=>`<span class="${l.type==='dh'?'dhl':''}">${l.type==='dh'?'DH ':''}${esc(l.flight)}</span><span>${l.dep}</span><span>${t4(l.t1)}</span><span>${t4(l.t2)}</span><span>${l.arr}</span>`).join('')}</div>` : '';
+    const ex = state.extras[d.date]||{};
+    const offish = d.kind==='off' || d.kind==='flight' || d.kind==='deadhead';
+    return `<details class="day${d.date===today?' isToday':''}" id="d-${d.date}" data-date="${d.date}"${open.has(d.date)?' open':''}>
+      <summary>
+        <div class="dd"><span class="wd">${wd}</span><span class="n">${d.day}</span></div>
+        <div class="what"><div class="r">${esc(main)}</div>
+          <div class="m"><span class="tag" style="--kc:var(${k.c})"><i></i>${k.n}</span>${times?`<span class="mono">${times}</span>`:''}${d.hotel?`<span>Noche en ${d.hotel}</span>`:''}</div></div>
+        <div class="amt"><div class="v${d.total>0.005?'':' zero'}">${d.total>0.005?eur.format(d.total):'0 €'}</div>${d.H?`<div class="h">${hhmm(d.H)} h</div>`:''}</div>
+      </summary>
+      <div class="detail">
+        ${legs}
+        <dl class="brk">
+          ${d.H?`<dt>Horas pagables: FDP ${hhmm(d.F)} + adicional ${hhmm(d.A)}${d.absence?' (crédito ausencia)':''} · ${tier}</dt><dd>${eur.format(d.hourPay)}</dd>`:''}
+          ${d.dieta?`<dt>${DIETA_N[d.dietaType]}</dt><dd>${eur.format(d.dieta)}</dd>`:''}
+          ${d.early?`<dt>Early check-in fuera de base (${t4(d.ci)})</dt><dd>${eur.format(d.early)}</dd>`:''}
+          ${d.isTrain?`<dt>Formación como trainer · día ${d.trainNo} del mes${d.trainNo<=(+state.settings.trainingIncluded||0)?' (incluido en el plus)':''}</dt><dd>${eur.format(d.trainPay)}</dd>`:''}
+          ${d.extraFix?`<dt>Compra / aplazamiento de día libre</dt><dd>${eur.format(d.extraFix)}</dd>`:''}
+          ${d.sales?`<dt>Comisión ventas</dt><dd>${eur.format(d.sales)}</dd>`:''}
+          <dt class="t">Total del día</dt><dd class="t">${eur.format(d.total)}</dd>
+        </dl>
+        <div class="extras" data-date="${d.date}">
+          ${d.kind==='flight'?`<label>Comisión ventas € <input type="number" step="0.01" min="0" id="s-${d.date}" data-f="sales" value="${ex.sales||''}" placeholder="0,00"></label>`:''}
+          ${offish?`<label>Día libre comprado <select id="b-${d.date}" data-f="buy"><option value="">No</option><option value="full"${ex.buy==='full'?' selected':''}>Completo (9 %)</option><option value="half"${ex.buy==='half'?' selected':''}>Medio (4,5 %)</option></select></label>`:''}
+          ${d.codes.includes('O_M')?`<label><input type="checkbox" id="o-${d.date}" data-f="omDefer"${ex.omDefer?' checked':''}> O_M aplazado (4,5 %)</label>`:''}
+          ${(!offish && d.kind!=='flight')?'<span class="note">Sin extras para este tipo de día.</span>':''}
+        </div>
+      </div>
+    </details>`;
+  }).join('');
+}
+
+function renderSlip(c, ro){
+  const s = state.settings, R = c.rates;
+  const rows = [];
+  const add = (name, info, val, cls='') => rows.push(`<tr class="${cls}"><td>${name}</td><td>${info||''}</td><td>${val}</td></tr>`);
+  add(`Salario base (${s.rank==='PU'?'sobrecargo':'auxiliar'} nivel ${s.level})`, s.contract!==100?s.contract+' %':'', eur.format(c.baseSalary));
+  if(+s.trainerPlus) add('Formación de cabina','',eur.format(+s.trainerPlus));
+  if(+s.uniform) add('Uniforme / limpieza','',eur.format(+s.uniform));
+  const tn = ['<70','70–110','>110'];
+  c.tiers.forEach(t=>{ if(t.h<=0) return;
+    add(`Tiempo de vuelo ${tn[t.i]}`, `${n2.format(t.hF)} h × ${n2.format(t.rateF)}`, eur.format(t.payF));
+    add(`Tpo vuelo adicional ${tn[t.i]}`, `${n2.format(t.hA)} h × ${n2.format(t.rateA)}`, eur.format(t.payA)); });
+  if(c.topUp) add('Complemento mínimo 49+21 h','',eur.format(c.topUp));
+  if(c.trainDays>(+s.trainingIncluded||0)) add('Formación adicional trainer', `${c.trainDays-(+s.trainingIncluded||0)} × ${n2.format(+s.trainingDayPay||0)}`, eur.format(c.trainPay));
+  if(c.early) add('Early check-in', `${c.early/s.earlyCheckin} × ${s.earlyCheckin} €`, eur.format(c.early));
+  if(c.extraFix) add('Compra / aplazamiento días libres','',eur.format(c.extraFix));
+  if(c.sales) add('Comisión de ventas', c.salesFromDays?'':'estimada', eur.format(c.sales));
+  add('<b>Base cotización / IRPF</b>','',`<b>${eur.format(c.taxable)}</b>`);
+  add('Seguridad Social trabajador', n2.format(s.ss)+' %', '−'+eur.format(c.ss), 'ded');
+  add('Retención IRPF', n2.format(s.irpf)+' %', '−'+eur.format(c.irpf), 'ded');
+  const dc=c.dietaCounts;
+  if(dc.intlNight) add('Viajes inter con pernocta', `${dc.intlNight} × ${n2.format(PR.DIETA.intlNight)}`, eur.format(dc.intlNight*PR.DIETA.intlNight), 'ex');
+  if(dc.intlDay) add('Viajes inter sin pernocta', `${dc.intlDay} × ${n2.format(PR.DIETA.intlDay)}`, eur.format(dc.intlDay*PR.DIETA.intlDay), 'ex');
+  if(dc.natNight) add('Viajes nacional con pernocta', `${dc.natNight} × ${n2.format(PR.DIETA.natNight)}`, eur.format(dc.natNight*PR.DIETA.natNight), 'ex');
+  if(dc.natDay) add('Viajes nacional sin pernocta', `${dc.natDay} × ${n2.format(PR.DIETA.natDay)}`, eur.format(dc.natDay*PR.DIETA.natDay), 'ex');
+  if(c.dietasPaid>c.dietas) add('Garantía mínima de dietas','',eur.format(c.dietasPaid-c.dietas),'ex');
+  rows.push(`<tr class="sum"><td>Líquido aproximado</td><td></td><td>${eur.format(c.net)}</td></tr>`);
+  $('slip').innerHTML = rows.join('');
+  const next = new Date(ro.year, ro.month, 1).toLocaleDateString('es-ES',{month:'long'});
+  $('slipNote').innerHTML = `Mismo formato que tu nómina. Las horas y dietas de este mes suelen cobrarse en la nómina de <b>${next}</b>, junto al sueldo base de ese mes. Tarifas por hora: FDP ${R.fdp.map(n2.format).join(' / ')} €, adicional ${R.add.map(n2.format).join(' / ')} €.`;
+}
+
+function renderForm(){
+  if($('form').dataset.ready) return;
+  const s = state.settings;
+  const lvl = r => (r==='PU'?[...Array(15)].map((_,i)=>i+1):[...Array(12)].map((_,i)=>i));
+  $('form').innerHTML = `
+    <label>Categoría<select id="f-rank"><option value="PU"${s.rank==='PU'?' selected':''}>Sobrecargo (C)</option><option value="CA"${s.rank==='CA'?' selected':''}>Auxiliar de vuelo (D)</option></select></label>
+    <label>Nivel salarial<select id="f-level">${lvl(s.rank).map(l=>`<option${l==s.level?' selected':''}>${l}</option>`).join('')}</select></label>
+    <label>Jornada<select id="f-contract">${[100,95,90,85,80,75,70,65,60,55,50].map(p=>`<option value="${p}"${p==s.contract?' selected':''}>${p} %</option>`).join('')}</select></label>
+    <label>Base<input type="text" id="f-base" maxlength="3" value="${esc(s.base)}"></label>
+    <label>Plus formación de cabina €/mes<input type="number" step="0.01" id="f-trainerPlus" value="${s.trainerPlus}"></label>
+    <label>Uniforme €/mes<input type="number" step="0.01" id="f-uniform" value="${s.uniform}"></label>
+    <label>IRPF %<input type="number" step="0.01" id="f-irpf" value="${s.irpf}"></label>
+    <label>Seguridad Social %<input type="number" step="0.01" id="f-ss" value="${s.ss}"></label>
+    <label>Días de formación incluidos en el plus<input type="number" step="1" min="0" id="f-trainingIncluded" value="${s.trainingIncluded}"></label>
+    <label>Pago por día de formación adicional €<input type="number" step="0.01" id="f-trainingDayPay" value="${s.trainingDayPay}"></label>
+    <label>Códigos de formación como trainer<input type="text" id="f-trainingCodes" value="${esc(s.trainingCodes)}"></label>
+    <label>Comisión ventas estimada €/mes<input type="number" step="0.01" id="f-salesEstimate" value="${s.salesEstimate}"></label>
+    <label>Early check-in €<input type="number" step="0.01" id="f-earlyCheckin" value="${s.earlyCheckin}"></label>
+    <label class="wide">Códigos de ausencia que cuentan como vacaciones/permiso (3:30 FDP + 1:12 adicional)<input type="text" id="f-absenceCodes" value="${esc(s.absenceCodes)}"></label>
+    <label class="chk wide"><input type="checkbox" id="f-minDietas"${s.minDietas?' checked':''}> Aplicar garantía mínima de dietas (500 € sobrecargo / 400 € auxiliar; el convenio la fija hasta el 31/12/2025)</label>
+    <div class="wide row"><button class="btn ghost" id="resetSet" type="button">Restaurar valores del convenio</button><span class="note">IRPF y nivel salen de tu nómina de octubre.</span></div>`;
+  $('form').dataset.ready = '1';
+}
+
+function renderStored(){
+  const keys = Object.keys(state.months).sort().reverse();
+  $('stored').innerHTML = keys.map(k=>{ const r=state.months[k]; const lbl=new Date(r.year,r.month-1,1).toLocaleDateString('es-ES',{month:'long',year:'numeric'});
+    return `<div class="row" style="justify-content:space-between"><span style="text-transform:capitalize">${lbl}${r.crew?` · <span class="note">${esc(r.crew)}</span>`:''}</span>
+      <span class="confirm" id="cf-${k}"><button class="btn danger" data-del="${k}" type="button">Borrar</button></span></div>`; }).join('') || '<span class="note">Ningún mes guardado.</span>';
+}
+
+// ---- events ----
+document.addEventListener('click', e=>{
+  const go = e.target.closest('[data-go]');
+  if(go){ const el = $('d-'+go.dataset.go); if(el){ el.open = true; el.scrollIntoView({behavior: matchMedia('(prefers-reduced-motion: reduce)').matches?'auto':'smooth', block:'center'}); } return; }
+  const del = e.target.closest('[data-del]');
+  if(del){ const k=del.dataset.del; $('cf-'+k).innerHTML = `<span class="note">¿Borrar este mes?</span><button class="btn danger" data-delok="${k}" type="button">Sí, borrar</button><button class="btn ghost" data-delno type="button">No</button>`; return; }
+  const ok = e.target.closest('[data-delok]');
+  if(ok){ delete state.months[ok.dataset.delok]; state.current = Object.keys(state.months).sort().pop()||null; save(); render(); return; }
+  if(e.target.closest('[data-delno]')){ renderStored(); return; }
+  if(e.target.id==='resetSet'){ const b=state.settings.base; state.settings = Object.assign(PR.defaultSettings(),{base:b}); $('form').dataset.ready=''; save(); render(); }
+});
+$('prevM').onclick = ()=>{ const k=Object.keys(state.months).sort(); const i=k.indexOf(state.current); if(i>0){state.current=k[i-1]; save(); render();} };
+$('nextM').onclick = ()=>{ const k=Object.keys(state.months).sort(); const i=k.indexOf(state.current); if(i<k.length-1){state.current=k[i+1]; save(); render();} };
+
+document.addEventListener('change', e=>{
+  const t = e.target;
+  const box = t.closest('.extras');
+  if(box && t.dataset.f){
+    const d = box.dataset.date; const ex = state.extras[d] = state.extras[d]||{};
+    ex[t.dataset.f] = t.type==='checkbox' ? t.checked : (t.dataset.f==='sales' ? (parseFloat(String(t.value).replace(',','.'))||0) : t.value);
+    save(); render(); return;
+  }
+  if(t.id && t.id.startsWith('f-')){
+    const f = t.id.slice(2), s = state.settings;
+    if(t.type==='checkbox') s[f]=t.checked;
+    else if(['level','contract','trainerPlus','uniform','irpf','ss','salesEstimate','earlyCheckin','trainingIncluded','trainingDayPay'].includes(f)) s[f]=parseFloat(String(t.value).replace(',','.'))||0;
+    else s[f]=f==='base'?t.value.toUpperCase().trim():t.value;
+    if(f==='base') s.baseSetByUser = true;
+    if(f==='rank'){ s.level = s.rank==='PU'?1:1; $('form').dataset.ready=''; }
+    save(); render();
+  }
+});
+
+// ---- PDF import ----
+const PDFJS = './lib/';
+function loadScript(src){ return new Promise((res,rej)=>{ const s=document.createElement('script'); s.src=src; s.onload=res; s.onerror=()=>rej(new Error('No se pudo cargar el lector de PDF. Comprueba la conexión e inténtalo otra vez.')); document.head.appendChild(s); }); }
+async function readPdf(file){
+  if(!window.pdfjsLib){ await loadScript(PDFJS+'pdf.min.js'); pdfjsLib.GlobalWorkerOptions.workerSrc = PDFJS+'pdf.worker.min.js'; }
+  const doc = await pdfjsLib.getDocument({data:new Uint8Array(await file.arrayBuffer())}).promise;
+  const pages=[];
+  for(let p=1;p<=doc.numPages;p++){
+    const pg=await doc.getPage(p); const tc=await pg.getTextContent(); const vp=pg.getViewport({scale:1});
+    pages.push({items: tc.items.filter(i=>i.str&&i.str.trim()).map(it=>{ const m=pdfjsLib.Util.transform(vp.transform,it.transform); return {x:m[4],y:m[5],str:it.str}; })});
+  }
+  return pages;
+}
+function showMsg(html, err){ const m=$('importMsg'); m.hidden=false; m.className='msg'+(err?' err':''); m.innerHTML=html; }
+$('pdfIn').addEventListener('change', async e=>{
+  const f = e.target.files[0]; if(!f) return;
+  showMsg('Leyendo '+esc(f.name)+'…');
+  try{
+    const ro = PR.parseRoster(await readPdf(f));
+    const k = key(ro);
+    state.months[k] = ro; state.current = k; save(); render();
+    const flights = ro.days.filter(d=>d.events.some(x=>x.type==='flt')).length;
+    showMsg(`Importado <b>${new Date(ro.year,ro.month-1,1).toLocaleDateString('es-ES',{month:'long',year:'numeric'})}</b>: ${ro.days.length} días, ${flights} con vuelo.`);
+  }catch(err){ showMsg(esc(err.message||err), true); }
+  e.target.value='';
+});
+
+render();
+if('serviceWorker' in navigator){ addEventListener('load',()=>navigator.serviceWorker.register('sw.js').catch(()=>{})); }
+// open today's row on first view
+(()=>{ const el=$('d-'+todayISO()); if(el) el.open=true; })();
+</script>
+
+</body>
+</html>
