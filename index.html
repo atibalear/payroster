@@ -168,11 +168,13 @@ details.box[open]>summary::after{content:"–"}
       <div class="mlabel" id="mLabel">—</div>
       <button class="iconbtn" id="nextM" aria-label="Mes siguiente">›</button>
     </div>
-    <label class="iconbtn" for="pdfIn" title="Importar roster PDF">＋ PDF</label>
+    <label class="iconbtn" for="pdfIn" title="Importar roster o nómina en PDF">＋ PDF</label>
     <input type="file" id="pdfIn" accept="application/pdf,.pdf" class="sr">
   </header>
 
   <div id="importMsg" hidden></div>
+  <div id="rankWarn" hidden></div>
+  <section class="panel" id="setup" hidden></section>
 
   <section class="hero" id="hero"></section>
 
@@ -232,8 +234,8 @@ var PR = (function () {
 
   function defaultSettings() {
     return {
-      rank: 'PU', level: 5, contract: 100, base: 'PMI',
-      trainerPlus: 270, uniform: 66.66, irpf: 19.87, ss: 6.5,
+      rank: 'PU', level: 1, levelMode: 'date', since: '', contract: 100, base: 'PMI',
+      isTrainer: false, trainerPlus: 0, uniform: 66.66, irpf: 15, ss: 6.5, configured: false,
       salesEstimate: 0, minDietas: false,
       absenceCodes: 'U, UL, URL, VAC, SICK, KRANK, PERM, PR',
       earlyCheckin: 30,
@@ -383,7 +385,7 @@ var PR = (function () {
       x.date = `${year}-${String(month).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
       out.push(x);
     }
-    return { year, month, crew: nameM ? nameM[1] : '', crewId: nameM ? nameM[2] : '', contract, rank, base, days: out, summary };
+    return { year, month, crew: nameM ? nameM[1] : '', crewId: nameM ? nameM[2] : '', contract, rank, rankNorm: normRank(rank), base, days: out, summary };
   }
 
   // ---------- classification ----------
@@ -403,8 +405,22 @@ var PR = (function () {
   }
 
   // ---------- pay computation ----------
+  // salary level in a given month (art. 24.2 e–g): +1 level per full year in the category;
+  // a date between day 1 and 15 counts from that month, otherwise from the next one
+  function levelFor(s, year, month) {
+    const max = s.rank === 'PU' ? 15 : 11;
+    if (s.levelMode !== 'date' || !s.since) return Math.min(max, Math.max(s.rank === 'PU' ? 1 : 0, +s.level || 1));
+    const m = /^(\d{4})-(\d{2})-(\d{2})/.exec(s.since); if (!m) return +s.level || 1;
+    let sy = +m[1], sm = +m[2]; if (+m[3] > 15) { sm++; if (sm > 12) { sm = 1; sy++; } }
+    const months = (year * 12 + month) - (sy * 12 + sm);
+    return Math.min(max, 1 + Math.max(0, Math.floor(months / 12)));
+  }
+  function normRank(r) { return !r ? null : (r === 'PU' ? 'PU' : 'CA'); }
+
   function compute(roster, s, extras) {
     extras = extras || {};
+    s = Object.assign({}, s, { level: levelFor(s, roster.year, roster.month) });
+    if (!s.isTrainer) s = Object.assign({}, s, { trainerPlus: 0 });
     const R = rates(s);
     const base = s.base || roster.base || 'PMI';
     const absenceSet = new Set(String(s.absenceCodes || '').split(/[,\s]+/).filter(Boolean).map(x => x.toUpperCase()));
@@ -448,7 +464,7 @@ var PR = (function () {
       const pct = R.base / 100;
       const extraFix = (ex.buy === 'full' ? 9 * pct : ex.buy === 'half' ? 4.5 * pct : 0) + (ex.omDefer ? 4.5 * pct : 0);
       const sales = +ex.sales || 0;
-      const isTrain = codes.some(c => trainSet.has(c));
+      const isTrain = !!s.isTrainer && codes.some(c => trainSet.has(c));
       let trainPay = 0, trainNo = 0;
       if (isTrain) { trainSeen++; trainNo = trainSeen; if (trainSeen > (+s.trainingIncluded || 0)) trainPay = +s.trainingDayPay || 0; }
       // route
@@ -509,7 +525,7 @@ var PR = (function () {
     const net = r2(taxable - ss - irpf + dietasPaid);
     const count = k => days.filter(d => d.dietaType === k).length;
     return {
-      days, rates: R, TF, TA, T, r, tiers, hourPay: r2(hourPay), minGuarantee, topUp, dietas, dietasPaid, early, extraFix, sales,
+      level: s.level, days, rates: R, TF, TA, T, r, tiers, hourPay: r2(hourPay), minGuarantee, topUp, dietas, dietasPaid, early, extraFix, sales,
       salesFromDays: salesDays > 0, trainPay, trainDays, baseSalary, fixed, taxable, ss, irpf, net,
       variable: r2(hourPay + topUp + dietasPaid + early + extraFix + sales + trainPay),
       dietaCounts: { intlNight: count('intlNight'), intlDay: count('intlDay'), natNight: count('natNight'), natDay: count('natDay') },
@@ -521,13 +537,70 @@ var PR = (function () {
     let x = m(l.t2) - m(l.t1); if (x < 0) x += 1440; return x / 60;
   }
 
-  return { parseRoster, compute, rates, defaultSettings, classify, DIETA, BASE, hm, r2, ES_AIRPORTS };
+  // ---------- payslip (nómina Eurowings Europe) ----------
+  // Reads only what the pay rules need; personal data (DNI, IBAN, address) is never kept.
+  function parsePayslip(items) {
+    const text = items.map(i => i.str).join(' ');
+    if (!/Conceptos de N[óo]mina|L[íi]quido a percibir/i.test(text)) return null;
+    const num = s => parseFloat(String(s).replace(/\./g, '').replace(',', '.'));
+    const under = label => {
+      const h = items.find(i => i.str.trim() === label); if (!h) return null;
+      const cands = items.filter(i => i.y > h.y + 4 && i.y < h.y + 22 && Math.abs(i.x - h.x) < 45);
+      cands.sort((a, b) => Math.abs(a.x - h.x) - Math.abs(b.x - h.x)); return cands[0] ? cands[0].str.trim() : null;
+    };
+    const lines = [];
+    for (const it of items.slice().sort((a, b) => a.y - b.y || a.x - b.x)) {
+      const l = lines[lines.length - 1];
+      if (l && Math.abs(l.y - it.y) <= 2) l.items.push(it); else lines.push({ y: it.y, items: [it] });
+    }
+    const concepts = [];
+    for (const l of lines) {
+      const its = l.items.sort((a, b) => a.x - b.x);
+      const code = its[0].str.trim();
+      if (!/^\/?\d{3,4}$/.test(code) || its[0].x > 35) continue;
+      const label = (its[1] && its[1].x < 160) ? its[1].str.trim() : '';
+      const rest = its.slice(label ? 2 : 1);
+      const retro = (rest.find(i => i.x > 150 && i.x < 200 && /^\d{6}$/.test(i.str.trim())) || {}).str || null;
+      const numbers = rest.filter(i => /^-?[\d.]+,\d{2}$/.test(i.str.trim())).map(i => ({ x: i.x, v: num(i.str) }));
+      concepts.push({ code, label, retro, numbers });
+    }
+    const amt = c => { const n = c.numbers.filter(n => n.x > 380); return n.length ? n[n.length - 1].v : null; };
+    const pctOf = c => { const n = c.numbers.find(n => n.x > 320 && n.x < 380); return n ? n.v : null; };
+    const get = code => concepts.filter(c => c.code === code && !c.retro);
+    const per = /Periodo de liquidaci[óo]n\s*:?\s*(\d{2})\/(\d{2})\/(\d{4})/.exec(text);
+    const cat = under('Categoría profesional') || '';
+    const cm = /^([CD])-?(\d{1,2})$/.exec(cat);
+    const inc = under('Incremento Salarial');
+    const incM = inc && /(\d{2})\/(\d{2})\/(\d{4})/.exec(inc);
+    const out = {
+      period: per ? { month: +per[2], year: +per[3] } : null,
+      rank: cm ? (cm[1] === 'C' ? 'PU' : 'CA') : null,
+      level: cm ? +cm[2] : null,
+      contract: num(under('% de Salario') || '100') || 100,
+      nextIncrease: incM ? `${incM[3]}-${incM[2]}-${incM[1]}` : null,
+      basePay: (get('1000')[0] && amt(get('1000')[0])) || null,
+      trainerPlus: get('1046').reduce((a, c) => a + (amt(c) || 0), 0),
+      uniform: (get('1047')[0] && amt(get('1047')[0])) || null,
+      sales: get('5128').reduce((a, c) => a + (amt(c) || 0), 0),
+      irpf: (get('/401')[0] && pctOf(get('/401')[0])) || null,
+      ss: ['/350', '/370', '/380'].map(k => get(k)[0]).filter(Boolean).reduce((a, c) => a + (pctOf(c) || 0), 0) || null
+    };
+    // derive the anniversary: level L applies from (next increase − 1 year), level 1 from (next increase − L years)
+    if (out.nextIncrease && out.level != null) {
+      const [y, m, d] = out.nextIncrease.split('-').map(Number);
+      out.since = `${y - Math.max(out.level, 1)}-${String(m).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+    }
+    return out;
+  }
+
+  return { parsePayslip, parseRoster, compute, rates, defaultSettings, levelFor, normRank, classify, DIETA, BASE, hm, r2, ES_AIRPORTS };
 })();
 if (typeof module !== 'undefined') module.exports = PR;
 
 </script>
 <script>
 const SEED = null;
+const SEED_SETTINGS = null;
 const LS = 'payroster.v1';
 const KIND = {
   flight:{n:'Vuelo',c:'--k-flight'}, deadhead:{n:'Posicionamiento',c:'--k-dh'}, training:{n:'Formación',c:'--k-train'},
@@ -546,7 +619,11 @@ const esc = s => String(s==null?'':s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':
 let state = load();
 function load(){
   let s=null; try{ s = JSON.parse(localStorage.getItem(LS)||'null'); }catch(e){}
-  if(!s || !s.months) s = { months:{}, extras:{}, settings: PR.defaultSettings(), current:null, example:true };
+  if(!s || !s.months) s = { months:{}, extras:{}, settings: SEED_SETTINGS || PR.defaultSettings(), current:null, example:true };
+  if(s.settings && s.settings.configured===undefined){ // profile saved before profiles existed
+    s.settings.configured = true; s.settings.isTrainer = +s.settings.trainerPlus>0; s.settings.levelMode = 'manual';
+  }
+  if(!s.settings && SEED_SETTINGS) s.settings = SEED_SETTINGS;
   s.settings = Object.assign(PR.defaultSettings(), s.settings||{});
   if(!Object.keys(s.months).length && SEED){ s.months[key(SEED)] = SEED; s.current = key(SEED); }
   if(!s.current || !s.months[s.current]) s.current = Object.keys(s.months).sort().pop();
@@ -561,9 +638,15 @@ function render(){
   const i = keys.indexOf(state.current);
   $('prevM').disabled = i<=0; $('nextM').disabled = i<0 || i>=keys.length-1;
   const ro = state.months[state.current];
-  if(!ro){ $('mLabel').textContent='Sin datos'; $('hero').innerHTML='<div class="panel"><div class="eyebrow">Empieza aquí</div><p style="margin:8px 0 0">Descarga tu <b>Individual duty plan</b> en PDF desde IDP y pulsa <b>＋ PDF</b> arriba. Verás cada día con lo que generas.</p></div>'; ['strip','legend','days','slip'].forEach(i=>$(i).innerHTML=''); renderForm(); renderStored(); return; }
+  if(!ro){ renderSetup(); $('mLabel').textContent='Sin datos'; $('hero').innerHTML='<div class="panel"><div class="eyebrow">Empieza aquí</div><p style="margin:8px 0 0">Descarga tu <b>Individual duty plan</b> en PDF desde IDP y pulsa <b>＋ PDF</b> arriba. Verás cada día con lo que generas.</p></div>'; ['strip','legend','days','slip'].forEach(i=>$(i).innerHTML=''); renderForm(); renderStored(); return; }
   const s = state.settings;
+  renderSetup();
   if(ro.base && !s.baseSetByUser) s.base = ro.base;
+  const w = $('rankWarn');
+  if(s.configured && ro.rankNorm && ro.rankNorm!==s.rank){
+    w.hidden=false; w.className='msg err';
+    w.innerHTML = `Este roster es de <b>${ro.rankNorm==='PU'?'sobrecargo':'auxiliar de vuelo'}</b>, pero tu perfil dice <b>${s.rank==='PU'?'sobrecargo':'auxiliar de vuelo'}</b>. <button class="btn ghost" id="useRosterRank" type="button" style="margin-left:6px">Usar ${ro.rankNorm==='PU'?'sobrecargo':'auxiliar'}</button>`;
+  } else w.hidden=true;
   const c = PR.compute(ro, s, state.extras);
   const mDate = new Date(ro.year, ro.month-1, 1);
   $('mLabel').textContent = mDate.toLocaleDateString('es-ES',{month:'short',year:'numeric'}).replace('.','');
@@ -675,8 +758,8 @@ function renderSlip(c, ro){
   const s = state.settings, R = c.rates;
   const rows = [];
   const add = (name, info, val, cls='') => rows.push(`<tr class="${cls}"><td>${name}</td><td>${info||''}</td><td>${val}</td></tr>`);
-  add(`Salario base (${s.rank==='PU'?'sobrecargo':'auxiliar'} nivel ${s.level})`, s.contract!==100?s.contract+' %':'', eur.format(c.baseSalary));
-  if(+s.trainerPlus) add('Formación de cabina','',eur.format(+s.trainerPlus));
+  add(`Salario base (${s.rank==='PU'?'sobrecargo':'auxiliar'} nivel ${c.level})`, s.contract!==100?s.contract+' %':'', eur.format(c.baseSalary));
+  if(s.isTrainer && +s.trainerPlus) add('Formación de cabina','',eur.format(+s.trainerPlus));
   if(+s.uniform) add('Uniforme / limpieza','',eur.format(+s.uniform));
   const tn = ['<70','70–110','>110'];
   c.tiers.forEach(t=>{ if(t.h<=0) return;
@@ -708,22 +791,82 @@ function renderForm(){
   const lvl = r => (r==='PU'?[...Array(15)].map((_,i)=>i+1):[...Array(12)].map((_,i)=>i));
   $('form').innerHTML = `
     <label>Categoría<select id="f-rank"><option value="PU"${s.rank==='PU'?' selected':''}>Sobrecargo (C)</option><option value="CA"${s.rank==='CA'?' selected':''}>Auxiliar de vuelo (D)</option></select></label>
-    <label>Nivel salarial<select id="f-level">${lvl(s.rank).map(l=>`<option${l==s.level?' selected':''}>${l}</option>`).join('')}</select></label>
+    <label>Nivel salarial<select id="f-levelMode"><option value="date"${s.levelMode==='date'?' selected':''}>Sube solo cada año</option><option value="manual"${s.levelMode!=='date'?' selected':''}>Fijo, lo elijo yo</option></select></label>
+    ${s.levelMode==='date'
+      ? `<label>Inicio en la categoría (nivel 1)<input type="date" id="f-since" value="${esc(s.since)}"></label><div class="note" style="align-self:end">Nivel hoy: <b>${PR.levelFor(s,new Date().getFullYear(),new Date().getMonth()+1)}</b>. Sube cada año en esta fecha.</div>`
+      : `<label>Nivel<select id="f-level">${lvl(s.rank).map(l=>`<option${l==s.level?' selected':''}>${l}</option>`).join('')}</select></label>`}
     <label>Jornada<select id="f-contract">${[100,95,90,85,80,75,70,65,60,55,50].map(p=>`<option value="${p}"${p==s.contract?' selected':''}>${p} %</option>`).join('')}</select></label>
     <label>Base<input type="text" id="f-base" maxlength="3" value="${esc(s.base)}"></label>
-    <label>Plus formación de cabina €/mes<input type="number" step="0.01" id="f-trainerPlus" value="${s.trainerPlus}"></label>
+    <label class="chk"><input type="checkbox" id="f-isTrainer"${s.isTrainer?' checked':''}> Soy trainer de cabina</label>
+    ${s.isTrainer?`<label>Plus formación de cabina €/mes<input type="number" step="0.01" id="f-trainerPlus" value="${s.trainerPlus}"></label>`:''}
     <label>Uniforme €/mes<input type="number" step="0.01" id="f-uniform" value="${s.uniform}"></label>
     <label>IRPF %<input type="number" step="0.01" id="f-irpf" value="${s.irpf}"></label>
     <label>Seguridad Social %<input type="number" step="0.01" id="f-ss" value="${s.ss}"></label>
-    <label>Días de formación incluidos en el plus<input type="number" step="1" min="0" id="f-trainingIncluded" value="${s.trainingIncluded}"></label>
+    ${s.isTrainer?`<label>Días de formación incluidos en el plus<input type="number" step="1" min="0" id="f-trainingIncluded" value="${s.trainingIncluded}"></label>
     <label>Pago por día de formación adicional €<input type="number" step="0.01" id="f-trainingDayPay" value="${s.trainingDayPay}"></label>
-    <label>Códigos de formación como trainer<input type="text" id="f-trainingCodes" value="${esc(s.trainingCodes)}"></label>
+    <label>Códigos de formación como trainer<input type="text" id="f-trainingCodes" value="${esc(s.trainingCodes)}"></label>`:''}
     <label>Comisión ventas estimada €/mes<input type="number" step="0.01" id="f-salesEstimate" value="${s.salesEstimate}"></label>
     <label>Early check-in €<input type="number" step="0.01" id="f-earlyCheckin" value="${s.earlyCheckin}"></label>
     <label class="wide">Códigos de ausencia que cuentan como vacaciones/permiso (3:30 FDP + 1:12 adicional)<input type="text" id="f-absenceCodes" value="${esc(s.absenceCodes)}"></label>
     <label class="chk wide"><input type="checkbox" id="f-minDietas"${s.minDietas?' checked':''}> Aplicar garantía mínima de dietas (500 € sobrecargo / 400 € auxiliar; el convenio la fija hasta el 31/12/2025)</label>
-    <div class="wide row"><button class="btn ghost" id="resetSet" type="button">Restaurar valores del convenio</button><span class="note">IRPF y nivel salen de tu nómina de octubre.</span></div>`;
+    <div class="wide row"><button class="btn ghost" id="resetSet" type="button">Restaurar valores del convenio</button><button class="btn ghost" id="redoSetup" type="button">Configurar perfil de nuevo</button></div>`;
   $('form').dataset.ready = '1';
+}
+
+function renderSetup(){
+  const box = $('setup'), s = state.settings;
+  if(s.configured){ box.hidden = true; box.innerHTML=''; return; }
+  if(!box.hidden && box.innerHTML) return;
+  box.hidden = false;
+  box.innerHTML = `<div class="eyebrow">Tu perfil</div>
+    <h2 style="margin:4px 0 6px">¿Qué cobras según el convenio?</h2>
+    <p class="note">Lo más fácil: sube una nómina reciente en PDF. La app lee tu categoría, nivel, fecha de incremento, IRPF, jornada y plus de trainer. No guarda DNI, IBAN ni dirección. Todo se queda en este móvil.</p>
+    <div class="row" style="margin-top:10px"><label class="btn" for="pdfIn" style="display:inline-block">Subir mi nómina (PDF)</label></div>
+    <p class="note" style="margin-top:14px">O rellénalo a mano con el <b>salario base</b> y la fecha de <b>Incremento salarial</b> de la nómina:</p>
+    <div class="form">
+      <label>Categoría<select id="p-rank"><option value="PU"${s.rank==='PU'?' selected':''}>Sobrecargo (C)</option><option value="CA"${s.rank==='CA'?' selected':''}>Auxiliar de vuelo (D)</option></select></label>
+      <label>Salario base en tu nómina €<input type="number" step="0.01" id="p-basepay" placeholder="2250,00"></label>
+      <label>Incremento salarial (fecha en la nómina)<input type="date" id="p-inc"></label>
+      <label>O elige el nivel a mano<select id="p-level"><option value="">—</option>${[...Array(16)].map((_,i)=>i).map(l=>`<option>${l}</option>`).join('')}</select></label>
+      <label>IRPF % (Retención a cta. IRPF)<input type="number" step="0.01" id="p-irpf" value="${s.irpf}"></label>
+      <label>Jornada<select id="p-contract">${[100,95,90,85,80,75,70,65,60,55,50].map(p=>`<option value="${p}"${p==s.contract?' selected':''}>${p} %</option>`).join('')}</select></label>
+      <label class="chk"><input type="checkbox" id="p-trainer"${s.isTrainer?' checked':''}> Soy trainer de cabina</label>
+      <label>Plus formación de cabina €/mes<input type="number" step="0.01" id="p-tplus" value="${s.trainerPlus||''}" placeholder="solo trainers"></label>
+      <div class="wide row"><button class="btn" id="p-save" type="button">Guardar perfil</button><span id="p-err" class="note"></span></div>
+    </div>`;
+}
+function applyPayslip(p){
+  const s = state.settings;
+  if(!p.rank || p.level==null){ showMsg('No encuentro la categoría (C-05, D-03…) en esta nómina. Rellena el perfil a mano.', true); return; }
+  s.rank = p.rank; s.level = p.level; s.contract = p.contract || 100;
+  if(p.since){ s.levelMode='date'; s.since=p.since; } else s.levelMode='manual';
+  s.isTrainer = p.trainerPlus>0; s.trainerPlus = p.trainerPlus||0;
+  if(p.uniform) s.uniform = p.uniform;
+  if(p.irpf!=null) s.irpf = p.irpf;
+  if(p.ss) s.ss = PR.r2(p.ss);
+  if(p.sales>0) s.salesEstimate = PR.r2(p.sales);
+  s.configured = true; $('form').dataset.ready=''; save(); render();
+  const expected = (PR.BASE[p.rank][p.level]||0) * s.contract/100;
+  const mes = p.period ? new Date(p.period.year,p.period.month-1,1).toLocaleDateString('es-ES',{month:'long',year:'numeric'}) : '';
+  let html = `Perfil leído de tu nómina${mes?' de <b>'+mes+'</b>':''}: <b>${p.rank==='PU'?'sobrecargo':'auxiliar'} nivel ${p.level}</b>${s.contract!==100?' al '+s.contract+' %':''}, IRPF ${n2.format(s.irpf)} %${s.isTrainer?`, plus formación ${eur.format(s.trainerPlus)}`:''}${p.nextIncrease?`. Próxima subida de nivel: ${new Date(p.nextIncrease+'T12:00').toLocaleDateString('es-ES')}`:''}.`;
+  if(p.basePay && Math.abs(p.basePay-expected)>1) html += ` <br>Ojo: tu salario base (${eur.format(p.basePay)}) no coincide con la tabla del convenio (${eur.format(expected)}). Revisa el nivel en Mis datos de contrato.`;
+  if(!Object.keys(state.months).length) html += ' Ahora sube tu roster con <b>＋ PDF</b>.';
+  showMsg(html, p.basePay && Math.abs(p.basePay-expected)>1);
+}
+function saveSetup(){
+  const s = state.settings, v = id => $(id).value;
+  const rank = v('p-rank'), pay = parseFloat(String(v('p-basepay')).replace(',','.')), inc = v('p-inc'), lv = v('p-level');
+  const table = PR.BASE[rank];
+  if(pay && inc){
+    const full = pay / ((+v('p-contract')||100)/100); let level = table.findIndex(x=>x!=null && Math.abs(x-full)<0.5);
+    if(level<0){ $('p-err').textContent = `${n2.format(pay)} € no aparece en la tabla de ${rank==='PU'?'sobrecargo':'auxiliar'}. Revisa la categoría o elige el nivel a mano.`; return; }
+    const d = new Date(inc+'T12:00'); d.setFullYear(d.getFullYear()-level);
+    s.levelMode='date'; s.since = d.toISOString().slice(0,10); s.level = level;
+  } else if(lv!==''){ s.levelMode='manual'; s.level=+lv; s.since=''; }
+  else { $('p-err').textContent = 'Pon el salario base y la fecha de incremento, o elige el nivel a mano.'; return; }
+  s.rank = rank; s.irpf = parseFloat(String(v('p-irpf')).replace(',','.'))||0; s.contract = +v('p-contract');
+  s.isTrainer = $('p-trainer').checked; s.trainerPlus = s.isTrainer ? (parseFloat(String(v('p-tplus')).replace(',','.'))||0) : 0;
+  s.configured = true; $('form').dataset.ready=''; save(); render();
 }
 
 function renderStored(){
@@ -742,6 +885,9 @@ document.addEventListener('click', e=>{
   const ok = e.target.closest('[data-delok]');
   if(ok){ delete state.months[ok.dataset.delok]; state.current = Object.keys(state.months).sort().pop()||null; save(); render(); return; }
   if(e.target.closest('[data-delno]')){ renderStored(); return; }
+  if(e.target.id==='useRosterRank'){ const ro=state.months[state.current]; state.settings.rank=ro.rankNorm; $('form').dataset.ready=''; save(); render(); return; }
+  if(e.target.id==='redoSetup'){ state.settings.configured=false; save(); render(); $('setup').scrollIntoView(); return; }
+  if(e.target.id==='p-save'){ saveSetup(); return; }
   if(e.target.id==='resetSet'){ const b=state.settings.base; state.settings = Object.assign(PR.defaultSettings(),{base:b}); $('form').dataset.ready=''; save(); render(); }
 });
 $('prevM').onclick = ()=>{ const k=Object.keys(state.months).sort(); const i=k.indexOf(state.current); if(i>0){state.current=k[i-1]; save(); render();} };
@@ -761,7 +907,7 @@ document.addEventListener('change', e=>{
     else if(['level','contract','trainerPlus','uniform','irpf','ss','salesEstimate','earlyCheckin','trainingIncluded','trainingDayPay'].includes(f)) s[f]=parseFloat(String(t.value).replace(',','.'))||0;
     else s[f]=f==='base'?t.value.toUpperCase().trim():t.value;
     if(f==='base') s.baseSetByUser = true;
-    if(f==='rank'){ s.level = s.rank==='PU'?1:1; $('form').dataset.ready=''; }
+    if(['rank','levelMode','isTrainer','since'].includes(f)){ if(f==='rank') s.level=1; $('form').dataset.ready=''; }
     save(); render();
   }
 });
@@ -784,7 +930,10 @@ $('pdfIn').addEventListener('change', async e=>{
   const f = e.target.files[0]; if(!f) return;
   showMsg('Leyendo '+esc(f.name)+'…');
   try{
-    const ro = PR.parseRoster(await readPdf(f));
+    const pages = await readPdf(f);
+    const slip = PR.parsePayslip(pages[0] ? pages[0].items : []);
+    if(slip){ applyPayslip(slip); e.target.value=''; return; }
+    const ro = PR.parseRoster(pages);
     const k = key(ro);
     state.months[k] = ro; state.current = k; save(); render();
     const flights = ro.days.filter(d=>d.events.some(x=>x.type==='flt')).length;
