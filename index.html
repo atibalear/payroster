@@ -130,7 +130,17 @@ input[type=number],input[type=text],select{background:var(--surface);border:1px 
 .slip td{padding:5px 4px;border-bottom:1px solid var(--line);vertical-align:top}
 .slip td:nth-child(2),.slip td:nth-child(3){text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
 .slip td:nth-child(2){color:var(--muted);font-family:var(--f-mono);font-size:12px}
-.slip tr.sum td{font-weight:700;border-bottom:0;border-top:2px solid var(--ink)}
+.slip tr.sum td{font-weight:800;border-bottom:0;border-top:2px solid var(--pay);color:var(--pay);font-size:16px;padding-top:8px}
+.slip tr.sec td{font-size:11.5px;letter-spacing:.07em;text-transform:uppercase;color:var(--muted);font-weight:600;padding-top:14px;border-bottom:1px solid var(--line)}
+.slip tr.sec td:nth-child(3){color:var(--ink);font-weight:700;letter-spacing:0;text-transform:none;font-size:13.5px}
+.slip tr.gross td{font-weight:700;background:var(--pay-soft);color:var(--pay);border-bottom:0}
+.slip tr.info td{color:var(--muted);font-size:12.5px}
+.sumbox{display:grid;grid-template-columns:1fr auto;gap:6px 12px;font-size:14px;margin-top:12px;font-variant-numeric:tabular-nums}
+.sumbox dt{color:var(--muted)} .sumbox dd{margin:0;text-align:right;font-weight:500}
+.sumbox .op{color:var(--muted);font-family:var(--f-mono);margin-right:6px}
+.sumbox .gross{background:var(--pay-soft);color:var(--pay);font-weight:700;padding:6px 8px;border-radius:6px}
+.sumbox dt.gross{border-radius:6px 0 0 6px} .sumbox dd.gross{border-radius:0 6px 6px 0}
+.sumbox .netrow{border-top:2px solid var(--pay);padding-top:8px;color:var(--pay);font-weight:800;font-size:17px}
 .slip tr.ded td:nth-child(3){color:var(--warn)}
 .slip tr.ex td:nth-child(3){color:var(--pay)}
 .tablewrap{overflow-x:auto}
@@ -619,7 +629,10 @@ var PR = (function () {
     const allowTotal = r2(allowBase + (v.trainPay || 0));
     const taxable = r2(baseSalary + allowTotal + uniform + v.hourPay + v.topUp + v.early + v.extraFix + v.sales);
     const ss = r2(taxable * s.ss / 100), irpf = r2(taxable * s.irpf / 100);
+    const fixed = r2(baseSalary + allowBase + uniform);
+    const variable = r2(taxable - fixed + v.dietasPaid);         // hours, extras and per diems of the month before
     return { year, month, level: lvl, baseSalary, allowBase, allowTotal, uniform, prev: prev || null, v,
+      fixed, variable, gross: r2(fixed + variable),
       taxable, ss, irpf, dietas: v.dietasPaid, net: r2(taxable - ss - irpf + v.dietasPaid) };
   }
 
@@ -634,7 +647,8 @@ var I18N = {
   names: { es: 'Español', ca: 'Català', en: 'English', de: 'Deutsch', fr: 'Français', hu: 'Magyar', sk: 'Slovenčina', cs: 'Čeština' },
   locales: { es: 'es-ES', ca: 'ca-ES', en: 'en-GB', de: 'de-DE', fr: 'fr-FR', hu: 'hu-HU', sk: 'sk-SK', cs: 'cs-CZ' },
   es: {
-    paidIn: 'Se cobra en la nómina de <b>{m}</b>: ≈ {v} netos.', slipOf: 'Nómina de {m}', slipOfSub: 'Como la de Eurowings: sueldo de {m} + horas y dietas de {p}.', needPrev: 'Falta el roster de {p}: sin él solo cuento el sueldo fijo. Súbelo con ＋ PDF.', fixedOf: 'Sueldo fijo de {m}', variableOf: 'Horas y pluses de {p}', deductions: 'SS + IRPF', realSlip: 'Nómina real', difference: 'Diferencia', slipNote2: 'Mismo formato que tu nómina: sueldo base y pluses de {m}; horas, dietas y comisión de {p}. Tarifas por hora: FDP {f} €, adicional {a} €.', ps_saved: 'Guardada la nómina real de {m} para compararla.',
+    grossTotal: 'Total devengado',
+    paidIn: 'Se cobra en la nómina de <b>{m}</b>: ≈ {v} netos.', slipOf: 'Nómina de {m}', slipOfSub: 'Como la de Eurowings: sueldo de {m} + horas y dietas de {p}.', needPrev: 'Falta el roster de {p}: sin él solo cuento el sueldo fijo. Súbelo con ＋ PDF.', fixedOf: 'Sueldo fijo de {m}', variableOf: 'Variable de {p}', deductions: 'SS + IRPF', realSlip: 'Nómina real', difference: 'Diferencia', slipNote2: 'Mismo formato que tu nómina: sueldo base y pluses de {m}; horas, dietas y comisión de {p}. Tarifas por hora: FDP {f} €, adicional {a} €.', ps_saved: 'Guardada la nómina real de {m} para compararla.',
     footer2: 'Plus de trainer y Competence Team según el acuerdo de empresa «Works Agreement Cabin Trainers» (1.1.1.2): 270 € al mes con 1 día incluido, 340 € con 2 días y 105 € por cada día más; Competence Team 80 € con 1 día y 80 € por día más. Si tienes las dos funciones, se cobra una sola vez el plus mensual más alto.',
     ps_ct: ', Competence Team',
     ps_trainer: ', trainer',
@@ -712,7 +726,8 @@ var I18N = {
     e_noPeriod: 'No encuentro el periodo del roster. ¿Es el «Individual duty plan» de IDP en PDF?'
   },
   ca: {
-    paidIn: 'Es cobra a la nòmina de <b>{m}</b>: ≈ {v} nets.', slipOf: 'Nòmina de {m}', slipOfSub: 'Com la d’Eurowings: sou de {m} + hores i dietes de {p}.', needPrev: 'Falta el roster de {p}: sense ell només compto el sou fix. Puja’l amb ＋ PDF.', fixedOf: 'Sou fix de {m}', variableOf: 'Hores i plusos de {p}', deductions: 'SS + IRPF', realSlip: 'Nòmina real', difference: 'Diferència', slipNote2: 'Mateix format que la teva nòmina: sou base i plusos de {m}; hores, dietes i comissió de {p}. Tarifes per hora: FDP {f} €, addicional {a} €.', ps_saved: 'Desada la nòmina real de {m} per comparar-la.',
+    grossTotal: 'Total meritat',
+    paidIn: 'Es cobra a la nòmina de <b>{m}</b>: ≈ {v} nets.', slipOf: 'Nòmina de {m}', slipOfSub: 'Com la d’Eurowings: sou de {m} + hores i dietes de {p}.', needPrev: 'Falta el roster de {p}: sense ell només compto el sou fix. Puja’l amb ＋ PDF.', fixedOf: 'Sou fix de {m}', variableOf: 'Variable de {p}', deductions: 'SS + IRPF', realSlip: 'Nòmina real', difference: 'Diferència', slipNote2: 'Mateix format que la teva nòmina: sou base i plusos de {m}; hores, dietes i comissió de {p}. Tarifes per hora: FDP {f} €, addicional {a} €.', ps_saved: 'Desada la nòmina real de {m} per comparar-la.',
     footer2: 'Plus de trainer i Competence Team segons l’acord d’empresa «Works Agreement Cabin Trainers» (1.1.1.2): 270 € al mes amb 1 dia inclòs, 340 € amb 2 dies i 105 € per cada dia més; Competence Team 80 € amb 1 dia i 80 € per dia més. Si tens les dues funcions, es cobra una sola vegada el plus mensual més alt.',
     ps_ct: ', Competence Team',
     ps_trainer: ', trainer',
@@ -790,7 +805,8 @@ var I18N = {
     e_noPeriod: 'No trobo el període del roster. És l’«Individual duty plan» d’IDP en PDF?'
   },
   en: {
-    paidIn: 'Paid in the <b>{m}</b> payslip: ≈ {v} net.', slipOf: '{m} payslip', slipOfSub: 'Like Eurowings does it: {m} salary + {p} hours and per diems.', needPrev: 'The {p} roster is missing, so only the fixed pay is counted. Upload it with ＋ PDF.', fixedOf: 'Fixed pay for {m}', variableOf: 'Hours and extras from {p}', deductions: 'Social security + IRPF', realSlip: 'Actual payslip', difference: 'Difference', slipNote2: 'Same layout as your payslip: base salary and allowances for {m}; hours, per diems and commission from {p}. Hourly rates: FDP {f} €, additional {a} €.', ps_saved: 'Saved the actual {m} payslip for comparison.',
+    grossTotal: 'Total gross',
+    paidIn: 'Paid in the <b>{m}</b> payslip: ≈ {v} net.', slipOf: '{m} payslip', slipOfSub: 'Like Eurowings does it: {m} salary + {p} hours and per diems.', needPrev: 'The {p} roster is missing, so only the fixed pay is counted. Upload it with ＋ PDF.', fixedOf: 'Fixed pay for {m}', variableOf: 'Variable from {p}', deductions: 'Social security + IRPF', realSlip: 'Actual payslip', difference: 'Difference', slipNote2: 'Same layout as your payslip: base salary and allowances for {m}; hours, per diems and commission from {p}. Hourly rates: FDP {f} €, additional {a} €.', ps_saved: 'Saved the actual {m} payslip for comparison.',
     footer2: 'Trainer and Competence Team pay under the Works Agreement Cabin Trainers (1.1.1.2): 270 € a month with 1 day included, 340 € with 2 days and 105 € for each further day; Competence Team 80 € with 1 day and 80 € per further day. With both functions, only the higher monthly allowance is paid, once.',
     ps_ct: ', Competence Team',
     ps_trainer: ', trainer',
@@ -868,7 +884,8 @@ var I18N = {
     e_noPeriod: 'I can’t find the roster period. Is this the IDP “Individual duty plan” PDF?'
   },
   de: {
-    paidIn: 'Wird mit der Abrechnung für <b>{m}</b> bezahlt: ≈ {v} netto.', slipOf: 'Abrechnung {m}', slipOfSub: 'Wie bei Eurowings: Gehalt {m} + Stunden und Spesen aus {p}.', needPrev: 'Der Dienstplan für {p} fehlt, daher zählt nur das Fixgehalt. Mit ＋ PDF hochladen.', fixedOf: 'Fixgehalt {m}', variableOf: 'Stunden und Zulagen aus {p}', deductions: 'SV + IRPF', realSlip: 'Echte Abrechnung', difference: 'Differenz', slipNote2: 'Aufbau wie deine Abrechnung: Grundgehalt und Zulagen für {m}; Stunden, Spesen und Provision aus {p}. Stundensätze: FDP {f} €, zusätzlich {a} €.', ps_saved: 'Echte Abrechnung {m} zum Vergleich gespeichert.',
+    grossTotal: 'Gesamtbrutto',
+    paidIn: 'Wird mit der Abrechnung für <b>{m}</b> bezahlt: ≈ {v} netto.', slipOf: 'Abrechnung {m}', slipOfSub: 'Wie bei Eurowings: Gehalt {m} + Stunden und Spesen aus {p}.', needPrev: 'Der Dienstplan für {p} fehlt, daher zählt nur das Fixgehalt. Mit ＋ PDF hochladen.', fixedOf: 'Fixgehalt {m}', variableOf: 'Variabel aus {p}', deductions: 'SV + IRPF', realSlip: 'Echte Abrechnung', difference: 'Differenz', slipNote2: 'Aufbau wie deine Abrechnung: Grundgehalt und Zulagen für {m}; Stunden, Spesen und Provision aus {p}. Stundensätze: FDP {f} €, zusätzlich {a} €.', ps_saved: 'Echte Abrechnung {m} zum Vergleich gespeichert.',
     footer2: 'Trainer- und Competence-Team-Zulage nach der Betriebsvereinbarung „Works Agreement Cabin Trainers“ (1.1.1.2): 270 € im Monat mit 1 Tag inklusive, 340 € mit 2 Tagen und 105 € für jeden weiteren Tag; Competence Team 80 € mit 1 Tag und 80 € je weiteren Tag. Bei beiden Funktionen wird nur die höhere Monatszulage einmal gezahlt.',
     ps_ct: ', Competence Team',
     ps_trainer: ', Trainer',
@@ -946,7 +963,8 @@ var I18N = {
     e_noPeriod: 'Ich finde den Zeitraum des Dienstplans nicht. Ist das der „Individual duty plan“ aus IDP als PDF?'
   },
   fr: {
-    paidIn: 'Payé sur la fiche de <b>{m}</b> : ≈ {v} net.', slipOf: 'Fiche de paie de {m}', slipOfSub: 'Comme chez Eurowings : salaire de {m} + heures et indemnités de {p}.', needPrev: 'Il manque le planning de {p} : seul le fixe est compté. Importe-le avec ＋ PDF.', fixedOf: 'Fixe de {m}', variableOf: 'Heures et primes de {p}', deductions: 'Sécu + IRPF', realSlip: 'Fiche de paie réelle', difference: 'Écart', slipNote2: 'Même présentation que ta fiche : salaire de base et primes de {m} ; heures, indemnités et commission de {p}. Taux horaires : FDP {f} €, additionnel {a} €.', ps_saved: 'Fiche réelle de {m} enregistrée pour comparaison.',
+    grossTotal: 'Total brut',
+    paidIn: 'Payé sur la fiche de <b>{m}</b> : ≈ {v} net.', slipOf: 'Fiche de paie de {m}', slipOfSub: 'Comme chez Eurowings : salaire de {m} + heures et indemnités de {p}.', needPrev: 'Il manque le planning de {p} : seul le fixe est compté. Importe-le avec ＋ PDF.', fixedOf: 'Fixe de {m}', variableOf: 'Variable de {p}', deductions: 'Sécu + IRPF', realSlip: 'Fiche de paie réelle', difference: 'Écart', slipNote2: 'Même présentation que ta fiche : salaire de base et primes de {m} ; heures, indemnités et commission de {p}. Taux horaires : FDP {f} €, additionnel {a} €.', ps_saved: 'Fiche réelle de {m} enregistrée pour comparaison.',
     footer2: 'Primes formateur et Competence Team selon l’accord d’entreprise « Works Agreement Cabin Trainers » (1.1.1.2) : 270 € par mois avec 1 jour inclus, 340 € avec 2 jours et 105 € par jour supplémentaire ; Competence Team 80 € avec 1 jour et 80 € par jour supplémentaire. Avec les deux fonctions, seule la prime mensuelle la plus élevée est versée, une fois.',
     ps_ct: ', Competence Team',
     ps_trainer: ', formateur',
@@ -1024,7 +1042,8 @@ var I18N = {
     e_noPeriod: 'Je ne trouve pas la période du planning. Est-ce bien l’« Individual duty plan » d’IDP en PDF ?'
   },
   hu: {
-    paidIn: 'A(z) <b>{m}</b> havi bérrel fizetik: ≈ {v} nettó.', slipOf: '{m} havi bérjegyzék', slipOfSub: 'Ahogy a Eurowings számolja: {m} havi bér + {p} órái és napidíjai.', needPrev: 'Hiányzik a(z) {p} beosztás, így csak a fix bért számolom. Töltsd fel a ＋ PDF gombbal.', fixedOf: 'Fix bér ({m})', variableOf: 'Órák és pótlékok ({p})', deductions: 'TB + IRPF', realSlip: 'Valódi bérjegyzék', difference: 'Eltérés', slipNote2: 'Ugyanaz a felépítés, mint a bérjegyzékeden: {m} alapbére és pótlékai; {p} órái, napidíjai és jutaléka. Órabérek: FDP {f} €, kiegészítő {a} €.', ps_saved: 'A valódi {m} havi bérjegyzék elmentve összehasonlításhoz.',
+    grossTotal: 'Bruttó összesen',
+    paidIn: 'A(z) <b>{m}</b> havi bérrel fizetik: ≈ {v} nettó.', slipOf: '{m} havi bérjegyzék', slipOfSub: 'Ahogy a Eurowings számolja: {m} havi bér + {p} órái és napidíjai.', needPrev: 'Hiányzik a(z) {p} beosztás, így csak a fix bért számolom. Töltsd fel a ＋ PDF gombbal.', fixedOf: 'Fix bér ({m})', variableOf: 'Változó rész ({p})', deductions: 'TB + IRPF', realSlip: 'Valódi bérjegyzék', difference: 'Eltérés', slipNote2: 'Ugyanaz a felépítés, mint a bérjegyzékeden: {m} alapbére és pótlékai; {p} órái, napidíjai és jutaléka. Órabérek: FDP {f} €, kiegészítő {a} €.', ps_saved: 'A valódi {m} havi bérjegyzék elmentve összehasonlításhoz.',
     footer2: 'Tréner- és Competence Team-pótlék a „Works Agreement Cabin Trainers” üzemi megállapodás szerint (1.1.1.2): havi 270 € 1 nappal, 340 € 2 nappal, és minden további napért 105 €; Competence Team 80 € 1 nappal és további naponként 80 €. Mindkét funkció esetén csak a magasabb havi pótlék jár, egyszer.',
     ps_ct: ', Competence Team',
     ps_trainer: ', tréner',
@@ -1102,7 +1121,8 @@ var I18N = {
     e_noPeriod: 'Nem találom a beosztás időszakát. Ez az IDP „Individual duty plan” PDF-je?'
   },
   sk: {
-    paidIn: 'Vyplatí sa vo výplatnej páske za <b>{m}</b>: ≈ {v} v čistom.', slipOf: 'Výplatná páska za {m}', slipOfSub: 'Ako v Eurowings: mzda za {m} + hodiny a diéty za {p}.', needPrev: 'Chýba rozpis za {p}, preto rátam iba pevnú mzdu. Nahraj ho cez ＋ PDF.', fixedOf: 'Pevná mzda za {m}', variableOf: 'Hodiny a príplatky za {p}', deductions: 'Odvody + IRPF', realSlip: 'Skutočná výplatná páska', difference: 'Rozdiel', slipNote2: 'Rovnaká štruktúra ako tvoja páska: základná mzda a príplatky za {m}; hodiny, diéty a provízia za {p}. Hodinové sadzby: FDP {f} €, doplnková {a} €.', ps_saved: 'Skutočná páska za {m} uložená na porovnanie.',
+    grossTotal: 'Hrubá suma spolu',
+    paidIn: 'Vyplatí sa vo výplatnej páske za <b>{m}</b>: ≈ {v} v čistom.', slipOf: 'Výplatná páska za {m}', slipOfSub: 'Ako v Eurowings: mzda za {m} + hodiny a diéty za {p}.', needPrev: 'Chýba rozpis za {p}, preto rátam iba pevnú mzdu. Nahraj ho cez ＋ PDF.', fixedOf: 'Pevná mzda za {m}', variableOf: 'Pohyblivá zložka za {p}', deductions: 'Odvody + IRPF', realSlip: 'Skutočná výplatná páska', difference: 'Rozdiel', slipNote2: 'Rovnaká štruktúra ako tvoja páska: základná mzda a príplatky za {m}; hodiny, diéty a provízia za {p}. Hodinové sadzby: FDP {f} €, doplnková {a} €.', ps_saved: 'Skutočná páska za {m} uložená na porovnanie.',
     footer2: 'Trénerský príplatok a Competence Team podľa podnikovej dohody „Works Agreement Cabin Trainers“ (1.1.1.2): 270 € mesačne s 1 dňom, 340 € s 2 dňami a 105 € za každý ďalší deň; Competence Team 80 € s 1 dňom a 80 € za každý ďalší deň. Pri oboch funkciách sa vypláca raz iba vyšší mesačný príplatok.',
     ps_ct: ', Competence Team',
     ps_trainer: ', tréner',
@@ -1180,7 +1200,8 @@ var I18N = {
     e_noPeriod: 'Nenachádzam obdobie rozpisu. Je to „Individual duty plan“ z IDP v PDF?'
   },
   cs: {
-    paidIn: 'Vyplatí se ve výplatní pásce za <b>{m}</b>: ≈ {v} čistého.', slipOf: 'Výplatní páska za {m}', slipOfSub: 'Jako v Eurowings: mzda za {m} + hodiny a diety za {p}.', needPrev: 'Chybí rozpis za {p}, proto počítám jen pevnou mzdu. Nahraj ho přes ＋ PDF.', fixedOf: 'Pevná mzda za {m}', variableOf: 'Hodiny a příplatky za {p}', deductions: 'Odvody + IRPF', realSlip: 'Skutečná výplatní páska', difference: 'Rozdíl', slipNote2: 'Stejná struktura jako tvoje páska: základní mzda a příplatky za {m}; hodiny, diety a provize za {p}. Hodinové sazby: FDP {f} €, doplňková {a} €.', ps_saved: 'Skutečná páska za {m} uložena pro porovnání.',
+    grossTotal: 'Hrubá částka celkem',
+    paidIn: 'Vyplatí se ve výplatní pásce za <b>{m}</b>: ≈ {v} čistého.', slipOf: 'Výplatní páska za {m}', slipOfSub: 'Jako v Eurowings: mzda za {m} + hodiny a diety za {p}.', needPrev: 'Chybí rozpis za {p}, proto počítám jen pevnou mzdu. Nahraj ho přes ＋ PDF.', fixedOf: 'Pevná mzda za {m}', variableOf: 'Pohyblivá složka za {p}', deductions: 'Odvody + IRPF', realSlip: 'Skutečná výplatní páska', difference: 'Rozdíl', slipNote2: 'Stejná struktura jako tvoje páska: základní mzda a příplatky za {m}; hodiny, diety a provize za {p}. Hodinové sazby: FDP {f} €, doplňková {a} €.', ps_saved: 'Skutečná páska za {m} uložena pro porovnání.',
     footer2: 'Trenérský příplatek a Competence Team podle podnikové dohody „Works Agreement Cabin Trainers“ (1.1.1.2): 270 € měsíčně s 1 dnem, 340 € se 2 dny a 105 € za každý další den; Competence Team 80 € s 1 dnem a 80 € za každý další den. Při obou funkcích se vyplácí jednou jen vyšší měsíční příplatek.',
     ps_ct: ', Competence Team',
     ps_trainer: ', trenér',
@@ -1263,7 +1284,7 @@ var I18N = {
 <script>
 const SEED = null;
 const SEED_SETTINGS = null;
-const APP_VERSION = '2026.11.05-1744';
+const APP_VERSION = '2026.11.05-1752';
 const IS_PWA_BUILD = true;
 const LS = 'payroster.v1';
 const KC = { flight:'--k-flight', deadhead:'--k-dh', training:'--k-train', standby:'--k-sby', reserve:'--k-sby', ground:'--k-ground', off:'--k-off', empty:'--k-off', other:'--k-ground' };
@@ -1380,12 +1401,12 @@ function renderHero(c, ro){
     <div class="netfig num">${eur.format(P.net)}</div>
     <div class="sub">${t('slipOfSub',{m:mNow,p:mPrev})}</div>
     ${c._prevLoaded?'':`<p class="msg err" style="margin:10px 0 0;font-size:13px">${t('needPrev',{p:mPrev})}</p>`}
-    <dl class="kv">
-      <dt>${t('fixedOf',{m:mNow})}</dt><dd>${eur.format(P.baseSalary+P.allowBase+P.uniform)}</dd>
-      <dt>${t('variableOf',{p:mPrev})}</dt><dd>${eur.format(P.taxable-(P.baseSalary+P.allowBase+P.uniform))}</dd>
-      <dt>${t('deductions')}</dt><dd>−${eur.format(P.ss+P.irpf)}</dd>
-      <dt>${t('perDiems')} (${mPrev})</dt><dd>${eur.format(P.dietas)}</dd>
-      <dt class="tot">${t('slip_net')}</dt><dd class="tot">${eur.format(P.net)}</dd>
+    <dl class="sumbox">
+      <dt><span class="op"> </span>${t('fixedOf',{m:mNow})}</dt><dd>${eur.format(P.fixed)}</dd>
+      <dt><span class="op">+</span>${t('variableOf',{p:mPrev})}</dt><dd>${eur.format(P.variable)}</dd>
+      <dt class="gross"><span class="op">=</span>${t('grossTotal')}</dt><dd class="gross">${eur.format(P.gross)}</dd>
+      <dt><span class="op">−</span>${t('deductions')}</dt><dd>${eur.format(P.ss+P.irpf)}</dd>
+      <dt class="netrow"><span class="op">=</span>${t('slip_net')}</dt><dd class="netrow">${eur.format(P.net)}</dd>
       ${real && real.net!=null?`<dt>${t('realSlip')}</dt><dd>${eur.format(real.net)}</dd><dt>${t('difference')}</dt><dd style="color:${Math.abs(diff)<5?'var(--pay)':'var(--warn)'}">${diff>0?'+':''}${eur.format(diff)}</dd>`:''}
     </dl>
   </div>`;
@@ -1457,26 +1478,31 @@ function renderSlip(c, ro){
   $('slipH').textContent = t('slipOf',{m:mNow});
   const rows = [];
   const add = (name, info, val, cls='') => rows.push(`<tr class="${cls}"><td>${name}</td><td>${info||''}</td><td>${val}</td></tr>`);
+  const sec = (label, val) => rows.push(`<tr class="sec"><td>${label}</td><td></td><td>${val}</td></tr>`);
+  sec(t('fixedOf',{m:mNow}), eur.format(P.fixed));
   add(t('slip_base',{r:rankName(s.rank),l:P.level}), s.contract!==100?s.contract+' %':'', eur.format(P.baseSalary));
-  if(P.allowTotal) add(t('slip_trainer'), P.prev?t('slip_trainerInfo',{n:v.trainDays,c:v.ctDays}):'', eur.format(P.allowTotal));
+  if(P.allowBase) add(t('slip_trainer'), '', eur.format(P.allowBase));
   if(P.uniform) add(t('slip_uniform'),'',eur.format(P.uniform));
+  sec(t('variableOf',{p:mPrev}), eur.format(P.variable));
   const tn = ['<70','70–110','>110'];
   (v.tiers||[]).forEach(tr=>{ if(tr.h<=0) return;
     add(t('slip_fdp',{t:tn[tr.i]}), `${n2.format(tr.hF)} h × ${n2.format(tr.rateF)}`, eur.format(tr.payF));
     add(t('slip_add',{t:tn[tr.i]}), `${n2.format(tr.hA)} h × ${n2.format(tr.rateA)}`, eur.format(tr.payA)); });
   if(v.topUp) add(t('slip_min'),'',eur.format(v.topUp));
+  if(v.trainPay) add(t('slip_trainer'), t('slip_trainerInfo',{n:v.trainDays,c:v.ctDays}), eur.format(v.trainPay));
   if(v.early) add('Early check-in', `${v.early/s.earlyCheckin} × ${s.earlyCheckin} €`, eur.format(v.early));
   if(v.extraFix) add(t('slip_buy'),'',eur.format(v.extraFix));
   if(v.sales) add(t('slip_sales'), v.salesFromDays?'':t('estimatedW'), eur.format(v.sales));
-  add(`<b>${t('slip_taxable')}</b>`,'',`<b>${eur.format(P.taxable)}</b>`);
+  const dc=v.dietaCounts||{};
+  if(dc.intlNight) add(t('slip_intlNight'), `${dc.intlNight} × ${n2.format(PR.DIETA.intlNight)}`, eur.format(dc.intlNight*PR.DIETA.intlNight));
+  if(dc.intlDay) add(t('slip_intlDay'), `${dc.intlDay} × ${n2.format(PR.DIETA.intlDay)}`, eur.format(dc.intlDay*PR.DIETA.intlDay));
+  if(dc.natNight) add(t('slip_natNight'), `${dc.natNight} × ${n2.format(PR.DIETA.natNight)}`, eur.format(dc.natNight*PR.DIETA.natNight));
+  if(dc.natDay) add(t('slip_natDay'), `${dc.natDay} × ${n2.format(PR.DIETA.natDay)}`, eur.format(dc.natDay*PR.DIETA.natDay));
+  if(v.dietasPaid>v.dietas) add(t('slip_minDiet'),'',eur.format(v.dietasPaid-v.dietas));
+  add(t('grossTotal'),'',eur.format(P.gross),'gross');
+  add(t('slip_taxable'),'',eur.format(P.taxable),'info');
   add(t('slip_ss'), n2.format(s.ss)+' %', '−'+eur.format(P.ss), 'ded');
   add(t('slip_irpf'), n2.format(s.irpf)+' %', '−'+eur.format(P.irpf), 'ded');
-  const dc=v.dietaCounts||{};
-  if(dc.intlNight) add(t('slip_intlNight'), `${dc.intlNight} × ${n2.format(PR.DIETA.intlNight)}`, eur.format(dc.intlNight*PR.DIETA.intlNight), 'ex');
-  if(dc.intlDay) add(t('slip_intlDay'), `${dc.intlDay} × ${n2.format(PR.DIETA.intlDay)}`, eur.format(dc.intlDay*PR.DIETA.intlDay), 'ex');
-  if(dc.natNight) add(t('slip_natNight'), `${dc.natNight} × ${n2.format(PR.DIETA.natNight)}`, eur.format(dc.natNight*PR.DIETA.natNight), 'ex');
-  if(dc.natDay) add(t('slip_natDay'), `${dc.natDay} × ${n2.format(PR.DIETA.natDay)}`, eur.format(dc.natDay*PR.DIETA.natDay), 'ex');
-  if(v.dietasPaid>v.dietas) add(t('slip_minDiet'),'',eur.format(v.dietasPaid-v.dietas),'ex');
   rows.push(`<tr class="sum"><td>${t('slip_net')}</td><td></td><td>${eur.format(P.net)}</td></tr>`);
   const real = (state.slips||{})[key(ro)];
   if(real && real.net!=null){ const d=PR.r2(P.net-real.net);
