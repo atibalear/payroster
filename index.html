@@ -242,7 +242,7 @@ var PR = (function () {
       salesEstimate: 0, minDietas: false,
       absenceCodes: 'U, UL, URL, VAC, SICK, KRANK, PERM, PR',
       earlyCheckin: 30,
-      trainingCodes: 'DT_TRNG', ctCodes: 'DT_CT, DT_COMP, CT',
+      trainingCodes: 'DT_TRNG', ctCodes: 'COMP',
       // Works Agreement Cabin Trainers (Eurowings Europe Spain), 1.1.1.2
       tBase: 270, tTwo: 340, tExtra: 105, ctBase: 80, ctExtra: 80
     };
@@ -472,7 +472,7 @@ var PR = (function () {
       // trainer / competence team days: the monthly allowance covers the first day;
       // each further day adds what the works agreement table adds. Both on one day → the trainer day only.
       const isTrain = !!s.isTrainer && codes.some(c => trainSet.has(c));
-      const isCTday = !isTrain && !!(s.isCT || s.isTrainer) && codes.some(c => ctSet.has(c));
+      const isCTday = !isTrain && !!(s.isCT || s.isTrainer) && codes.some(c => [...ctSet].some(k => c.includes(k)));  // any code containing COMP
       let trainPay = 0, trainNo = 0, ctNo = 0;
       if (isTrain) { trainSeen++; trainNo = trainSeen;
         trainPay = trainSeen === 1 ? 0 : trainSeen === 2 ? (+s.tTwo - +s.tBase) : +s.tExtra; }
@@ -1238,7 +1238,7 @@ var I18N = {
 <script>
 const SEED = null;
 const SEED_SETTINGS = null;
-const APP_VERSION = '2026.11.05-1401';
+const APP_VERSION = '2026.11.05-1406';
 const IS_PWA_BUILD = true;
 const LS = 'payroster.v1';
 const KC = { flight:'--k-flight', deadhead:'--k-dh', training:'--k-train', standby:'--k-sby', reserve:'--k-sby', ground:'--k-ground', off:'--k-off', empty:'--k-off', other:'--k-ground' };
@@ -1279,6 +1279,7 @@ function load(){
   }
   if(!s.settings && SEED_SETTINGS) s.settings = SEED_SETTINGS;
   s.settings = Object.assign(PR.defaultSettings(), s.settings||{});
+  if(s.settings.ctCodes==='DT_CT, DT_COMP, CT') s.settings.ctCodes='COMP';
   if(!Object.keys(s.months).length && SEED){ s.months[key(SEED)] = SEED; s.current = key(SEED); }
   if(!s.current || !s.months[s.current]) s.current = Object.keys(s.months).sort().pop();
   return s;
