@@ -164,11 +164,11 @@ details.box[open]>summary::after{content:"–"}
   <header class="bar">
     <div class="brand">Pay<span>roster</span></div>
     <div class="monthnav">
-      <button class="iconbtn" id="prevM" aria-label="Mes anterior">‹</button>
+      <button class="iconbtn" id="prevM" aria-label="" data-i18n-aria="prevMonth">‹</button>
       <div class="mlabel" id="mLabel">—</div>
-      <button class="iconbtn" id="nextM" aria-label="Mes siguiente">›</button>
+      <button class="iconbtn" id="nextM" aria-label="" data-i18n-aria="nextMonth">›</button>
     </div>
-    <label class="iconbtn" for="pdfIn" title="Importar roster o nómina en PDF">＋ PDF</label>
+    <label class="iconbtn" for="pdfIn" title="" data-i18n-title="importTitle">＋ PDF</label>
     <input type="file" id="pdfIn" accept="application/pdf,.pdf" class="sr">
   </header>
 
@@ -184,29 +184,29 @@ details.box[open]>summary::after{content:"–"}
   </section>
 
   <section>
-    <h2>Día a día</h2>
-    <p class="note">Lo que generas cada día por horas de servicio, dietas y pluses. El sueldo base y los pluses fijos van aparte, en la nómina estimada.</p>
+    <h2 data-i18n="dayByDay"></h2>
+    <p class="note" data-i18n="dayByDayNote"></p>
     <div class="days" id="days"></div>
   </section>
 
   <section class="panel">
-    <h2 style="margin-top:0">Nómina estimada del mes</h2>
+    <h2 style="margin-top:0" data-i18n="slipTitle"></h2>
     <p class="note" id="slipNote"></p>
     <div class="tablewrap"><table class="slip" id="slip"></table></div>
   </section>
 
   <details class="box panel" id="setBox">
-    <summary>Mis datos de contrato</summary>
+    <summary data-i18n="contractData"></summary>
     <div class="form" id="form"></div>
   </details>
 
   <details class="box panel">
-    <summary>Meses guardados</summary>
+    <summary data-i18n="storedMonths"></summary>
     <div id="stored" style="margin-top:12px;display:grid;gap:8px"></div>
-    <p class="note" style="margin-top:12px">Los rosters se guardan solo en este navegador. Para añadir un mes, exporta el <b>Individual duty plan</b> en PDF desde IDP y pulsa <b>＋ PDF</b>.</p>
+    <p class="note" style="margin-top:12px" data-i18n="storedNote"></p>
   </details>
 
-  <p class="note">Cálculo según el Convenio TCP Eurowings Europe (bases en España): art. 11 h (dietas), 24.5 y 24.7 (tiempo relevante para el pago, tramos 70/110 h y regla de proporción FDP/servicio adicional), 24.7.2 c (mínimo 49 + 21 h), 24.9 (early check-in), 18.1 (compra y aplazamiento de días libres). Es una estimación: la nómina oficial manda.</p>
+  <p class="note" data-i18n="footer"></p>
 </div>
 
 <script>
@@ -599,24 +599,559 @@ if (typeof module !== 'undefined') module.exports = PR;
 
 </script>
 <script>
+// Payroster UI strings. Spanish is the source; other languages fall back to it key by key.
+var I18N = {
+  names: { es: 'Español', ca: 'Català', en: 'English', de: 'Deutsch', fr: 'Français', hu: 'Magyar', sk: 'Slovenčina', cs: 'Čeština' },
+  locales: { es: 'es-ES', ca: 'ca-ES', en: 'en-GB', de: 'de-DE', fr: 'fr-FR', hu: 'hu-HU', sk: 'sk-SK', cs: 'cs-CZ' },
+  es: {
+    prevMonth: 'Mes anterior', nextMonth: 'Mes siguiente', importTitle: 'Importar roster o nómina en PDF',
+    dayByDay: 'Día a día',
+    dayByDayNote: 'Lo que generas cada día por horas de servicio, dietas y pluses. El sueldo base y los pluses fijos van aparte, en la nómina estimada.',
+    slipTitle: 'Nómina estimada del mes', contractData: 'Mis datos de contrato', storedMonths: 'Meses guardados',
+    storedNote: 'Los rosters se guardan solo en este dispositivo. Para añadir un mes, exporta el <b>Individual duty plan</b> en PDF desde IDP y pulsa <b>＋ PDF</b>.',
+    footer: 'Cálculo según el Convenio TCP Eurowings Europe (bases en España): art. 11 h (dietas), 24.5 y 24.7 (tiempo relevante para el pago, tramos 70/110 h y regla de proporción FDP/servicio adicional), 24.7.2 c (mínimo 49 + 21 h), 24.9 (early check-in), 18.1 (compra y aplazamiento de días libres). Es una estimación: la nómina oficial manda.',
+    k_flight: 'Vuelo', k_deadhead: 'Posicionamiento', k_training: 'Formación', k_standby: 'Imaginaria', k_reserve: 'Franco', k_ground: 'Tierra', k_off: 'Libre', k_empty: '—', k_other: 'Otro',
+    d_intlNight: 'Dieta internacional con pernocta', d_intlDay: 'Dieta internacional sin pernocta', d_natNight: 'Dieta nacional con pernocta', d_natDay: 'Dieta nacional sin pernocta',
+    noData: 'Sin datos', startHere: 'Empieza aquí',
+    startText: 'Descarga tu <b>Individual duty plan</b> en PDF desde IDP y pulsa <b>＋ PDF</b> arriba. Verás cada día con lo que generas.',
+    rankPU: 'sobrecargo', rankCA: 'auxiliar de vuelo',
+    rankWarn: 'Este roster es de <b>{a}</b>, pero tu perfil dice <b>{b}</b>.', useRank: 'Usar {a}',
+    tier1Msg: 'Te faltan <b>{h} h</b> para el tramo 2 (cada hora vale más del doble).',
+    tier2Msg: 'Estás en el tramo 2. Te faltan <b>{h} h</b> para el tramo 3.',
+    tier3Msg: 'Estás en el tramo 3, el mejor pagado.',
+    dc_intlNight: '{n} int. con noche', dc_intlDay: '{n} int. sin noche', dc_natNight: '{n} nac. con noche', dc_natDay: '{n} nac. sin noche', noAway: 'sin días fuera',
+    variableIn: 'Variable generado en {m}', variableSub: 'Horas, dietas y pluses del mes. Sin sueldo base.',
+    dutyTime: 'Tiempo de servicio ({h} h)', perDiems: 'Dietas', earlyOff: 'Early check-in fuera de base',
+    trainDaysLine: 'Días de formación como trainer ({n}, {i} en el plus)', daysBought: 'Días libres comprados / aplazados',
+    sales: 'Comisión ventas', estimated: '(estimada)', gaugeAria: 'Horas en tramos de pago',
+    netTitle: 'Neto aproximado del mes',
+    netSub: 'Base + plus formación + uniforme + variable, menos SS {ss} % e IRPF {irpf} %. Dietas exentas.',
+    addDuty: 'Servicio adicional', fdpShare: 'Proporción FDP', minGuar: 'Mínimo garantizado (49+21 h)',
+    nightIn: 'Noche en {st}', payHours: 'Horas pagables: FDP {f} + adicional {a}', absenceCredit: ' (crédito ausencia)', tierN: 'tramo {n}',
+    earlyAt: 'Early check-in fuera de base ({t})', trainDay: 'Formación como trainer · día {n} del mes', inPlus: ' (incluido en el plus)',
+    buyDefer: 'Compra / aplazamiento de día libre', dayTotal: 'Total del día', salesEur: 'Comisión ventas €',
+    dayBought: 'Día libre comprado', no: 'No', full: 'Completo (9 %)', half: 'Medio (4,5 %)', omDeferred: 'O_M aplazado (4,5 %)',
+    noExtras: 'Sin extras para este tipo de día.',
+    slip_base: 'Salario base ({r} nivel {l})', slip_trainer: 'Formación de cabina', slip_uniform: 'Uniforme / limpieza',
+    slip_fdp: 'Tiempo de vuelo {t}', slip_add: 'Tpo vuelo adicional {t}', slip_min: 'Complemento mínimo 49+21 h',
+    slip_trainExtra: 'Formación adicional trainer', slip_buy: 'Compra / aplazamiento días libres', slip_sales: 'Comisión de ventas', estimatedW: 'estimada',
+    slip_taxable: 'Base cotización / IRPF', slip_ss: 'Seguridad Social trabajador', slip_irpf: 'Retención IRPF',
+    slip_intlNight: 'Viajes inter con pernocta', slip_intlDay: 'Viajes inter sin pernocta', slip_natNight: 'Viajes nacional con pernocta', slip_natDay: 'Viajes nacional sin pernocta',
+    slip_minDiet: 'Garantía mínima de dietas', slip_net: 'Líquido aproximado',
+    slipNote: 'Mismo formato que tu nómina. Las horas y dietas de este mes suelen cobrarse en la nómina de <b>{m}</b>, junto al sueldo base de ese mes. Tarifas por hora: FDP {f} €, adicional {a} €.',
+    f_lang: 'Idioma', f_rank: 'Categoría', optPU: 'Sobrecargo (C)', optCA: 'Auxiliar de vuelo (D)',
+    f_levelMode: 'Nivel salarial', lm_date: 'Sube solo cada año', lm_manual: 'Fijo, lo elijo yo',
+    f_since: 'Inicio en la categoría (nivel 1)', levelToday: 'Nivel hoy: <b>{l}</b>. Sube cada año en esta fecha.', f_level: 'Nivel',
+    f_contract: 'Jornada', f_base: 'Base', f_isTrainer: 'Soy trainer de cabina', f_trainerPlus: 'Plus formación de cabina €/mes',
+    f_uniform: 'Uniforme €/mes', f_irpf: 'IRPF %', f_ss: 'Seguridad Social %',
+    f_trainIncl: 'Días de formación incluidos en el plus', f_trainPay: 'Pago por día de formación adicional €', f_trainCodes: 'Códigos de formación como trainer',
+    f_salesEst: 'Comisión ventas estimada €/mes', f_early: 'Early check-in €',
+    f_absence: 'Códigos de ausencia que cuentan como vacaciones/permiso (3:30 FDP + 1:12 adicional)',
+    f_minDiet: 'Aplicar garantía mínima de dietas (500 € sobrecargo / 400 € auxiliar; el convenio la fija hasta el 31/12/2025)',
+    resetSet: 'Restaurar valores del convenio', redoSetup: 'Configurar perfil de nuevo',
+    su_eyebrow: 'Tu perfil', su_title: '¿Qué cobras según el convenio?',
+    su_note: 'Lo más fácil: sube una nómina reciente en PDF. La app lee tu categoría, nivel, fecha de incremento, IRPF, jornada y plus de trainer. No guarda DNI, IBAN ni dirección. Todo se queda en este dispositivo.',
+    su_upload: 'Subir mi nómina (PDF)',
+    su_manual: 'O rellénalo a mano con el <b>salario base</b> y la fecha de <b>Incremento salarial</b> de la nómina:',
+    su_basepay: 'Salario base en tu nómina €', su_inc: 'Incremento salarial (fecha en la nómina)', su_level: 'O elige el nivel a mano',
+    su_irpf: 'IRPF % (Retención a cta. IRPF)', su_tplusPh: 'solo trainers', su_save: 'Guardar perfil',
+    e_noCat: 'No encuentro la categoría (C-05, D-03…) en esta nómina. Rellena el perfil a mano.',
+    ps_read: 'Perfil leído de tu nómina{m}: <b>{r} nivel {l}</b>{c}, IRPF {irpf} %{t}{n}.',
+    ps_of: ' de <b>{m}</b>', ps_at: ' al {c} %', ps_plus: ', plus formación {v}', ps_next: '. Próxima subida de nivel: {d}',
+    ps_mismatch: 'Ojo: tu salario base ({a}) no coincide con la tabla del convenio ({b}). Revisa el nivel en Mis datos de contrato.',
+    ps_nowRoster: 'Ahora sube tu roster con <b>＋ PDF</b>.',
+    e_notInTable: '{v} € no aparece en la tabla de {r}. Revisa la categoría o elige el nivel a mano.',
+    e_fill: 'Pon el salario base y la fecha de incremento, o elige el nivel a mano.',
+    del: 'Borrar', delQ: '¿Borrar este mes?', delYes: 'Sí, borrar', noneStored: 'Ningún mes guardado.',
+    reading: 'Leyendo {f}…', imported: 'Importado <b>{m}</b>: {d} días, {f} con vuelo.',
+    e_pdfLib: 'No se pudo cargar el lector de PDF. Comprueba la conexión e inténtalo otra vez.',
+    e_noPeriod: 'No encuentro el periodo del roster. ¿Es el «Individual duty plan» de IDP en PDF?'
+  },
+  ca: {
+    prevMonth: 'Mes anterior', nextMonth: 'Mes següent', importTitle: 'Importar roster o nòmina en PDF',
+    dayByDay: 'Dia a dia',
+    dayByDayNote: 'El que generes cada dia per hores de servei, dietes i plusos. El sou base i els plusos fixos van a part, a la nòmina estimada.',
+    slipTitle: 'Nòmina estimada del mes', contractData: 'Les meves dades de contracte', storedMonths: 'Mesos desats',
+    storedNote: 'Els rosters es desen només en aquest dispositiu. Per afegir un mes, exporta l’<b>Individual duty plan</b> en PDF des d’IDP i prem <b>＋ PDF</b>.',
+    footer: 'Càlcul segons el Conveni TCP Eurowings Europe (bases a Espanya): art. 11 h (dietes), 24.5 i 24.7 (temps rellevant per al pagament, trams 70/110 h i regla de proporció FDP/servei addicional), 24.7.2 c (mínim 49 + 21 h), 24.9 (early check-in), 18.1 (compra i ajornament de dies lliures). És una estimació: mana la nòmina oficial.',
+    k_flight: 'Vol', k_deadhead: 'Posicionament', k_training: 'Formació', k_standby: 'Imaginària', k_reserve: 'Franc', k_ground: 'Terra', k_off: 'Lliure', k_other: 'Altre',
+    d_intlNight: 'Dieta internacional amb pernoctació', d_intlDay: 'Dieta internacional sense pernoctació', d_natNight: 'Dieta nacional amb pernoctació', d_natDay: 'Dieta nacional sense pernoctació',
+    noData: 'Sense dades', startHere: 'Comença aquí',
+    startText: 'Descarrega el teu <b>Individual duty plan</b> en PDF des d’IDP i prem <b>＋ PDF</b> a dalt. Veuràs cada dia amb el que generes.',
+    rankPU: 'sobrecàrrec', rankCA: 'auxiliar de vol',
+    rankWarn: 'Aquest roster és de <b>{a}</b>, però el teu perfil diu <b>{b}</b>.', useRank: 'Fer servir {a}',
+    tier1Msg: 'Et falten <b>{h} h</b> per al tram 2 (cada hora val més del doble).',
+    tier2Msg: 'Ets al tram 2. Et falten <b>{h} h</b> per al tram 3.',
+    tier3Msg: 'Ets al tram 3, el millor pagat.',
+    dc_intlNight: '{n} int. amb nit', dc_intlDay: '{n} int. sense nit', dc_natNight: '{n} nac. amb nit', dc_natDay: '{n} nac. sense nit', noAway: 'cap dia fora',
+    variableIn: 'Variable generat · {m}', variableSub: 'Hores, dietes i plusos del mes. Sense sou base.',
+    dutyTime: 'Temps de servei ({h} h)', perDiems: 'Dietes', earlyOff: 'Early check-in fora de base',
+    trainDaysLine: 'Dies de formació com a trainer ({n}, {i} dins del plus)', daysBought: 'Dies lliures comprats / ajornats',
+    sales: 'Comissió vendes', estimated: '(estimada)', gaugeAria: 'Hores en trams de pagament',
+    netTitle: 'Net aproximat del mes',
+    netSub: 'Base + plus formació + uniforme + variable, menys SS {ss} % i IRPF {irpf} %. Dietes exemptes.',
+    addDuty: 'Servei addicional', fdpShare: 'Proporció FDP', minGuar: 'Mínim garantit (49+21 h)',
+    nightIn: 'Nit a {st}', payHours: 'Hores pagables: FDP {f} + addicional {a}', absenceCredit: ' (crèdit absència)', tierN: 'tram {n}',
+    earlyAt: 'Early check-in fora de base ({t})', trainDay: 'Formació com a trainer · dia {n} del mes', inPlus: ' (inclòs al plus)',
+    buyDefer: 'Compra / ajornament de dia lliure', dayTotal: 'Total del dia', salesEur: 'Comissió vendes €',
+    dayBought: 'Dia lliure comprat', no: 'No', full: 'Complet (9 %)', half: 'Mig (4,5 %)', omDeferred: 'O_M ajornat (4,5 %)',
+    noExtras: 'Sense extres per a aquest tipus de dia.',
+    slip_base: 'Salari base ({r} nivell {l})', slip_trainer: 'Formació de cabina', slip_uniform: 'Uniforme / neteja',
+    slip_fdp: 'Temps de vol {t}', slip_add: 'Temps de vol addicional {t}', slip_min: 'Complement mínim 49+21 h',
+    slip_trainExtra: 'Formació addicional trainer', slip_buy: 'Compra / ajornament de dies lliures', slip_sales: 'Comissió de vendes', estimatedW: 'estimada',
+    slip_taxable: 'Base de cotització / IRPF', slip_ss: 'Seguretat Social treballador', slip_irpf: 'Retenció IRPF',
+    slip_intlNight: 'Viatges inter amb pernoctació', slip_intlDay: 'Viatges inter sense pernoctació', slip_natNight: 'Viatges nacionals amb pernoctació', slip_natDay: 'Viatges nacionals sense pernoctació',
+    slip_minDiet: 'Garantia mínima de dietes', slip_net: 'Líquid aproximat',
+    slipNote: 'Mateix format que la teva nòmina. Les hores i dietes d’aquest mes se solen cobrar a la nòmina de <b>{m}</b>, amb el sou base d’aquell mes. Tarifes per hora: FDP {f} €, addicional {a} €.',
+    f_lang: 'Idioma', f_rank: 'Categoria', optPU: 'Sobrecàrrec (C)', optCA: 'Auxiliar de vol (D)',
+    f_levelMode: 'Nivell salarial', lm_date: 'Puja sol cada any', lm_manual: 'Fix, el trio jo',
+    f_since: 'Inici a la categoria (nivell 1)', levelToday: 'Nivell avui: <b>{l}</b>. Puja cada any en aquesta data.', f_level: 'Nivell',
+    f_contract: 'Jornada', f_base: 'Base', f_isTrainer: 'Soc trainer de cabina', f_trainerPlus: 'Plus formació de cabina €/mes',
+    f_uniform: 'Uniforme €/mes', f_irpf: 'IRPF %', f_ss: 'Seguretat Social %',
+    f_trainIncl: 'Dies de formació inclosos al plus', f_trainPay: 'Pagament per dia de formació addicional €', f_trainCodes: 'Codis de formació com a trainer',
+    f_salesEst: 'Comissió vendes estimada €/mes', f_early: 'Early check-in €',
+    f_absence: 'Codis d’absència que compten com a vacances/permís (3:30 FDP + 1:12 addicional)',
+    f_minDiet: 'Aplicar la garantia mínima de dietes (500 € sobrecàrrec / 400 € auxiliar; el conveni la fixa fins al 31/12/2025)',
+    resetSet: 'Restaurar valors del conveni', redoSetup: 'Configurar el perfil de nou',
+    su_eyebrow: 'El teu perfil', su_title: 'Què cobres segons el conveni?',
+    su_note: 'El més fàcil: puja una nòmina recent en PDF. L’app llegeix la teva categoria, nivell, data d’increment, IRPF, jornada i plus de trainer. No desa DNI, IBAN ni adreça. Tot es queda en aquest dispositiu.',
+    su_upload: 'Pujar la meva nòmina (PDF)',
+    su_manual: 'O omple-ho a mà amb el <b>salari base</b> i la data d’<b>Incremento salarial</b> de la nòmina:',
+    su_basepay: 'Salari base a la nòmina €', su_inc: 'Increment salarial (data a la nòmina)', su_level: 'O tria el nivell a mà',
+    su_irpf: 'IRPF % (Retención a cta. IRPF)', su_tplusPh: 'només trainers', su_save: 'Desar perfil',
+    e_noCat: 'No trobo la categoria (C-05, D-03…) en aquesta nòmina. Omple el perfil a mà.',
+    ps_read: 'Perfil llegit de la teva nòmina{m}: <b>{r} nivell {l}</b>{c}, IRPF {irpf} %{t}{n}.',
+    ps_of: ' (<b>{m}</b>)', ps_at: ' al {c} %', ps_plus: ', plus formació {v}', ps_next: '. Propera pujada de nivell: {d}',
+    ps_mismatch: 'Compte: el teu salari base ({a}) no coincideix amb la taula del conveni ({b}). Revisa el nivell a Les meves dades de contracte.',
+    ps_nowRoster: 'Ara puja el teu roster amb <b>＋ PDF</b>.',
+    e_notInTable: '{v} € no apareix a la taula de {r}. Revisa la categoria o tria el nivell a mà.',
+    e_fill: 'Posa el salari base i la data d’increment, o tria el nivell a mà.',
+    del: 'Esborrar', delQ: 'Esborrar aquest mes?', delYes: 'Sí, esborra', noneStored: 'Cap mes desat.',
+    reading: 'Llegint {f}…', imported: 'Importat <b>{m}</b>: {d} dies, {f} amb vol.',
+    e_pdfLib: 'No s’ha pogut carregar el lector de PDF. Comprova la connexió i torna-ho a provar.',
+    e_noPeriod: 'No trobo el període del roster. És l’«Individual duty plan» d’IDP en PDF?'
+  },
+  en: {
+    prevMonth: 'Previous month', nextMonth: 'Next month', importTitle: 'Import roster or payslip PDF',
+    dayByDay: 'Day by day',
+    dayByDayNote: 'What you earn each day from duty hours, per diems and allowances. Base salary and fixed allowances are separate, in the estimated payslip.',
+    slipTitle: 'Estimated payslip for the month', contractData: 'My contract details', storedMonths: 'Saved months',
+    storedNote: 'Rosters are saved on this device only. To add a month, export the <b>Individual duty plan</b> as PDF from IDP and tap <b>＋ PDF</b>.',
+    footer: 'Calculated under the Eurowings Europe cabin crew CLA (Spanish bases): art. 11 h (per diems), 24.5 and 24.7 (pay-relevant time, 70/110 h tiers and FDP/additional duty ratio rule), 24.7.2 c (minimum 49 + 21 h), 24.9 (early check-in), 18.1 (buying and deferring days off). This is an estimate: the official payslip prevails.',
+    k_flight: 'Flight', k_deadhead: 'Deadhead', k_training: 'Training', k_standby: 'Standby', k_reserve: 'Reserve', k_ground: 'Ground', k_off: 'Off', k_other: 'Other',
+    d_intlNight: 'International per diem with overnight', d_intlDay: 'International per diem, no overnight', d_natNight: 'Domestic per diem with overnight', d_natDay: 'Domestic per diem, no overnight',
+    noData: 'No data', startHere: 'Start here',
+    startText: 'Download your <b>Individual duty plan</b> as PDF from IDP and tap <b>＋ PDF</b> above. You will see what you earn each day.',
+    rankPU: 'purser', rankCA: 'cabin attendant',
+    rankWarn: 'This roster belongs to a <b>{a}</b>, but your profile says <b>{b}</b>.', useRank: 'Use {a}',
+    tier1Msg: '<b>{h} h</b> to go until tier 2 (each hour is worth more than double).',
+    tier2Msg: 'You are in tier 2. <b>{h} h</b> to go until tier 3.',
+    tier3Msg: 'You are in tier 3, the best paid.',
+    dc_intlNight: '{n} intl with night', dc_intlDay: '{n} intl no night', dc_natNight: '{n} dom. with night', dc_natDay: '{n} dom. no night', noAway: 'no days away',
+    variableIn: 'Variable pay earned in {m}', variableSub: 'Hours, per diems and allowances this month. Excludes base salary.',
+    dutyTime: 'Duty time ({h} h)', perDiems: 'Per diems', earlyOff: 'Early check-in off base',
+    trainDaysLine: 'Training days as trainer ({n}, {i} covered by allowance)', daysBought: 'Days off bought / deferred',
+    sales: 'Sales commission', estimated: '(estimated)', gaugeAria: 'Hours across pay tiers',
+    netTitle: 'Approximate net pay',
+    netSub: 'Base + training allowance + uniform + variable, minus social security {ss} % and IRPF tax {irpf} %. Per diems are tax-free.',
+    addDuty: 'Additional duty', fdpShare: 'FDP share', minGuar: 'Guaranteed minimum (49+21 h)',
+    nightIn: 'Night in {st}', payHours: 'Paid hours: FDP {f} + additional {a}', absenceCredit: ' (absence credit)', tierN: 'tier {n}',
+    earlyAt: 'Early check-in off base ({t})', trainDay: 'Training as trainer · day {n} of the month', inPlus: ' (covered by allowance)',
+    buyDefer: 'Day off bought / deferred', dayTotal: 'Day total', salesEur: 'Sales commission €',
+    dayBought: 'Day off bought', no: 'No', full: 'Full (9 %)', half: 'Half (4.5 %)', omDeferred: 'O_M deferred (4.5 %)',
+    noExtras: 'No extras for this type of day.',
+    slip_base: 'Base salary ({r} level {l})', slip_trainer: 'Cabin training allowance', slip_uniform: 'Uniform / cleaning',
+    slip_fdp: 'Flight time {t}', slip_add: 'Additional duty time {t}', slip_min: 'Minimum top-up 49+21 h',
+    slip_trainExtra: 'Extra trainer days', slip_buy: 'Days off bought / deferred', slip_sales: 'Sales commission', estimatedW: 'estimated',
+    slip_taxable: 'Contribution / tax base', slip_ss: 'Employee social security', slip_irpf: 'IRPF tax withholding',
+    slip_intlNight: 'Intl trips with overnight', slip_intlDay: 'Intl trips, no overnight', slip_natNight: 'Domestic trips with overnight', slip_natDay: 'Domestic trips, no overnight',
+    slip_minDiet: 'Per diem minimum guarantee', slip_net: 'Approximate net',
+    slipNote: 'Same layout as your payslip. This month’s hours and per diems are usually paid in the <b>{m}</b> payslip, together with that month’s base salary. Hourly rates: FDP {f} €, additional {a} €.',
+    f_lang: 'Language', f_rank: 'Category', optPU: 'Purser (C)', optCA: 'Cabin attendant (D)',
+    f_levelMode: 'Pay level', lm_date: 'Goes up every year', lm_manual: 'Fixed, I choose it',
+    f_since: 'Start in category (level 1)', levelToday: 'Level today: <b>{l}</b>. It goes up every year on this date.', f_level: 'Level',
+    f_contract: 'Contract', f_base: 'Base', f_isTrainer: 'I am a cabin trainer', f_trainerPlus: 'Cabin training allowance €/month',
+    f_uniform: 'Uniform €/month', f_irpf: 'IRPF tax %', f_ss: 'Social security %',
+    f_trainIncl: 'Training days covered by the allowance', f_trainPay: 'Pay per extra training day €', f_trainCodes: 'Trainer duty codes',
+    f_salesEst: 'Estimated sales commission €/month', f_early: 'Early check-in €',
+    f_absence: 'Absence codes that count as leave (3:30 FDP + 1:12 additional)',
+    f_minDiet: 'Apply per diem minimum guarantee (500 € purser / 400 € cabin attendant; the CLA sets it until 31/12/2025)',
+    resetSet: 'Restore CLA values', redoSetup: 'Set up profile again',
+    su_eyebrow: 'Your profile', su_title: 'What do you earn under the CLA?',
+    su_note: 'Easiest: upload a recent payslip PDF. The app reads your category, level, pay rise date, IRPF, contract and trainer allowance. It does not keep your ID, IBAN or address. Everything stays on this device.',
+    su_upload: 'Upload my payslip (PDF)',
+    su_manual: 'Or fill it in by hand with the <b>Salario base</b> and the <b>Incremento salarial</b> date from your payslip:',
+    su_basepay: 'Base salary on your payslip €', su_inc: 'Pay rise date (Incremento salarial)', su_level: 'Or pick your level',
+    su_irpf: 'IRPF % (Retención a cta. IRPF)', su_tplusPh: 'trainers only', su_save: 'Save profile',
+    e_noCat: 'I can’t find the category (C-05, D-03…) on this payslip. Fill in the profile by hand.',
+    ps_read: 'Profile read from your payslip{m}: <b>{r} level {l}</b>{c}, IRPF {irpf} %{t}{n}.',
+    ps_of: ' for <b>{m}</b>', ps_at: ' at {c} %', ps_plus: ', training allowance {v}', ps_next: '. Next level rise: {d}',
+    ps_mismatch: 'Note: your base salary ({a}) doesn’t match the CLA table ({b}). Check the level in My contract details.',
+    ps_nowRoster: 'Now upload your roster with <b>＋ PDF</b>.',
+    e_notInTable: '{v} € is not in the {r} pay table. Check the category or pick the level by hand.',
+    e_fill: 'Enter the base salary and pay rise date, or pick the level by hand.',
+    del: 'Delete', delQ: 'Delete this month?', delYes: 'Yes, delete', noneStored: 'No saved months.',
+    reading: 'Reading {f}…', imported: 'Imported <b>{m}</b>: {d} days, {f} with flights.',
+    e_pdfLib: 'The PDF reader could not load. Check your connection and try again.',
+    e_noPeriod: 'I can’t find the roster period. Is this the IDP “Individual duty plan” PDF?'
+  },
+  de: {
+    prevMonth: 'Vorheriger Monat', nextMonth: 'Nächster Monat', importTitle: 'Dienstplan oder Abrechnung als PDF importieren',
+    dayByDay: 'Tag für Tag',
+    dayByDayNote: 'Was du jeden Tag durch Dienststunden, Spesen und Zulagen verdienst. Grundgehalt und feste Zulagen stehen separat in der geschätzten Abrechnung.',
+    slipTitle: 'Geschätzte Monatsabrechnung', contractData: 'Meine Vertragsdaten', storedMonths: 'Gespeicherte Monate',
+    storedNote: 'Dienstpläne werden nur auf diesem Gerät gespeichert. Für einen neuen Monat den <b>Individual duty plan</b> als PDF aus IDP exportieren und auf <b>＋ PDF</b> tippen.',
+    footer: 'Berechnung nach dem Tarifvertrag Kabine Eurowings Europe (Basen in Spanien): Art. 11 h (Spesen), 24.5 und 24.7 (vergütungsrelevante Zeit, Stufen 70/110 h und Verhältnisregel FDP/zusätzliche Dienstzeit), 24.7.2 c (Minimum 49 + 21 h), 24.9 (Early Check-in), 18.1 (Abkauf und Verschiebung freier Tage). Schätzung: maßgeblich ist die offizielle Abrechnung.',
+    k_flight: 'Flug', k_deadhead: 'Positionierung', k_training: 'Schulung', k_standby: 'Standby', k_reserve: 'Reserve', k_ground: 'Bodendienst', k_off: 'Frei', k_other: 'Sonstiges',
+    d_intlNight: 'Spesen Ausland mit Übernachtung', d_intlDay: 'Spesen Ausland ohne Übernachtung', d_natNight: 'Spesen Inland mit Übernachtung', d_natDay: 'Spesen Inland ohne Übernachtung',
+    noData: 'Keine Daten', startHere: 'Los geht’s',
+    startText: 'Lade deinen <b>Individual duty plan</b> als PDF aus IDP herunter und tippe oben auf <b>＋ PDF</b>. Du siehst dann jeden Tag, was du verdienst.',
+    rankPU: 'Purser', rankCA: 'Flugbegleiter/in',
+    rankWarn: 'Dieser Dienstplan gehört zu <b>{a}</b>, dein Profil sagt aber <b>{b}</b>.', useRank: '{a} verwenden',
+    tier1Msg: 'Noch <b>{h} h</b> bis Stufe 2 (jede Stunde ist dann mehr als doppelt so viel wert).',
+    tier2Msg: 'Du bist in Stufe 2. Noch <b>{h} h</b> bis Stufe 3.',
+    tier3Msg: 'Du bist in Stufe 3, der bestbezahlten.',
+    dc_intlNight: '{n} Ausl. mit Nacht', dc_intlDay: '{n} Ausl. ohne Nacht', dc_natNight: '{n} Inl. mit Nacht', dc_natDay: '{n} Inl. ohne Nacht', noAway: 'keine Tage auswärts',
+    variableIn: 'Variable Vergütung im {m}', variableSub: 'Stunden, Spesen und Zulagen des Monats. Ohne Grundgehalt.',
+    dutyTime: 'Dienstzeit ({h} h)', perDiems: 'Spesen', earlyOff: 'Early Check-in außerhalb der Basis',
+    trainDaysLine: 'Schulungstage als Trainer ({n}, davon {i} in der Zulage)', daysBought: 'Freie Tage abgekauft / verschoben',
+    sales: 'Verkaufsprovision', estimated: '(geschätzt)', gaugeAria: 'Stunden in den Vergütungsstufen',
+    netTitle: 'Ungefähres Netto des Monats',
+    netSub: 'Grundgehalt + Trainerzulage + Uniform + Variables, abzüglich SV {ss} % und IRPF {irpf} %. Spesen steuerfrei.',
+    addDuty: 'Zusätzliche Dienstzeit', fdpShare: 'FDP-Anteil', minGuar: 'Garantiertes Minimum (49+21 h)',
+    nightIn: 'Nacht in {st}', payHours: 'Bezahlte Stunden: FDP {f} + zusätzlich {a}', absenceCredit: ' (Abwesenheitsgutschrift)', tierN: 'Stufe {n}',
+    earlyAt: 'Early Check-in außerhalb der Basis ({t})', trainDay: 'Schulung als Trainer · Tag {n} im Monat', inPlus: ' (in der Zulage enthalten)',
+    buyDefer: 'Freier Tag abgekauft / verschoben', dayTotal: 'Tagessumme', salesEur: 'Verkaufsprovision €',
+    dayBought: 'Freier Tag abgekauft', no: 'Nein', full: 'Voll (9 %)', half: 'Halb (4,5 %)', omDeferred: 'O_M verschoben (4,5 %)',
+    noExtras: 'Keine Extras für diese Art von Tag.',
+    slip_base: 'Grundgehalt ({r} Stufe {l})', slip_trainer: 'Kabinenschulung (Zulage)', slip_uniform: 'Uniform / Reinigung',
+    slip_fdp: 'Flugzeit {t}', slip_add: 'Zusätzliche Dienstzeit {t}', slip_min: 'Mindestausgleich 49+21 h',
+    slip_trainExtra: 'Zusätzliche Trainertage', slip_buy: 'Abkauf / Verschiebung freier Tage', slip_sales: 'Verkaufsprovision', estimatedW: 'geschätzt',
+    slip_taxable: 'Beitrags- / Steuerbasis', slip_ss: 'Sozialversicherung Arbeitnehmer', slip_irpf: 'Lohnsteuer IRPF',
+    slip_intlNight: 'Auslandsreisen mit Übernachtung', slip_intlDay: 'Auslandsreisen ohne Übernachtung', slip_natNight: 'Inlandsreisen mit Übernachtung', slip_natDay: 'Inlandsreisen ohne Übernachtung',
+    slip_minDiet: 'Spesen-Mindestgarantie', slip_net: 'Ungefähres Netto',
+    slipNote: 'Aufbau wie deine Abrechnung. Stunden und Spesen dieses Monats werden meist mit der Abrechnung für <b>{m}</b> bezahlt, zusammen mit dem Grundgehalt dieses Monats. Stundensätze: FDP {f} €, zusätzlich {a} €.',
+    f_lang: 'Sprache', f_rank: 'Kategorie', optPU: 'Purser (C)', optCA: 'Flugbegleiter/in (D)',
+    f_levelMode: 'Gehaltsstufe', lm_date: 'Steigt jedes Jahr automatisch', lm_manual: 'Fest, ich wähle sie',
+    f_since: 'Beginn in der Kategorie (Stufe 1)', levelToday: 'Stufe heute: <b>{l}</b>. Steigt jedes Jahr an diesem Datum.', f_level: 'Stufe',
+    f_contract: 'Arbeitszeit', f_base: 'Basis', f_isTrainer: 'Ich bin Kabinentrainer/in', f_trainerPlus: 'Trainerzulage €/Monat',
+    f_uniform: 'Uniform €/Monat', f_irpf: 'IRPF %', f_ss: 'Sozialversicherung %',
+    f_trainIncl: 'Schulungstage in der Zulage enthalten', f_trainPay: 'Vergütung pro zusätzlichem Schulungstag €', f_trainCodes: 'Codes für Trainereinsätze',
+    f_salesEst: 'Geschätzte Verkaufsprovision €/Monat', f_early: 'Early Check-in €',
+    f_absence: 'Abwesenheitscodes, die als Urlaub/Freistellung zählen (3:30 FDP + 1:12 zusätzlich)',
+    f_minDiet: 'Spesen-Mindestgarantie anwenden (500 € Purser / 400 € Flugbegleiter; laut Tarifvertrag bis 31.12.2025)',
+    resetSet: 'Tarifwerte wiederherstellen', redoSetup: 'Profil neu einrichten',
+    su_eyebrow: 'Dein Profil', su_title: 'Was verdienst du laut Tarifvertrag?',
+    su_note: 'Am einfachsten: Lade eine aktuelle Abrechnung als PDF hoch. Die App liest Kategorie, Stufe, Datum der Gehaltserhöhung, IRPF, Arbeitszeit und Trainerzulage. Ausweis, IBAN und Adresse werden nicht gespeichert. Alles bleibt auf diesem Gerät.',
+    su_upload: 'Meine Abrechnung hochladen (PDF)',
+    su_manual: 'Oder von Hand mit <b>Salario base</b> und dem Datum <b>Incremento salarial</b> aus der Abrechnung ausfüllen:',
+    su_basepay: 'Grundgehalt laut Abrechnung €', su_inc: 'Gehaltserhöhung (Datum, Incremento salarial)', su_level: 'Oder Stufe selbst wählen',
+    su_irpf: 'IRPF % (Retención a cta. IRPF)', su_tplusPh: 'nur Trainer', su_save: 'Profil speichern',
+    e_noCat: 'Ich finde die Kategorie (C-05, D-03…) auf dieser Abrechnung nicht. Bitte das Profil von Hand ausfüllen.',
+    ps_read: 'Profil aus deiner Abrechnung{m} gelesen: <b>{r} Stufe {l}</b>{c}, IRPF {irpf} %{t}{n}.',
+    ps_of: ' für <b>{m}</b>', ps_at: ' mit {c} %', ps_plus: ', Trainerzulage {v}', ps_next: '. Nächste Stufe: {d}',
+    ps_mismatch: 'Achtung: dein Grundgehalt ({a}) passt nicht zur Tariftabelle ({b}). Prüfe die Stufe in Meine Vertragsdaten.',
+    ps_nowRoster: 'Lade jetzt deinen Dienstplan mit <b>＋ PDF</b> hoch.',
+    e_notInTable: '{v} € steht nicht in der Tabelle für {r}. Prüfe die Kategorie oder wähle die Stufe selbst.',
+    e_fill: 'Grundgehalt und Datum der Gehaltserhöhung eingeben oder die Stufe selbst wählen.',
+    del: 'Löschen', delQ: 'Diesen Monat löschen?', delYes: 'Ja, löschen', noneStored: 'Keine Monate gespeichert.',
+    reading: '{f} wird gelesen…', imported: '<b>{m}</b> importiert: {d} Tage, {f} mit Flügen.',
+    e_pdfLib: 'Der PDF-Leser konnte nicht geladen werden. Verbindung prüfen und erneut versuchen.',
+    e_noPeriod: 'Ich finde den Zeitraum des Dienstplans nicht. Ist das der „Individual duty plan“ aus IDP als PDF?'
+  },
+  fr: {
+    prevMonth: 'Mois précédent', nextMonth: 'Mois suivant', importTitle: 'Importer un planning ou une fiche de paie en PDF',
+    dayByDay: 'Jour par jour',
+    dayByDayNote: 'Ce que tu gagnes chaque jour en heures de service, indemnités et primes. Le salaire de base et les primes fixes sont à part, dans la fiche de paie estimée.',
+    slipTitle: 'Fiche de paie estimée du mois', contractData: 'Mes données de contrat', storedMonths: 'Mois enregistrés',
+    storedNote: 'Les plannings sont enregistrés uniquement sur cet appareil. Pour ajouter un mois, exporte l’<b>Individual duty plan</b> en PDF depuis IDP et appuie sur <b>＋ PDF</b>.',
+    footer: 'Calcul selon la convention collective PNC Eurowings Europe (bases en Espagne) : art. 11 h (indemnités), 24.5 et 24.7 (temps rémunéré, paliers 70/110 h et règle de proportion FDP/service additionnel), 24.7.2 c (minimum 49 + 21 h), 24.9 (early check-in), 18.1 (rachat et report de jours de repos). Il s’agit d’une estimation : la fiche de paie officielle fait foi.',
+    k_flight: 'Vol', k_deadhead: 'Mise en place', k_training: 'Formation', k_standby: 'Réserve à domicile', k_reserve: 'Réserve', k_ground: 'Sol', k_off: 'Repos', k_other: 'Autre',
+    d_intlNight: 'Indemnité internationale avec nuitée', d_intlDay: 'Indemnité internationale sans nuitée', d_natNight: 'Indemnité nationale avec nuitée', d_natDay: 'Indemnité nationale sans nuitée',
+    noData: 'Aucune donnée', startHere: 'Commence ici',
+    startText: 'Télécharge ton <b>Individual duty plan</b> en PDF depuis IDP et appuie sur <b>＋ PDF</b> en haut. Tu verras ce que tu gagnes chaque jour.',
+    rankPU: 'chef de cabine', rankCA: 'PNC',
+    rankWarn: 'Ce planning est celui d’un(e) <b>{a}</b>, mais ton profil indique <b>{b}</b>.', useRank: 'Utiliser {a}',
+    tier1Msg: 'Il te manque <b>{h} h</b> pour le palier 2 (chaque heure vaut alors plus du double).',
+    tier2Msg: 'Tu es au palier 2. Il te manque <b>{h} h</b> pour le palier 3.',
+    tier3Msg: 'Tu es au palier 3, le mieux payé.',
+    dc_intlNight: '{n} int. avec nuit', dc_intlDay: '{n} int. sans nuit', dc_natNight: '{n} nat. avec nuit', dc_natDay: '{n} nat. sans nuit', noAway: 'aucun jour en déplacement',
+    variableIn: 'Variable gagné en {m}', variableSub: 'Heures, indemnités et primes du mois. Hors salaire de base.',
+    dutyTime: 'Temps de service ({h} h)', perDiems: 'Indemnités', earlyOff: 'Early check-in hors base',
+    trainDaysLine: 'Jours de formation comme formateur ({n}, dont {i} dans la prime)', daysBought: 'Jours de repos rachetés / reportés',
+    sales: 'Commission ventes', estimated: '(estimée)', gaugeAria: 'Heures par palier de rémunération',
+    netTitle: 'Net approximatif du mois',
+    netSub: 'Base + prime de formation + uniforme + variable, moins sécurité sociale {ss} % et IRPF {irpf} %. Indemnités exonérées.',
+    addDuty: 'Service additionnel', fdpShare: 'Part FDP', minGuar: 'Minimum garanti (49+21 h)',
+    nightIn: 'Nuit à {st}', payHours: 'Heures payées : FDP {f} + additionnel {a}', absenceCredit: ' (crédit d’absence)', tierN: 'palier {n}',
+    earlyAt: 'Early check-in hors base ({t})', trainDay: 'Formation comme formateur · jour {n} du mois', inPlus: ' (inclus dans la prime)',
+    buyDefer: 'Jour de repos racheté / reporté', dayTotal: 'Total du jour', salesEur: 'Commission ventes €',
+    dayBought: 'Jour de repos racheté', no: 'Non', full: 'Complet (9 %)', half: 'Moitié (4,5 %)', omDeferred: 'O_M reporté (4,5 %)',
+    noExtras: 'Pas d’extras pour ce type de jour.',
+    slip_base: 'Salaire de base ({r} niveau {l})', slip_trainer: 'Formation cabine (prime)', slip_uniform: 'Uniforme / nettoyage',
+    slip_fdp: 'Temps de vol {t}', slip_add: 'Temps de service additionnel {t}', slip_min: 'Complément minimum 49+21 h',
+    slip_trainExtra: 'Jours de formateur supplémentaires', slip_buy: 'Rachat / report de jours de repos', slip_sales: 'Commission ventes', estimatedW: 'estimée',
+    slip_taxable: 'Base de cotisation / IRPF', slip_ss: 'Sécurité sociale salarié', slip_irpf: 'Retenue IRPF',
+    slip_intlNight: 'Déplacements int. avec nuitée', slip_intlDay: 'Déplacements int. sans nuitée', slip_natNight: 'Déplacements nat. avec nuitée', slip_natDay: 'Déplacements nat. sans nuitée',
+    slip_minDiet: 'Garantie minimale d’indemnités', slip_net: 'Net approximatif',
+    slipNote: 'Même présentation que ta fiche de paie. Les heures et indemnités de ce mois sont en général payées sur la fiche de <b>{m}</b>, avec le salaire de base de ce mois-là. Taux horaires : FDP {f} €, additionnel {a} €.',
+    f_lang: 'Langue', f_rank: 'Catégorie', optPU: 'Chef de cabine (C)', optCA: 'PNC (D)',
+    f_levelMode: 'Échelon salarial', lm_date: 'Augmente chaque année', lm_manual: 'Fixe, je le choisis',
+    f_since: 'Début dans la catégorie (niveau 1)', levelToday: 'Niveau aujourd’hui : <b>{l}</b>. Il augmente chaque année à cette date.', f_level: 'Niveau',
+    f_contract: 'Temps de travail', f_base: 'Base', f_isTrainer: 'Je suis formateur cabine', f_trainerPlus: 'Prime de formation €/mois',
+    f_uniform: 'Uniforme €/mois', f_irpf: 'IRPF %', f_ss: 'Sécurité sociale %',
+    f_trainIncl: 'Jours de formation inclus dans la prime', f_trainPay: 'Paiement par jour de formation supplémentaire €', f_trainCodes: 'Codes de formation comme formateur',
+    f_salesEst: 'Commission ventes estimée €/mois', f_early: 'Early check-in €',
+    f_absence: 'Codes d’absence comptés comme congés (3:30 FDP + 1:12 additionnel)',
+    f_minDiet: 'Appliquer la garantie minimale d’indemnités (500 € chef de cabine / 400 € PNC ; prévue jusqu’au 31/12/2025)',
+    resetSet: 'Rétablir les valeurs de la convention', redoSetup: 'Reconfigurer le profil',
+    su_eyebrow: 'Ton profil', su_title: 'Que gagnes-tu selon la convention ?',
+    su_note: 'Le plus simple : importe une fiche de paie récente en PDF. L’app lit ta catégorie, ton niveau, la date d’augmentation, l’IRPF, ton temps de travail et ta prime de formateur. Elle ne garde ni pièce d’identité, ni IBAN, ni adresse. Tout reste sur cet appareil.',
+    su_upload: 'Importer ma fiche de paie (PDF)',
+    su_manual: 'Ou remplis-le à la main avec le <b>Salario base</b> et la date d’<b>Incremento salarial</b> de ta fiche :',
+    su_basepay: 'Salaire de base sur ta fiche €', su_inc: 'Date d’augmentation (Incremento salarial)', su_level: 'Ou choisis le niveau',
+    su_irpf: 'IRPF % (Retención a cta. IRPF)', su_tplusPh: 'formateurs uniquement', su_save: 'Enregistrer le profil',
+    e_noCat: 'Je ne trouve pas la catégorie (C-05, D-03…) sur cette fiche. Remplis le profil à la main.',
+    ps_read: 'Profil lu sur ta fiche de paie{m} : <b>{r} niveau {l}</b>{c}, IRPF {irpf} %{t}{n}.',
+    ps_of: ' (<b>{m}</b>)', ps_at: ' à {c} %', ps_plus: ', prime de formation {v}', ps_next: '. Prochain échelon : {d}',
+    ps_mismatch: 'Attention : ton salaire de base ({a}) ne correspond pas à la grille ({b}). Vérifie le niveau dans Mes données de contrat.',
+    ps_nowRoster: 'Importe maintenant ton planning avec <b>＋ PDF</b>.',
+    e_notInTable: '{v} € ne figure pas dans la grille {r}. Vérifie la catégorie ou choisis le niveau à la main.',
+    e_fill: 'Indique le salaire de base et la date d’augmentation, ou choisis le niveau à la main.',
+    del: 'Supprimer', delQ: 'Supprimer ce mois ?', delYes: 'Oui, supprimer', noneStored: 'Aucun mois enregistré.',
+    reading: 'Lecture de {f}…', imported: '<b>{m}</b> importé : {d} jours, {f} avec vols.',
+    e_pdfLib: 'Le lecteur PDF n’a pas pu se charger. Vérifie la connexion et réessaie.',
+    e_noPeriod: 'Je ne trouve pas la période du planning. Est-ce bien l’« Individual duty plan » d’IDP en PDF ?'
+  },
+  hu: {
+    prevMonth: 'Előző hónap', nextMonth: 'Következő hónap', importTitle: 'Beosztás vagy bérjegyzék importálása PDF-ből',
+    dayByDay: 'Napról napra',
+    dayByDayNote: 'Amit naponta szolgálati órákkal, napidíjjal és pótlékokkal keresel. Az alapbér és a fix pótlékok külön szerepelnek, a becsült bérjegyzékben.',
+    slipTitle: 'A hónap becsült bérjegyzéke', contractData: 'Szerződéses adataim', storedMonths: 'Mentett hónapok',
+    storedNote: 'A beosztások csak ezen az eszközön vannak tárolva. Új hónaphoz exportáld az <b>Individual duty plan</b>-t PDF-ben az IDP-ből, és koppints a <b>＋ PDF</b>-re.',
+    footer: 'Számítás a Eurowings Europe utaskísérői kollektív szerződése alapján (spanyolországi bázisok): 11. h cikk (napidíj), 24.5 és 24.7 (fizetésre jogosító idő, 70/110 órás sávok és FDP/kiegészítő szolgálat arányszabály), 24.7.2 c (minimum 49 + 21 óra), 24.9 (early check-in), 18.1 (szabadnapok megváltása és halasztása). Ez becslés: a hivatalos bérjegyzék a mérvadó.',
+    k_flight: 'Repülés', k_deadhead: 'Pozicionálás', k_training: 'Képzés', k_standby: 'Készenlét', k_reserve: 'Tartalék', k_ground: 'Földi szolgálat', k_off: 'Szabadnap', k_other: 'Egyéb',
+    d_intlNight: 'Külföldi napidíj éjszakázással', d_intlDay: 'Külföldi napidíj éjszakázás nélkül', d_natNight: 'Belföldi napidíj éjszakázással', d_natDay: 'Belföldi napidíj éjszakázás nélkül',
+    noData: 'Nincs adat', startHere: 'Kezdd itt',
+    startText: 'Töltsd le az <b>Individual duty plan</b>-t PDF-ben az IDP-ből, és koppints fent a <b>＋ PDF</b>-re. Minden napnál látni fogod, mennyit keresel.',
+    rankPU: 'purser', rankCA: 'légiutas-kísérő',
+    rankWarn: 'Ez a beosztás <b>{a}</b> beosztása, de a profilod szerint <b>{b}</b> vagy.', useRank: '{a} használata',
+    tier1Msg: 'Még <b>{h} óra</b> a 2. sávig (ott minden óra több mint kétszer annyit ér).',
+    tier2Msg: 'A 2. sávban vagy. Még <b>{h} óra</b> a 3. sávig.',
+    tier3Msg: 'A 3. sávban vagy, ez a legjobban fizetett.',
+    dc_intlNight: '{n} külf. éjszakával', dc_intlDay: '{n} külf. éjszaka nélkül', dc_natNight: '{n} belf. éjszakával', dc_natDay: '{n} belf. éjszaka nélkül', noAway: 'nincs távollét',
+    variableIn: 'Változó jövedelem: {m}', variableSub: 'A hónap órái, napidíjai és pótlékai. Alapbér nélkül.',
+    dutyTime: 'Szolgálati idő ({h} óra)', perDiems: 'Napidíjak', earlyOff: 'Early check-in bázison kívül',
+    trainDaysLine: 'Képzési napok trénerként ({n}, ebből {i} a pótlékban)', daysBought: 'Megváltott / halasztott szabadnapok',
+    sales: 'Értékesítési jutalék', estimated: '(becsült)', gaugeAria: 'Órák a fizetési sávokban',
+    netTitle: 'A hónap becsült nettója',
+    netSub: 'Alapbér + trénerpótlék + egyenruha + változó rész, levonva a TB {ss} %-ot és az IRPF {irpf} %-ot. A napidíj adómentes.',
+    addDuty: 'Kiegészítő szolgálat', fdpShare: 'FDP aránya', minGuar: 'Garantált minimum (49+21 óra)',
+    nightIn: 'Éjszaka: {st}', payHours: 'Fizetett órák: FDP {f} + kiegészítő {a}', absenceCredit: ' (távolléti jóváírás)', tierN: '{n}. sáv',
+    earlyAt: 'Early check-in bázison kívül ({t})', trainDay: 'Képzés trénerként · a hónap {n}. napja', inPlus: ' (a pótlékban benne van)',
+    buyDefer: 'Megváltott / halasztott szabadnap', dayTotal: 'Napi összesen', salesEur: 'Értékesítési jutalék €',
+    dayBought: 'Megváltott szabadnap', no: 'Nem', full: 'Teljes (9 %)', half: 'Fél (4,5 %)', omDeferred: 'O_M halasztva (4,5 %)',
+    noExtras: 'Ennél a naptípusnál nincs extra.',
+    slip_base: 'Alapbér ({r}, {l}. szint)', slip_trainer: 'Kabinképzési pótlék', slip_uniform: 'Egyenruha / tisztítás',
+    slip_fdp: 'Repülési idő {t}', slip_add: 'Kiegészítő szolgálati idő {t}', slip_min: 'Minimum-kiegészítés 49+21 óra',
+    slip_trainExtra: 'További trénernapok', slip_buy: 'Szabadnapok megváltása / halasztása', slip_sales: 'Értékesítési jutalék', estimatedW: 'becsült',
+    slip_taxable: 'Járulék- / adóalap', slip_ss: 'Munkavállalói TB-járulék', slip_irpf: 'IRPF adóelőleg',
+    slip_intlNight: 'Külföldi utak éjszakázással', slip_intlDay: 'Külföldi utak éjszakázás nélkül', slip_natNight: 'Belföldi utak éjszakázással', slip_natDay: 'Belföldi utak éjszakázás nélkül',
+    slip_minDiet: 'Napidíj-minimumgarancia', slip_net: 'Becsült nettó',
+    slipNote: 'Ugyanaz a felépítés, mint a bérjegyzékeden. A hónap órái és napidíjai általában a(z) <b>{m}</b> havi bérjegyzékkel kerülnek kifizetésre, az adott hónap alapbérével együtt. Órabérek: FDP {f} €, kiegészítő {a} €.',
+    f_lang: 'Nyelv', f_rank: 'Kategória', optPU: 'Purser (C)', optCA: 'Légiutas-kísérő (D)',
+    f_levelMode: 'Bérszint', lm_date: 'Évente magától nő', lm_manual: 'Fix, én választom',
+    f_since: 'Kezdés a kategóriában (1. szint)', levelToday: 'Mai szint: <b>{l}</b>. Minden évben ezen a napon nő.', f_level: 'Szint',
+    f_contract: 'Munkaidő', f_base: 'Bázis', f_isTrainer: 'Kabintréner vagyok', f_trainerPlus: 'Trénerpótlék €/hó',
+    f_uniform: 'Egyenruha €/hó', f_irpf: 'IRPF %', f_ss: 'TB-járulék %',
+    f_trainIncl: 'A pótlékban foglalt képzési napok', f_trainPay: 'Díj további képzési naponként €', f_trainCodes: 'Trénerszolgálat kódjai',
+    f_salesEst: 'Becsült értékesítési jutalék €/hó', f_early: 'Early check-in €',
+    f_absence: 'Szabadságnak számító távolléti kódok (3:30 FDP + 1:12 kiegészítő)',
+    f_minDiet: 'Napidíj-minimumgarancia alkalmazása (500 € purser / 400 € légiutas-kísérő; a szerződés szerint 2025.12.31-ig)',
+    resetSet: 'Kollektív szerződés értékeinek visszaállítása', redoSetup: 'Profil újrabeállítása',
+    su_eyebrow: 'Profilod', su_title: 'Mennyit keresel a kollektív szerződés szerint?',
+    su_note: 'A legegyszerűbb: tölts fel egy friss bérjegyzéket PDF-ben. Az app kiolvassa a kategóriát, a szintet, az emelés dátumát, az IRPF-et, a munkaidőt és a trénerpótlékot. Személyi azonosítót, IBAN-t és címet nem tárol. Minden ezen az eszközön marad.',
+    su_upload: 'Bérjegyzék feltöltése (PDF)',
+    su_manual: 'Vagy töltsd ki kézzel a bérjegyzék <b>Salario base</b> összegével és <b>Incremento salarial</b> dátumával:',
+    su_basepay: 'Alapbér a bérjegyzéken €', su_inc: 'Béremelés dátuma (Incremento salarial)', su_level: 'Vagy válaszd ki a szintet',
+    su_irpf: 'IRPF % (Retención a cta. IRPF)', su_tplusPh: 'csak trénereknek', su_save: 'Profil mentése',
+    e_noCat: 'Nem találom a kategóriát (C-05, D-03…) ezen a bérjegyzéken. Töltsd ki a profilt kézzel.',
+    ps_read: 'Profil beolvasva a bérjegyzékedből{m}: <b>{r}, {l}. szint</b>{c}, IRPF {irpf} %{t}{n}.',
+    ps_of: ' (<b>{m}</b>)', ps_at: ', {c} %-os munkaidő', ps_plus: ', trénerpótlék {v}', ps_next: '. Következő szintemelés: {d}',
+    ps_mismatch: 'Figyelem: az alapbéred ({a}) nem egyezik a táblázattal ({b}). Ellenőrizd a szintet a Szerződéses adataim részben.',
+    ps_nowRoster: 'Most töltsd fel a beosztásodat a <b>＋ PDF</b> gombbal.',
+    e_notInTable: '{v} € nem szerepel a(z) {r} táblázatban. Ellenőrizd a kategóriát, vagy válaszd ki kézzel a szintet.',
+    e_fill: 'Add meg az alapbért és az emelés dátumát, vagy válaszd ki kézzel a szintet.',
+    del: 'Törlés', delQ: 'Törlöd ezt a hónapot?', delYes: 'Igen, törlöm', noneStored: 'Nincs mentett hónap.',
+    reading: '{f} beolvasása…', imported: 'Importálva: <b>{m}</b> – {d} nap, ebből {f} repüléssel.',
+    e_pdfLib: 'Nem sikerült betölteni a PDF-olvasót. Ellenőrizd a kapcsolatot, és próbáld újra.',
+    e_noPeriod: 'Nem találom a beosztás időszakát. Ez az IDP „Individual duty plan” PDF-je?'
+  },
+  sk: {
+    prevMonth: 'Predchádzajúci mesiac', nextMonth: 'Nasledujúci mesiac', importTitle: 'Importovať rozpis alebo výplatnú pásku v PDF',
+    dayByDay: 'Deň po dni',
+    dayByDayNote: 'Čo každý deň zarobíš za hodiny služby, diéty a príplatky. Základná mzda a pevné príplatky sú zvlášť, v odhadovanej výplatnej páske.',
+    slipTitle: 'Odhadovaná výplatná páska za mesiac', contractData: 'Moje zmluvné údaje', storedMonths: 'Uložené mesiace',
+    storedNote: 'Rozpisy sa ukladajú iba v tomto zariadení. Ak chceš pridať mesiac, exportuj <b>Individual duty plan</b> v PDF z IDP a ťukni na <b>＋ PDF</b>.',
+    footer: 'Výpočet podľa kolektívnej zmluvy palubného personálu Eurowings Europe (základne v Španielsku): čl. 11 h (diéty), 24.5 a 24.7 (čas rozhodujúci pre odmenu, pásma 70/110 h a pravidlo pomeru FDP/doplnková služba), 24.7.2 c (minimum 49 + 21 h), 24.9 (early check-in), 18.1 (odkúpenie a presun voľných dní). Je to odhad: rozhoduje oficiálna výplatná páska.',
+    k_flight: 'Let', k_deadhead: 'Presun', k_training: 'Školenie', k_standby: 'Pohotovosť', k_reserve: 'Rezerva', k_ground: 'Pozemná služba', k_off: 'Voľno', k_other: 'Iné',
+    d_intlNight: 'Zahraničná diéta s prenocovaním', d_intlDay: 'Zahraničná diéta bez prenocovania', d_natNight: 'Tuzemská diéta s prenocovaním', d_natDay: 'Tuzemská diéta bez prenocovania',
+    noData: 'Žiadne údaje', startHere: 'Začni tu',
+    startText: 'Stiahni si <b>Individual duty plan</b> v PDF z IDP a hore ťukni na <b>＋ PDF</b>. Pri každom dni uvidíš, koľko zarábaš.',
+    rankPU: 'purser', rankCA: 'palubný sprievodca',
+    rankWarn: 'Tento rozpis patrí pozícii <b>{a}</b>, ale tvoj profil uvádza <b>{b}</b>.', useRank: 'Použiť {a}',
+    tier1Msg: 'Do pásma 2 ti chýba <b>{h} h</b> (každá hodina tam má viac ako dvojnásobnú hodnotu).',
+    tier2Msg: 'Si v pásme 2. Do pásma 3 ti chýba <b>{h} h</b>.',
+    tier3Msg: 'Si v pásme 3, najlepšie platenom.',
+    dc_intlNight: '{n} zahr. s nocou', dc_intlDay: '{n} zahr. bez noci', dc_natNight: '{n} tuz. s nocou', dc_natDay: '{n} tuz. bez noci', noAway: 'žiadne dni mimo',
+    variableIn: 'Pohyblivá zložka za {m}', variableSub: 'Hodiny, diéty a príplatky za mesiac. Bez základnej mzdy.',
+    dutyTime: 'Čas služby ({h} h)', perDiems: 'Diéty', earlyOff: 'Early check-in mimo základne',
+    trainDaysLine: 'Dni školenia ako tréner ({n}, z toho {i} v príplatku)', daysBought: 'Odkúpené / presunuté voľné dni',
+    sales: 'Provízia z predaja', estimated: '(odhad)', gaugeAria: 'Hodiny v platových pásmach',
+    netTitle: 'Približná čistá mzda za mesiac',
+    netSub: 'Základ + trénerský príplatok + uniforma + pohyblivá zložka, mínus sociálne poistenie {ss} % a IRPF {irpf} %. Diéty sú oslobodené od dane.',
+    addDuty: 'Doplnková služba', fdpShare: 'Podiel FDP', minGuar: 'Garantované minimum (49+21 h)',
+    nightIn: 'Noc v {st}', payHours: 'Platené hodiny: FDP {f} + doplnková {a}', absenceCredit: ' (kredit za neprítomnosť)', tierN: 'pásmo {n}',
+    earlyAt: 'Early check-in mimo základne ({t})', trainDay: 'Školenie ako tréner · {n}. deň v mesiaci', inPlus: ' (zahrnuté v príplatku)',
+    buyDefer: 'Odkúpený / presunutý voľný deň', dayTotal: 'Spolu za deň', salesEur: 'Provízia z predaja €',
+    dayBought: 'Odkúpený voľný deň', no: 'Nie', full: 'Celý (9 %)', half: 'Polovičný (4,5 %)', omDeferred: 'O_M presunutý (4,5 %)',
+    noExtras: 'Pre tento typ dňa nie sú žiadne extra položky.',
+    slip_base: 'Základná mzda ({r}, stupeň {l})', slip_trainer: 'Príplatok za kabínové školenie', slip_uniform: 'Uniforma / čistenie',
+    slip_fdp: 'Letový čas {t}', slip_add: 'Doplnkový čas služby {t}', slip_min: 'Doplatok do minima 49+21 h',
+    slip_trainExtra: 'Ďalšie trénerské dni', slip_buy: 'Odkúpenie / presun voľných dní', slip_sales: 'Provízia z predaja', estimatedW: 'odhad',
+    slip_taxable: 'Vymeriavací / daňový základ', slip_ss: 'Sociálne poistenie zamestnanca', slip_irpf: 'Zrážka IRPF',
+    slip_intlNight: 'Zahr. cesty s prenocovaním', slip_intlDay: 'Zahr. cesty bez prenocovania', slip_natNight: 'Tuz. cesty s prenocovaním', slip_natDay: 'Tuz. cesty bez prenocovania',
+    slip_minDiet: 'Minimálna garancia diét', slip_net: 'Približná čistá mzda',
+    slipNote: 'Rovnaká štruktúra ako tvoja výplatná páska. Hodiny a diéty z tohto mesiaca sa zvyčajne vyplácajú vo výplatnej páske za <b>{m}</b>, spolu so základnou mzdou za ten mesiac. Hodinové sadzby: FDP {f} €, doplnková {a} €.',
+    f_lang: 'Jazyk', f_rank: 'Kategória', optPU: 'Purser (C)', optCA: 'Palubný sprievodca (D)',
+    f_levelMode: 'Platový stupeň', lm_date: 'Stúpa automaticky každý rok', lm_manual: 'Pevný, vyberiem si ho',
+    f_since: 'Začiatok v kategórii (stupeň 1)', levelToday: 'Stupeň dnes: <b>{l}</b>. Každý rok k tomuto dátumu stúpne.', f_level: 'Stupeň',
+    f_contract: 'Úväzok', f_base: 'Základňa', f_isTrainer: 'Som kabínový tréner', f_trainerPlus: 'Trénerský príplatok €/mesiac',
+    f_uniform: 'Uniforma €/mesiac', f_irpf: 'IRPF %', f_ss: 'Sociálne poistenie %',
+    f_trainIncl: 'Dni školenia zahrnuté v príplatku', f_trainPay: 'Platba za ďalší deň školenia €', f_trainCodes: 'Kódy trénerských služieb',
+    f_salesEst: 'Odhadovaná provízia z predaja €/mesiac', f_early: 'Early check-in €',
+    f_absence: 'Kódy neprítomnosti, ktoré sa rátajú ako dovolenka/voľno (3:30 FDP + 1:12 doplnková)',
+    f_minDiet: 'Použiť minimálnu garanciu diét (500 € purser / 400 € sprievodca; zmluva ju stanovuje do 31. 12. 2025)',
+    resetSet: 'Obnoviť hodnoty zo zmluvy', redoSetup: 'Nastaviť profil znova',
+    su_eyebrow: 'Tvoj profil', su_title: 'Koľko zarábaš podľa kolektívnej zmluvy?',
+    su_note: 'Najjednoduchšie: nahraj aktuálnu výplatnú pásku v PDF. Aplikácia prečíta kategóriu, stupeň, dátum zvýšenia, IRPF, úväzok a trénerský príplatok. Doklad totožnosti, IBAN ani adresu neukladá. Všetko zostáva v tomto zariadení.',
+    su_upload: 'Nahrať výplatnú pásku (PDF)',
+    su_manual: 'Alebo vyplň ručne podľa <b>Salario base</b> a dátumu <b>Incremento salarial</b> z výplatnej pásky:',
+    su_basepay: 'Základná mzda na výplatnej páske €', su_inc: 'Dátum zvýšenia (Incremento salarial)', su_level: 'Alebo vyber stupeň ručne',
+    su_irpf: 'IRPF % (Retención a cta. IRPF)', su_tplusPh: 'iba tréneri', su_save: 'Uložiť profil',
+    e_noCat: 'Na tejto výplatnej páske nenachádzam kategóriu (C-05, D-03…). Vyplň profil ručne.',
+    ps_read: 'Profil načítaný z výplatnej pásky{m}: <b>{r}, stupeň {l}</b>{c}, IRPF {irpf} %{t}{n}.',
+    ps_of: ' za <b>{m}</b>', ps_at: ', úväzok {c} %', ps_plus: ', trénerský príplatok {v}', ps_next: '. Ďalšie zvýšenie stupňa: {d}',
+    ps_mismatch: 'Pozor: tvoja základná mzda ({a}) nezodpovedá tabuľke v zmluve ({b}). Skontroluj stupeň v časti Moje zmluvné údaje.',
+    ps_nowRoster: 'Teraz nahraj svoj rozpis cez <b>＋ PDF</b>.',
+    e_notInTable: '{v} € nie je v tabuľke pre {r}. Skontroluj kategóriu alebo vyber stupeň ručne.',
+    e_fill: 'Zadaj základnú mzdu a dátum zvýšenia, alebo vyber stupeň ručne.',
+    del: 'Vymazať', delQ: 'Vymazať tento mesiac?', delYes: 'Áno, vymazať', noneStored: 'Žiadne uložené mesiace.',
+    reading: 'Načítavam {f}…', imported: 'Importované <b>{m}</b>: {d} dní, z toho {f} s letom.',
+    e_pdfLib: 'Čítačku PDF sa nepodarilo načítať. Skontroluj pripojenie a skús to znova.',
+    e_noPeriod: 'Nenachádzam obdobie rozpisu. Je to „Individual duty plan“ z IDP v PDF?'
+  },
+  cs: {
+    prevMonth: 'Předchozí měsíc', nextMonth: 'Další měsíc', importTitle: 'Importovat rozpis nebo výplatní pásku v PDF',
+    dayByDay: 'Den po dni',
+    dayByDayNote: 'Co každý den vyděláš za hodiny služby, diety a příplatky. Základní mzda a pevné příplatky jsou zvlášť, v odhadované výplatní pásce.',
+    slipTitle: 'Odhadovaná výplatní páska za měsíc', contractData: 'Moje smluvní údaje', storedMonths: 'Uložené měsíce',
+    storedNote: 'Rozpisy se ukládají jen v tomto zařízení. Chceš-li přidat měsíc, exportuj <b>Individual duty plan</b> v PDF z IDP a klepni na <b>＋ PDF</b>.',
+    footer: 'Výpočet podle kolektivní smlouvy palubního personálu Eurowings Europe (základny ve Španělsku): čl. 11 h (diety), 24.5 a 24.7 (čas rozhodný pro odměnu, pásma 70/110 h a pravidlo poměru FDP/doplňková služba), 24.7.2 c (minimum 49 + 21 h), 24.9 (early check-in), 18.1 (odkup a přesun volných dnů). Jde o odhad: rozhoduje oficiální výplatní páska.',
+    k_flight: 'Let', k_deadhead: 'Přesun', k_training: 'Školení', k_standby: 'Pohotovost', k_reserve: 'Rezerva', k_ground: 'Pozemní služba', k_off: 'Volno', k_other: 'Jiné',
+    d_intlNight: 'Zahraniční dieta s přenocováním', d_intlDay: 'Zahraniční dieta bez přenocování', d_natNight: 'Tuzemská dieta s přenocováním', d_natDay: 'Tuzemská dieta bez přenocování',
+    noData: 'Žádná data', startHere: 'Začni tady',
+    startText: 'Stáhni si <b>Individual duty plan</b> v PDF z IDP a nahoře klepni na <b>＋ PDF</b>. U každého dne uvidíš, kolik vyděláváš.',
+    rankPU: 'purser', rankCA: 'palubní průvodčí',
+    rankWarn: 'Tento rozpis patří pozici <b>{a}</b>, ale tvůj profil uvádí <b>{b}</b>.', useRank: 'Použít {a}',
+    tier1Msg: 'Do pásma 2 ti chybí <b>{h} h</b> (každá hodina tam má víc než dvojnásobnou hodnotu).',
+    tier2Msg: 'Jsi v pásmu 2. Do pásma 3 ti chybí <b>{h} h</b>.',
+    tier3Msg: 'Jsi v pásmu 3, nejlépe placeném.',
+    dc_intlNight: '{n} zahr. s nocí', dc_intlDay: '{n} zahr. bez noci', dc_natNight: '{n} tuz. s nocí', dc_natDay: '{n} tuz. bez noci', noAway: 'žádné dny mimo',
+    variableIn: 'Pohyblivá složka za {m}', variableSub: 'Hodiny, diety a příplatky za měsíc. Bez základní mzdy.',
+    dutyTime: 'Doba služby ({h} h)', perDiems: 'Diety', earlyOff: 'Early check-in mimo základnu',
+    trainDaysLine: 'Dny školení jako trenér ({n}, z toho {i} v příplatku)', daysBought: 'Odkoupené / přesunuté volné dny',
+    sales: 'Provize z prodeje', estimated: '(odhad)', gaugeAria: 'Hodiny v platových pásmech',
+    netTitle: 'Přibližná čistá mzda za měsíc',
+    netSub: 'Základ + trenérský příplatek + uniforma + pohyblivá složka, minus sociální pojištění {ss} % a IRPF {irpf} %. Diety jsou osvobozené od daně.',
+    addDuty: 'Doplňková služba', fdpShare: 'Podíl FDP', minGuar: 'Garantované minimum (49+21 h)',
+    nightIn: 'Noc v {st}', payHours: 'Placené hodiny: FDP {f} + doplňková {a}', absenceCredit: ' (kredit za nepřítomnost)', tierN: 'pásmo {n}',
+    earlyAt: 'Early check-in mimo základnu ({t})', trainDay: 'Školení jako trenér · {n}. den v měsíci', inPlus: ' (zahrnuto v příplatku)',
+    buyDefer: 'Odkoupený / přesunutý volný den', dayTotal: 'Celkem za den', salesEur: 'Provize z prodeje €',
+    dayBought: 'Odkoupený volný den', no: 'Ne', full: 'Celý (9 %)', half: 'Poloviční (4,5 %)', omDeferred: 'O_M přesunut (4,5 %)',
+    noExtras: 'Pro tento typ dne nejsou žádné extra položky.',
+    slip_base: 'Základní mzda ({r}, stupeň {l})', slip_trainer: 'Příplatek za kabinové školení', slip_uniform: 'Uniforma / čištění',
+    slip_fdp: 'Letový čas {t}', slip_add: 'Doplňková doba služby {t}', slip_min: 'Doplatek do minima 49+21 h',
+    slip_trainExtra: 'Další trenérské dny', slip_buy: 'Odkup / přesun volných dnů', slip_sales: 'Provize z prodeje', estimatedW: 'odhad',
+    slip_taxable: 'Vyměřovací / daňový základ', slip_ss: 'Sociální pojištění zaměstnance', slip_irpf: 'Srážka IRPF',
+    slip_intlNight: 'Zahr. cesty s přenocováním', slip_intlDay: 'Zahr. cesty bez přenocování', slip_natNight: 'Tuz. cesty s přenocováním', slip_natDay: 'Tuz. cesty bez přenocování',
+    slip_minDiet: 'Minimální garance diet', slip_net: 'Přibližná čistá mzda',
+    slipNote: 'Stejná struktura jako tvoje výplatní páska. Hodiny a diety z tohoto měsíce se obvykle vyplácejí ve výplatní pásce za <b>{m}</b>, spolu se základní mzdou za ten měsíc. Hodinové sazby: FDP {f} €, doplňková {a} €.',
+    f_lang: 'Jazyk', f_rank: 'Kategorie', optPU: 'Purser (C)', optCA: 'Palubní průvodčí (D)',
+    f_levelMode: 'Platový stupeň', lm_date: 'Stoupá automaticky každý rok', lm_manual: 'Pevný, vyberu si ho',
+    f_since: 'Začátek v kategorii (stupeň 1)', levelToday: 'Stupeň dnes: <b>{l}</b>. Každý rok k tomuto datu stoupne.', f_level: 'Stupeň',
+    f_contract: 'Úvazek', f_base: 'Základna', f_isTrainer: 'Jsem kabinový trenér', f_trainerPlus: 'Trenérský příplatek €/měsíc',
+    f_uniform: 'Uniforma €/měsíc', f_irpf: 'IRPF %', f_ss: 'Sociální pojištění %',
+    f_trainIncl: 'Dny školení zahrnuté v příplatku', f_trainPay: 'Platba za další den školení €', f_trainCodes: 'Kódy trenérských služeb',
+    f_salesEst: 'Odhadovaná provize z prodeje €/měsíc', f_early: 'Early check-in €',
+    f_absence: 'Kódy nepřítomnosti, které se počítají jako dovolená/volno (3:30 FDP + 1:12 doplňková)',
+    f_minDiet: 'Použít minimální garanci diet (500 € purser / 400 € průvodčí; smlouva ji stanoví do 31. 12. 2025)',
+    resetSet: 'Obnovit hodnoty ze smlouvy', redoSetup: 'Nastavit profil znovu',
+    su_eyebrow: 'Tvůj profil', su_title: 'Kolik vyděláváš podle kolektivní smlouvy?',
+    su_note: 'Nejjednodušší: nahraj aktuální výplatní pásku v PDF. Aplikace přečte kategorii, stupeň, datum zvýšení, IRPF, úvazek a trenérský příplatek. Doklad totožnosti, IBAN ani adresu neukládá. Vše zůstává v tomto zařízení.',
+    su_upload: 'Nahrát výplatní pásku (PDF)',
+    su_manual: 'Nebo vyplň ručně podle <b>Salario base</b> a data <b>Incremento salarial</b> z výplatní pásky:',
+    su_basepay: 'Základní mzda na výplatní pásce €', su_inc: 'Datum zvýšení (Incremento salarial)', su_level: 'Nebo vyber stupeň ručně',
+    su_irpf: 'IRPF % (Retención a cta. IRPF)', su_tplusPh: 'jen trenéři', su_save: 'Uložit profil',
+    e_noCat: 'Na této výplatní pásce nenacházím kategorii (C-05, D-03…). Vyplň profil ručně.',
+    ps_read: 'Profil načtený z výplatní pásky{m}: <b>{r}, stupeň {l}</b>{c}, IRPF {irpf} %{t}{n}.',
+    ps_of: ' za <b>{m}</b>', ps_at: ', úvazek {c} %', ps_plus: ', trenérský příplatek {v}', ps_next: '. Další zvýšení stupně: {d}',
+    ps_mismatch: 'Pozor: tvoje základní mzda ({a}) neodpovídá tabulce ve smlouvě ({b}). Zkontroluj stupeň v části Moje smluvní údaje.',
+    ps_nowRoster: 'Teď nahraj svůj rozpis přes <b>＋ PDF</b>.',
+    e_notInTable: '{v} € není v tabulce pro {r}. Zkontroluj kategorii nebo vyber stupeň ručně.',
+    e_fill: 'Zadej základní mzdu a datum zvýšení, nebo vyber stupeň ručně.',
+    del: 'Smazat', delQ: 'Smazat tento měsíc?', delYes: 'Ano, smazat', noneStored: 'Žádné uložené měsíce.',
+    reading: 'Načítám {f}…', imported: 'Importováno <b>{m}</b>: {d} dní, z toho {f} s letem.',
+    e_pdfLib: 'Čtečku PDF se nepodařilo načíst. Zkontroluj připojení a zkus to znovu.',
+    e_noPeriod: 'Nenacházím období rozpisu. Je to „Individual duty plan“ z IDP v PDF?'
+  }
+};
+
+</script>
+<script>
 const SEED = null;
 const SEED_SETTINGS = null;
 const LS = 'payroster.v1';
-const KIND = {
-  flight:{n:'Vuelo',c:'--k-flight'}, deadhead:{n:'Posicionamiento',c:'--k-dh'}, training:{n:'Formación',c:'--k-train'},
-  standby:{n:'Imaginaria',c:'--k-sby'}, reserve:{n:'Franco',c:'--k-sby'}, ground:{n:'Tierra',c:'--k-ground'},
-  off:{n:'Libre',c:'--k-off'}, empty:{n:'—',c:'--k-off'}, other:{n:'Otro',c:'--k-ground'}
-};
-const DIETA_N = {intlNight:'Dieta internacional con pernocta', intlDay:'Dieta internacional sin pernocta', natNight:'Dieta nacional con pernocta', natDay:'Dieta nacional sin pernocta'};
-const eur = new Intl.NumberFormat('es-ES',{style:'currency',currency:'EUR'});
-const eur0 = new Intl.NumberFormat('es-ES',{style:'currency',currency:'EUR',maximumFractionDigits:0});
-const n2 = new Intl.NumberFormat('es-ES',{minimumFractionDigits:2,maximumFractionDigits:2});
+const KC = { flight:'--k-flight', deadhead:'--k-dh', training:'--k-train', standby:'--k-sby', reserve:'--k-sby', ground:'--k-ground', off:'--k-off', empty:'--k-off', other:'--k-ground' };
+const kind = k => ({ n: t('k_'+(KC[k]?k:'other')), c: KC[k]||KC.other });
+const LANGS = Object.keys(I18N.names);
+let lang = 'es', LOC = 'es-ES', eur, eur0, n2;
+function setLang(l){
+  lang = LANGS.includes(l) ? l : 'es'; LOC = I18N.locales[lang];
+  eur = new Intl.NumberFormat(LOC,{style:'currency',currency:'EUR'});
+  eur0 = new Intl.NumberFormat(LOC,{style:'currency',currency:'EUR',maximumFractionDigits:0});
+  n2 = new Intl.NumberFormat(LOC,{minimumFractionDigits:2,maximumFractionDigits:2});
+  document.documentElement.lang = lang;
+  document.querySelectorAll('[data-i18n]').forEach(el=>el.innerHTML=t(el.dataset.i18n));
+  document.querySelectorAll('[data-i18n-aria]').forEach(el=>el.setAttribute('aria-label',t(el.dataset.i18nAria)));
+  document.querySelectorAll('[data-i18n-title]').forEach(el=>el.title=t(el.dataset.i18nTitle));
+}
+function t(k, v){
+  let s = (I18N[lang] && I18N[lang][k] != null) ? I18N[lang][k] : (I18N.es[k] != null ? I18N.es[k] : k);
+  if(v) s = s.replace(/\{(\w+)\}/g, (m,x) => v[x] != null ? v[x] : m);
+  return s;
+}
+function detectLang(){ const n=(navigator.language||'').slice(0,2).toLowerCase(); return LANGS.includes(n) ? n : 'en'; }
+const rankName = r => t(r==='PU'?'rankPU':'rankCA');
+const monthName = (y,m,opt) => new Date(y,m-1,1).toLocaleDateString(LOC, opt||{month:'long'});
+const langSelect = id => `<label>${t('f_lang')}<select id="${id}">${LANGS.map(l=>`<option value="${l}"${l===lang?' selected':''}>${I18N.names[l]}</option>`).join('')}</select></label>`;
 const hhmm = h => { const m = Math.round(h*60); return Math.floor(m/60)+':'+String(m%60).padStart(2,'0'); };
 const t4 = t => t ? t.slice(0,2)+':'+t.slice(2) : '';
 const $ = id => document.getElementById(id);
 const esc = s => String(s==null?'':s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 
 let state = load();
+setLang(state.lang || detectLang());
 function load(){
   let s=null; try{ s = JSON.parse(localStorage.getItem(LS)||'null'); }catch(e){}
   if(!s || !s.months) s = { months:{}, extras:{}, settings: SEED_SETTINGS || PR.defaultSettings(), current:null, example:true };
@@ -638,18 +1173,18 @@ function render(){
   const i = keys.indexOf(state.current);
   $('prevM').disabled = i<=0; $('nextM').disabled = i<0 || i>=keys.length-1;
   const ro = state.months[state.current];
-  if(!ro){ renderSetup(); $('mLabel').textContent='Sin datos'; $('hero').innerHTML='<div class="panel"><div class="eyebrow">Empieza aquí</div><p style="margin:8px 0 0">Descarga tu <b>Individual duty plan</b> en PDF desde IDP y pulsa <b>＋ PDF</b> arriba. Verás cada día con lo que generas.</p></div>'; ['strip','legend','days','slip'].forEach(i=>$(i).innerHTML=''); renderForm(); renderStored(); return; }
+  if(!ro){ renderSetup(); $('mLabel').textContent=t('noData'); $('hero').innerHTML=`<div class="panel"><div class="eyebrow">${t('startHere')}</div><p style="margin:8px 0 0">${t('startText')}</p></div>`; ['strip','legend','days','slip'].forEach(i=>$(i).innerHTML=''); renderForm(); renderStored(); return; }
   const s = state.settings;
   renderSetup();
   if(ro.base && !s.baseSetByUser) s.base = ro.base;
   const w = $('rankWarn');
   if(s.configured && ro.rankNorm && ro.rankNorm!==s.rank){
     w.hidden=false; w.className='msg err';
-    w.innerHTML = `Este roster es de <b>${ro.rankNorm==='PU'?'sobrecargo':'auxiliar de vuelo'}</b>, pero tu perfil dice <b>${s.rank==='PU'?'sobrecargo':'auxiliar de vuelo'}</b>. <button class="btn ghost" id="useRosterRank" type="button" style="margin-left:6px">Usar ${ro.rankNorm==='PU'?'sobrecargo':'auxiliar'}</button>`;
+    w.innerHTML = `${t('rankWarn',{a:rankName(ro.rankNorm),b:rankName(s.rank)})} <button class="btn ghost" id="useRosterRank" type="button" style="margin-left:6px">${t('useRank',{a:rankName(ro.rankNorm)})}</button>`;
   } else w.hidden=true;
   const c = PR.compute(ro, s, state.extras);
   const mDate = new Date(ro.year, ro.month-1, 1);
-  $('mLabel').textContent = mDate.toLocaleDateString('es-ES',{month:'short',year:'numeric'}).replace('.','');
+  $('mLabel').textContent = mDate.toLocaleDateString(LOC,{month:'short',year:'numeric'}).replace('.','');
   renderHero(c, ro); renderStrip(c, ro); renderDays(c, ro); renderSlip(c, ro); renderForm(); renderStored();
 }
 
@@ -658,50 +1193,49 @@ function renderHero(c, ro){
   const max = Math.max(L2+20, Math.ceil((c.T+10)/10)*10);
   const seg = (lo,hi,color) => { const w = Math.max(0, Math.min(c.T,hi)-lo)/max*100; return w>0?`<div class="gseg" style="width:${w}%;background:${color}"></div>`:''; };
   const tierNow = c.T>L2?3:c.T>L1?2:1;
-  const nextMsg = tierNow===1 ? `Te faltan <b>${hhmm(L1-c.T)} h</b> para el tramo 2 (cada hora vale más del doble).`
-               : tierNow===2 ? `Estás en el tramo 2. Te faltan <b>${hhmm(L2-c.T)} h</b> para el tramo 3.` : `Estás en el tramo 3, el mejor pagado.`;
+  const nextMsg = tierNow===1 ? t('tier1Msg',{h:hhmm(L1-c.T)}) : tierNow===2 ? t('tier2Msg',{h:hhmm(L2-c.T)}) : t('tier3Msg');
   const dc = c.dietaCounts;
-  const dietLine = [dc.intlNight&&`${dc.intlNight} int. con noche`, dc.intlDay&&`${dc.intlDay} int. sin noche`, dc.natNight&&`${dc.natNight} nac. con noche`, dc.natDay&&`${dc.natDay} nac. sin noche`].filter(Boolean).join(' · ') || 'sin días fuera';
+  const dietLine = ['intlNight','intlDay','natNight','natDay'].filter(k=>dc[k]).map(k=>t('dc_'+k,{n:dc[k]})).join(' · ') || t('noAway');
   $('hero').innerHTML = `
   <div class="panel">
-    <div class="eyebrow">Variable generado en ${new Date(ro.year,ro.month-1,1).toLocaleDateString('es-ES',{month:'long'})}</div>
+    <div class="eyebrow">${t('variableIn',{m:monthName(ro.year,ro.month)})}</div>
     <div class="big num">${eur0.format(c.variable).replace(/\s?€/,'')}<small>€</small></div>
-    <div class="sub">Horas, dietas y pluses del mes. Sin sueldo base.</div>
+    <div class="sub">${t('variableSub')}</div>
     <dl class="kv">
-      <dt>Tiempo de servicio (${hhmm(c.T)} h)</dt><dd>${eur.format(c.hourPay + c.topUp)}</dd>
-      <dt>Dietas · ${dietLine}</dt><dd>${eur.format(c.dietasPaid)}</dd>
-      ${c.early?`<dt>Early check-in fuera de base</dt><dd>${eur.format(c.early)}</dd>`:''}
-      ${c.trainDays>1||c.trainPay?`<dt>Días de formación como trainer (${c.trainDays}, ${Math.min(c.trainDays,+state.settings.trainingIncluded||0)} en el plus)</dt><dd>${eur.format(c.trainPay)}</dd>`:''}
-      ${c.extraFix?`<dt>Días libres comprados / aplazados</dt><dd>${eur.format(c.extraFix)}</dd>`:''}
-      ${c.sales?`<dt>Comisión ventas ${c.salesFromDays?'':'(estimada)'}</dt><dd>${eur.format(c.sales)}</dd>`:''}
+      <dt>${t('dutyTime',{h:hhmm(c.T)})}</dt><dd>${eur.format(c.hourPay + c.topUp)}</dd>
+      <dt>${t('perDiems')} · ${dietLine}</dt><dd>${eur.format(c.dietasPaid)}</dd>
+      ${c.early?`<dt>${t('earlyOff')}</dt><dd>${eur.format(c.early)}</dd>`:''}
+      ${c.trainDays>1||c.trainPay?`<dt>${t('trainDaysLine',{n:c.trainDays,i:Math.min(c.trainDays,+state.settings.trainingIncluded||0)})}</dt><dd>${eur.format(c.trainPay)}</dd>`:''}
+      ${c.extraFix?`<dt>${t('daysBought')}</dt><dd>${eur.format(c.extraFix)}</dd>`:''}
+      ${c.sales?`<dt>${t('sales')} ${c.salesFromDays?'':t('estimated')}</dt><dd>${eur.format(c.sales)}</dd>`:''}
     </dl>
-    <div class="gauge" aria-label="Horas en tramos de pago">
+    <div class="gauge" aria-label="${t('gaugeAria')}">
       <div class="gtrack">${seg(0,L1,'var(--accent)')}${seg(L1,L2,'var(--pay)')}${seg(L2,Infinity,'var(--warn)')}</div>
       <div class="gscale"><span style="left:0;transform:none">0</span><span style="left:${L1/max*100}%">${L1} h</span><span style="left:${L2/max*100}%">${L2} h</span></div>
       <div class="gnote">${nextMsg}</div>
     </div>
   </div>
   <div class="panel">
-    <div class="eyebrow">Neto aproximado del mes</div>
+    <div class="eyebrow">${t('netTitle')}</div>
     <div class="netfig num">${eur.format(c.net)}</div>
-    <div class="sub">Base + plus formación + uniforme + variable, menos SS ${n2.format(state.settings.ss)} % e IRPF ${n2.format(state.settings.irpf)} %. Dietas exentas.</div>
+    <div class="sub">${t('netSub',{ss:n2.format(state.settings.ss),irpf:n2.format(state.settings.irpf)})}</div>
     <dl class="kv">
       <dt>FDP</dt><dd class="mono">${hhmm(c.TF)} h</dd>
-      <dt>Servicio adicional</dt><dd class="mono">${hhmm(c.TA)} h</dd>
+      <dt>${t('addDuty')}</dt><dd class="mono">${hhmm(c.TA)} h</dd>
       <dt>Block</dt><dd class="mono">${hhmm(c.blockHours)} h</dd>
-      <dt>Proporción FDP</dt><dd class="mono">${Math.round(c.r*100)} %</dd>
-      ${c.topUp?`<dt>Mínimo garantizado (49+21 h)</dt><dd>+${eur.format(c.topUp)}</dd>`:''}
+      <dt>${t('fdpShare')}</dt><dd class="mono">${Math.round(c.r*100)} %</dd>
+      ${c.topUp?`<dt>${t('minGuar')}</dt><dd>+${eur.format(c.topUp)}</dd>`:''}
     </dl>
   </div>`;
 }
 
 function renderStrip(c, ro){
-  const dows = ['L','M','X','J','V','S','D'];
+  const dows = [...Array(7)].map((_,i)=>new Date(2024,0,1+i).toLocaleDateString(LOC,{weekday:'narrow'}));
   const first = (new Date(ro.year, ro.month-1, 1).getDay()+6)%7;
   const today = todayISO();
   let h = dows.map(d=>`<div class="dow">${d}</div>`).join('') + '<div class="cell blank"></div>'.repeat(first);
   for(const d of c.days){
-    const k = KIND[d.kind]||KIND.other;
+    const k = kind(d.kind);
     const code = d.kind==='flight' ? (d.legs.filter(l=>l.type==='flt').map(l=>l.arr).filter(a=>a!==d.startLoc).filter((v,i,a)=>a.indexOf(v)===i).slice(0,2).join(' ')||'FLT')
               : d.kind==='deadhead' ? 'DH '+(d.legs[0]?d.legs[d.legs.length-1].arr:'')
               : (d.label||'').replace(/^DT_/,'').replace(/^STBY_/,'SB ').replace('RESERVE72','RES');
@@ -710,18 +1244,18 @@ function renderStrip(c, ro){
   }
   $('strip').innerHTML = h;
   const used = [...new Set(c.days.map(d=>d.kind))].filter(k=>k!=='empty');
-  $('legend').innerHTML = used.map(k=>`<span><i style="background:var(${KIND[k].c})"></i>${KIND[k].n}</span>`).join('');
+  $('legend').innerHTML = used.map(k=>`<span><i style="background:var(${kind(k).c})"></i>${kind(k).n}</span>`).join('');
 }
 
 function renderDays(c, ro){
   const today = todayISO();
   const open = new Set([...document.querySelectorAll('.day[open]')].map(e=>e.dataset.date));
   $('days').innerHTML = c.days.map(d=>{
-    const k = KIND[d.kind]||KIND.other;
-    const wd = new Date(d.date+'T12:00').toLocaleDateString('es-ES',{weekday:'short'}).replace('.','');
+    const k = kind(d.kind);
+    const wd = new Date(d.date+'T12:00').toLocaleDateString(LOC,{weekday:'short'}).replace('.','');
     const main = d.route ? d.route : (d.label || k.n);
     const times = d.ci ? `${t4(d.ci)}${d.co?'–'+t4(d.co):''}` : '';
-    const tier = d.H>0 ? `tramo ${d.tierEnd>c.rates.limits[1]?3:d.tierEnd>c.rates.limits[0]?2:1}` : '';
+    const tier = d.H>0 ? t('tierN',{n:d.tierEnd>c.rates.limits[1]?3:d.tierEnd>c.rates.limits[0]?2:1}) : '';
     const legs = d.legs.length ? `<div class="legs">${d.legs.map(l=>`<span class="${l.type==='dh'?'dhl':''}">${l.type==='dh'?'DH ':''}${esc(l.flight)}</span><span>${l.dep}</span><span>${t4(l.t1)}</span><span>${t4(l.t2)}</span><span>${l.arr}</span>`).join('')}</div>` : '';
     const ex = state.extras[d.date]||{};
     const offish = d.kind==='off' || d.kind==='flight' || d.kind==='deadhead';
@@ -729,25 +1263,25 @@ function renderDays(c, ro){
       <summary>
         <div class="dd"><span class="wd">${wd}</span><span class="n">${d.day}</span></div>
         <div class="what"><div class="r">${esc(main)}</div>
-          <div class="m"><span class="tag" style="--kc:var(${k.c})"><i></i>${k.n}</span>${times?`<span class="mono">${times}</span>`:''}${d.hotel?`<span>Noche en ${d.hotel}</span>`:''}</div></div>
+          <div class="m"><span class="tag" style="--kc:var(${k.c})"><i></i>${k.n}</span>${times?`<span class="mono">${times}</span>`:''}${d.hotel?`<span>${t('nightIn',{st:d.hotel})}</span>`:''}</div></div>
         <div class="amt"><div class="v${d.total>0.005?'':' zero'}">${d.total>0.005?eur.format(d.total):'0 €'}</div>${d.H?`<div class="h">${hhmm(d.H)} h</div>`:''}</div>
       </summary>
       <div class="detail">
         ${legs}
         <dl class="brk">
-          ${d.H?`<dt>Horas pagables: FDP ${hhmm(d.F)} + adicional ${hhmm(d.A)}${d.absence?' (crédito ausencia)':''} · ${tier}</dt><dd>${eur.format(d.hourPay)}</dd>`:''}
-          ${d.dieta?`<dt>${DIETA_N[d.dietaType]}</dt><dd>${eur.format(d.dieta)}</dd>`:''}
-          ${d.early?`<dt>Early check-in fuera de base (${t4(d.ci)})</dt><dd>${eur.format(d.early)}</dd>`:''}
-          ${d.isTrain?`<dt>Formación como trainer · día ${d.trainNo} del mes${d.trainNo<=(+state.settings.trainingIncluded||0)?' (incluido en el plus)':''}</dt><dd>${eur.format(d.trainPay)}</dd>`:''}
-          ${d.extraFix?`<dt>Compra / aplazamiento de día libre</dt><dd>${eur.format(d.extraFix)}</dd>`:''}
-          ${d.sales?`<dt>Comisión ventas</dt><dd>${eur.format(d.sales)}</dd>`:''}
-          <dt class="t">Total del día</dt><dd class="t">${eur.format(d.total)}</dd>
+          ${d.H?`<dt>${t('payHours',{f:hhmm(d.F),a:hhmm(d.A)})}${d.absence?t('absenceCredit'):''} · ${tier}</dt><dd>${eur.format(d.hourPay)}</dd>`:''}
+          ${d.dieta?`<dt>${t('d_'+d.dietaType)}</dt><dd>${eur.format(d.dieta)}</dd>`:''}
+          ${d.early?`<dt>${t('earlyAt',{t:t4(d.ci)})}</dt><dd>${eur.format(d.early)}</dd>`:''}
+          ${d.isTrain?`<dt>${t('trainDay',{n:d.trainNo})}${d.trainNo<=(+state.settings.trainingIncluded||0)?t('inPlus'):''}</dt><dd>${eur.format(d.trainPay)}</dd>`:''}
+          ${d.extraFix?`<dt>${t('buyDefer')}</dt><dd>${eur.format(d.extraFix)}</dd>`:''}
+          ${d.sales?`<dt>${t('sales')}</dt><dd>${eur.format(d.sales)}</dd>`:''}
+          <dt class="t">${t('dayTotal')}</dt><dd class="t">${eur.format(d.total)}</dd>
         </dl>
         <div class="extras" data-date="${d.date}">
-          ${d.kind==='flight'?`<label>Comisión ventas € <input type="number" step="0.01" min="0" id="s-${d.date}" data-f="sales" value="${ex.sales||''}" placeholder="0,00"></label>`:''}
-          ${offish?`<label>Día libre comprado <select id="b-${d.date}" data-f="buy"><option value="">No</option><option value="full"${ex.buy==='full'?' selected':''}>Completo (9 %)</option><option value="half"${ex.buy==='half'?' selected':''}>Medio (4,5 %)</option></select></label>`:''}
-          ${d.codes.includes('O_M')?`<label><input type="checkbox" id="o-${d.date}" data-f="omDefer"${ex.omDefer?' checked':''}> O_M aplazado (4,5 %)</label>`:''}
-          ${(!offish && d.kind!=='flight')?'<span class="note">Sin extras para este tipo de día.</span>':''}
+          ${d.kind==='flight'?`<label>${t('salesEur')} <input type="number" step="0.01" min="0" id="s-${d.date}" data-f="sales" value="${ex.sales||''}" placeholder="0,00"></label>`:''}
+          ${offish?`<label>${t('dayBought')} <select id="b-${d.date}" data-f="buy"><option value="">${t('no')}</option><option value="full"${ex.buy==='full'?' selected':''}>${t('full')}</option><option value="half"${ex.buy==='half'?' selected':''}>${t('half')}</option></select></label>`:''}
+          ${d.codes.includes('O_M')?`<label><input type="checkbox" id="o-${d.date}" data-f="omDefer"${ex.omDefer?' checked':''}> ${t('omDeferred')}</label>`:''}
+          ${(!offish && d.kind!=='flight')?`<span class="note">${t('noExtras')}</span>`:''}
         </div>
       </div>
     </details>`;
@@ -758,31 +1292,31 @@ function renderSlip(c, ro){
   const s = state.settings, R = c.rates;
   const rows = [];
   const add = (name, info, val, cls='') => rows.push(`<tr class="${cls}"><td>${name}</td><td>${info||''}</td><td>${val}</td></tr>`);
-  add(`Salario base (${s.rank==='PU'?'sobrecargo':'auxiliar'} nivel ${c.level})`, s.contract!==100?s.contract+' %':'', eur.format(c.baseSalary));
-  if(s.isTrainer && +s.trainerPlus) add('Formación de cabina','',eur.format(+s.trainerPlus));
-  if(+s.uniform) add('Uniforme / limpieza','',eur.format(+s.uniform));
+  add(t('slip_base',{r:rankName(s.rank),l:c.level}), s.contract!==100?s.contract+' %':'', eur.format(c.baseSalary));
+  if(s.isTrainer && +s.trainerPlus) add(t('slip_trainer'),'',eur.format(+s.trainerPlus));
+  if(+s.uniform) add(t('slip_uniform'),'',eur.format(+s.uniform));
   const tn = ['<70','70–110','>110'];
-  c.tiers.forEach(t=>{ if(t.h<=0) return;
-    add(`Tiempo de vuelo ${tn[t.i]}`, `${n2.format(t.hF)} h × ${n2.format(t.rateF)}`, eur.format(t.payF));
-    add(`Tpo vuelo adicional ${tn[t.i]}`, `${n2.format(t.hA)} h × ${n2.format(t.rateA)}`, eur.format(t.payA)); });
-  if(c.topUp) add('Complemento mínimo 49+21 h','',eur.format(c.topUp));
-  if(c.trainDays>(+s.trainingIncluded||0)) add('Formación adicional trainer', `${c.trainDays-(+s.trainingIncluded||0)} × ${n2.format(+s.trainingDayPay||0)}`, eur.format(c.trainPay));
+  c.tiers.forEach(tr=>{ if(tr.h<=0) return;
+    add(t('slip_fdp',{t:tn[tr.i]}), `${n2.format(tr.hF)} h × ${n2.format(tr.rateF)}`, eur.format(tr.payF));
+    add(t('slip_add',{t:tn[tr.i]}), `${n2.format(tr.hA)} h × ${n2.format(tr.rateA)}`, eur.format(tr.payA)); });
+  if(c.topUp) add(t('slip_min'),'',eur.format(c.topUp));
+  if(c.trainDays>(+s.trainingIncluded||0)) add(t('slip_trainExtra'), `${c.trainDays-(+s.trainingIncluded||0)} × ${n2.format(+s.trainingDayPay||0)}`, eur.format(c.trainPay));
   if(c.early) add('Early check-in', `${c.early/s.earlyCheckin} × ${s.earlyCheckin} €`, eur.format(c.early));
-  if(c.extraFix) add('Compra / aplazamiento días libres','',eur.format(c.extraFix));
-  if(c.sales) add('Comisión de ventas', c.salesFromDays?'':'estimada', eur.format(c.sales));
-  add('<b>Base cotización / IRPF</b>','',`<b>${eur.format(c.taxable)}</b>`);
-  add('Seguridad Social trabajador', n2.format(s.ss)+' %', '−'+eur.format(c.ss), 'ded');
-  add('Retención IRPF', n2.format(s.irpf)+' %', '−'+eur.format(c.irpf), 'ded');
+  if(c.extraFix) add(t('slip_buy'),'',eur.format(c.extraFix));
+  if(c.sales) add(t('slip_sales'), c.salesFromDays?'':t('estimatedW'), eur.format(c.sales));
+  add(`<b>${t('slip_taxable')}</b>`,'',`<b>${eur.format(c.taxable)}</b>`);
+  add(t('slip_ss'), n2.format(s.ss)+' %', '−'+eur.format(c.ss), 'ded');
+  add(t('slip_irpf'), n2.format(s.irpf)+' %', '−'+eur.format(c.irpf), 'ded');
   const dc=c.dietaCounts;
-  if(dc.intlNight) add('Viajes inter con pernocta', `${dc.intlNight} × ${n2.format(PR.DIETA.intlNight)}`, eur.format(dc.intlNight*PR.DIETA.intlNight), 'ex');
-  if(dc.intlDay) add('Viajes inter sin pernocta', `${dc.intlDay} × ${n2.format(PR.DIETA.intlDay)}`, eur.format(dc.intlDay*PR.DIETA.intlDay), 'ex');
-  if(dc.natNight) add('Viajes nacional con pernocta', `${dc.natNight} × ${n2.format(PR.DIETA.natNight)}`, eur.format(dc.natNight*PR.DIETA.natNight), 'ex');
-  if(dc.natDay) add('Viajes nacional sin pernocta', `${dc.natDay} × ${n2.format(PR.DIETA.natDay)}`, eur.format(dc.natDay*PR.DIETA.natDay), 'ex');
-  if(c.dietasPaid>c.dietas) add('Garantía mínima de dietas','',eur.format(c.dietasPaid-c.dietas),'ex');
-  rows.push(`<tr class="sum"><td>Líquido aproximado</td><td></td><td>${eur.format(c.net)}</td></tr>`);
+  if(dc.intlNight) add(t('slip_intlNight'), `${dc.intlNight} × ${n2.format(PR.DIETA.intlNight)}`, eur.format(dc.intlNight*PR.DIETA.intlNight), 'ex');
+  if(dc.intlDay) add(t('slip_intlDay'), `${dc.intlDay} × ${n2.format(PR.DIETA.intlDay)}`, eur.format(dc.intlDay*PR.DIETA.intlDay), 'ex');
+  if(dc.natNight) add(t('slip_natNight'), `${dc.natNight} × ${n2.format(PR.DIETA.natNight)}`, eur.format(dc.natNight*PR.DIETA.natNight), 'ex');
+  if(dc.natDay) add(t('slip_natDay'), `${dc.natDay} × ${n2.format(PR.DIETA.natDay)}`, eur.format(dc.natDay*PR.DIETA.natDay), 'ex');
+  if(c.dietasPaid>c.dietas) add(t('slip_minDiet'),'',eur.format(c.dietasPaid-c.dietas),'ex');
+  rows.push(`<tr class="sum"><td>${t('slip_net')}</td><td></td><td>${eur.format(c.net)}</td></tr>`);
   $('slip').innerHTML = rows.join('');
-  const next = new Date(ro.year, ro.month, 1).toLocaleDateString('es-ES',{month:'long'});
-  $('slipNote').innerHTML = `Mismo formato que tu nómina. Las horas y dietas de este mes suelen cobrarse en la nómina de <b>${next}</b>, junto al sueldo base de ese mes. Tarifas por hora: FDP ${R.fdp.map(n2.format).join(' / ')} €, adicional ${R.add.map(n2.format).join(' / ')} €.`;
+  const next = monthName(ro.year, ro.month+1);
+  $('slipNote').innerHTML = t('slipNote',{m:next,f:R.fdp.map(x=>n2.format(x)).join(' / '),a:R.add.map(x=>n2.format(x)).join(' / ')});
 }
 
 function renderForm(){
@@ -790,26 +1324,27 @@ function renderForm(){
   const s = state.settings;
   const lvl = r => (r==='PU'?[...Array(15)].map((_,i)=>i+1):[...Array(12)].map((_,i)=>i));
   $('form').innerHTML = `
-    <label>Categoría<select id="f-rank"><option value="PU"${s.rank==='PU'?' selected':''}>Sobrecargo (C)</option><option value="CA"${s.rank==='CA'?' selected':''}>Auxiliar de vuelo (D)</option></select></label>
-    <label>Nivel salarial<select id="f-levelMode"><option value="date"${s.levelMode==='date'?' selected':''}>Sube solo cada año</option><option value="manual"${s.levelMode!=='date'?' selected':''}>Fijo, lo elijo yo</option></select></label>
+    ${langSelect('f-lang')}
+    <label>${t('f_rank')}<select id="f-rank"><option value="PU"${s.rank==='PU'?' selected':''}>${t('optPU')}</option><option value="CA"${s.rank==='CA'?' selected':''}>${t('optCA')}</option></select></label>
+    <label>${t('f_levelMode')}<select id="f-levelMode"><option value="date"${s.levelMode==='date'?' selected':''}>${t('lm_date')}</option><option value="manual"${s.levelMode!=='date'?' selected':''}>${t('lm_manual')}</option></select></label>
     ${s.levelMode==='date'
-      ? `<label>Inicio en la categoría (nivel 1)<input type="date" id="f-since" value="${esc(s.since)}"></label><div class="note" style="align-self:end">Nivel hoy: <b>${PR.levelFor(s,new Date().getFullYear(),new Date().getMonth()+1)}</b>. Sube cada año en esta fecha.</div>`
-      : `<label>Nivel<select id="f-level">${lvl(s.rank).map(l=>`<option${l==s.level?' selected':''}>${l}</option>`).join('')}</select></label>`}
-    <label>Jornada<select id="f-contract">${[100,95,90,85,80,75,70,65,60,55,50].map(p=>`<option value="${p}"${p==s.contract?' selected':''}>${p} %</option>`).join('')}</select></label>
-    <label>Base<input type="text" id="f-base" maxlength="3" value="${esc(s.base)}"></label>
-    <label class="chk"><input type="checkbox" id="f-isTrainer"${s.isTrainer?' checked':''}> Soy trainer de cabina</label>
-    ${s.isTrainer?`<label>Plus formación de cabina €/mes<input type="number" step="0.01" id="f-trainerPlus" value="${s.trainerPlus}"></label>`:''}
-    <label>Uniforme €/mes<input type="number" step="0.01" id="f-uniform" value="${s.uniform}"></label>
-    <label>IRPF %<input type="number" step="0.01" id="f-irpf" value="${s.irpf}"></label>
-    <label>Seguridad Social %<input type="number" step="0.01" id="f-ss" value="${s.ss}"></label>
-    ${s.isTrainer?`<label>Días de formación incluidos en el plus<input type="number" step="1" min="0" id="f-trainingIncluded" value="${s.trainingIncluded}"></label>
-    <label>Pago por día de formación adicional €<input type="number" step="0.01" id="f-trainingDayPay" value="${s.trainingDayPay}"></label>
-    <label>Códigos de formación como trainer<input type="text" id="f-trainingCodes" value="${esc(s.trainingCodes)}"></label>`:''}
-    <label>Comisión ventas estimada €/mes<input type="number" step="0.01" id="f-salesEstimate" value="${s.salesEstimate}"></label>
-    <label>Early check-in €<input type="number" step="0.01" id="f-earlyCheckin" value="${s.earlyCheckin}"></label>
-    <label class="wide">Códigos de ausencia que cuentan como vacaciones/permiso (3:30 FDP + 1:12 adicional)<input type="text" id="f-absenceCodes" value="${esc(s.absenceCodes)}"></label>
-    <label class="chk wide"><input type="checkbox" id="f-minDietas"${s.minDietas?' checked':''}> Aplicar garantía mínima de dietas (500 € sobrecargo / 400 € auxiliar; el convenio la fija hasta el 31/12/2025)</label>
-    <div class="wide row"><button class="btn ghost" id="resetSet" type="button">Restaurar valores del convenio</button><button class="btn ghost" id="redoSetup" type="button">Configurar perfil de nuevo</button></div>`;
+      ? `<label>${t('f_since')}<input type="date" id="f-since" value="${esc(s.since)}"></label><div class="note" style="align-self:end">${t('levelToday',{l:PR.levelFor(s,new Date().getFullYear(),new Date().getMonth()+1)})}</div>`
+      : `<label>${t('f_level')}<select id="f-level">${lvl(s.rank).map(l=>`<option${l==s.level?' selected':''}>${l}</option>`).join('')}</select></label>`}
+    <label>${t('f_contract')}<select id="f-contract">${[100,95,90,85,80,75,70,65,60,55,50].map(p=>`<option value="${p}"${p==s.contract?' selected':''}>${p} %</option>`).join('')}</select></label>
+    <label>${t('f_base')}<input type="text" id="f-base" maxlength="3" value="${esc(s.base)}"></label>
+    <label class="chk"><input type="checkbox" id="f-isTrainer"${s.isTrainer?' checked':''}> ${t('f_isTrainer')}</label>
+    ${s.isTrainer?`<label>${t('f_trainerPlus')}<input type="number" step="0.01" id="f-trainerPlus" value="${s.trainerPlus}"></label>`:''}
+    <label>${t('f_uniform')}<input type="number" step="0.01" id="f-uniform" value="${s.uniform}"></label>
+    <label>${t('f_irpf')}<input type="number" step="0.01" id="f-irpf" value="${s.irpf}"></label>
+    <label>${t('f_ss')}<input type="number" step="0.01" id="f-ss" value="${s.ss}"></label>
+    ${s.isTrainer?`<label>${t('f_trainIncl')}<input type="number" step="1" min="0" id="f-trainingIncluded" value="${s.trainingIncluded}"></label>
+    <label>${t('f_trainPay')}<input type="number" step="0.01" id="f-trainingDayPay" value="${s.trainingDayPay}"></label>
+    <label>${t('f_trainCodes')}<input type="text" id="f-trainingCodes" value="${esc(s.trainingCodes)}"></label>`:''}
+    <label>${t('f_salesEst')}<input type="number" step="0.01" id="f-salesEstimate" value="${s.salesEstimate}"></label>
+    <label>${t('f_early')}<input type="number" step="0.01" id="f-earlyCheckin" value="${s.earlyCheckin}"></label>
+    <label class="wide">${t('f_absence')}<input type="text" id="f-absenceCodes" value="${esc(s.absenceCodes)}"></label>
+    <label class="chk wide"><input type="checkbox" id="f-minDietas"${s.minDietas?' checked':''}> ${t('f_minDiet')}</label>
+    <div class="wide row"><button class="btn ghost" id="resetSet" type="button">${t('resetSet')}</button><button class="btn ghost" id="redoSetup" type="button">${t('redoSetup')}</button></div>`;
   $('form').dataset.ready = '1';
 }
 
@@ -818,26 +1353,26 @@ function renderSetup(){
   if(s.configured){ box.hidden = true; box.innerHTML=''; return; }
   if(!box.hidden && box.innerHTML) return;
   box.hidden = false;
-  box.innerHTML = `<div class="eyebrow">Tu perfil</div>
-    <h2 style="margin:4px 0 6px">¿Qué cobras según el convenio?</h2>
-    <p class="note">Lo más fácil: sube una nómina reciente en PDF. La app lee tu categoría, nivel, fecha de incremento, IRPF, jornada y plus de trainer. No guarda DNI, IBAN ni dirección. Todo se queda en este móvil.</p>
-    <div class="row" style="margin-top:10px"><label class="btn" for="pdfIn" style="display:inline-block">Subir mi nómina (PDF)</label></div>
-    <p class="note" style="margin-top:14px">O rellénalo a mano con el <b>salario base</b> y la fecha de <b>Incremento salarial</b> de la nómina:</p>
+  box.innerHTML = `<div class="row" style="justify-content:space-between;align-items:flex-start"><div class="eyebrow">${t('su_eyebrow')}</div><div class="form" style="margin:0;grid-template-columns:auto">${langSelect('p-lang')}</div></div>
+    <h2 style="margin:4px 0 6px">${t('su_title')}</h2>
+    <p class="note">${t('su_note')}</p>
+    <div class="row" style="margin-top:10px"><label class="btn" for="pdfIn" style="display:inline-block">${t('su_upload')}</label></div>
+    <p class="note" style="margin-top:14px">${t('su_manual')}</p>
     <div class="form">
-      <label>Categoría<select id="p-rank"><option value="PU"${s.rank==='PU'?' selected':''}>Sobrecargo (C)</option><option value="CA"${s.rank==='CA'?' selected':''}>Auxiliar de vuelo (D)</option></select></label>
-      <label>Salario base en tu nómina €<input type="number" step="0.01" id="p-basepay" placeholder="2250,00"></label>
-      <label>Incremento salarial (fecha en la nómina)<input type="date" id="p-inc"></label>
-      <label>O elige el nivel a mano<select id="p-level"><option value="">—</option>${[...Array(16)].map((_,i)=>i).map(l=>`<option>${l}</option>`).join('')}</select></label>
-      <label>IRPF % (Retención a cta. IRPF)<input type="number" step="0.01" id="p-irpf" value="${s.irpf}"></label>
-      <label>Jornada<select id="p-contract">${[100,95,90,85,80,75,70,65,60,55,50].map(p=>`<option value="${p}"${p==s.contract?' selected':''}>${p} %</option>`).join('')}</select></label>
-      <label class="chk"><input type="checkbox" id="p-trainer"${s.isTrainer?' checked':''}> Soy trainer de cabina</label>
-      <label>Plus formación de cabina €/mes<input type="number" step="0.01" id="p-tplus" value="${s.trainerPlus||''}" placeholder="solo trainers"></label>
-      <div class="wide row"><button class="btn" id="p-save" type="button">Guardar perfil</button><span id="p-err" class="note"></span></div>
+      <label>${t('f_rank')}<select id="p-rank"><option value="PU"${s.rank==='PU'?' selected':''}>${t('optPU')}</option><option value="CA"${s.rank==='CA'?' selected':''}>${t('optCA')}</option></select></label>
+      <label>${t('su_basepay')}<input type="number" step="0.01" id="p-basepay" placeholder="2250,00"></label>
+      <label>${t('su_inc')}<input type="date" id="p-inc"></label>
+      <label>${t('su_level')}<select id="p-level"><option value="">—</option>${[...Array(16)].map((_,i)=>i).map(l=>`<option>${l}</option>`).join('')}</select></label>
+      <label>${t('su_irpf')}<input type="number" step="0.01" id="p-irpf" value="${s.irpf}"></label>
+      <label>${t('f_contract')}<select id="p-contract">${[100,95,90,85,80,75,70,65,60,55,50].map(p=>`<option value="${p}"${p==s.contract?' selected':''}>${p} %</option>`).join('')}</select></label>
+      <label class="chk"><input type="checkbox" id="p-trainer"${s.isTrainer?' checked':''}> ${t('f_isTrainer')}</label>
+      <label>${t('f_trainerPlus')}<input type="number" step="0.01" id="p-tplus" value="${s.trainerPlus||''}" placeholder="${t('su_tplusPh')}"></label>
+      <div class="wide row"><button class="btn" id="p-save" type="button">${t('su_save')}</button><span id="p-err" class="note"></span></div>
     </div>`;
 }
 function applyPayslip(p){
   const s = state.settings;
-  if(!p.rank || p.level==null){ showMsg('No encuentro la categoría (C-05, D-03…) en esta nómina. Rellena el perfil a mano.', true); return; }
+  if(!p.rank || p.level==null){ showMsg(t('e_noCat'), true); return; }
   s.rank = p.rank; s.level = p.level; s.contract = p.contract || 100;
   if(p.since){ s.levelMode='date'; s.since=p.since; } else s.levelMode='manual';
   s.isTrainer = p.trainerPlus>0; s.trainerPlus = p.trainerPlus||0;
@@ -847,10 +1382,11 @@ function applyPayslip(p){
   if(p.sales>0) s.salesEstimate = PR.r2(p.sales);
   s.configured = true; $('form').dataset.ready=''; save(); render();
   const expected = (PR.BASE[p.rank][p.level]||0) * s.contract/100;
-  const mes = p.period ? new Date(p.period.year,p.period.month-1,1).toLocaleDateString('es-ES',{month:'long',year:'numeric'}) : '';
-  let html = `Perfil leído de tu nómina${mes?' de <b>'+mes+'</b>':''}: <b>${p.rank==='PU'?'sobrecargo':'auxiliar'} nivel ${p.level}</b>${s.contract!==100?' al '+s.contract+' %':''}, IRPF ${n2.format(s.irpf)} %${s.isTrainer?`, plus formación ${eur.format(s.trainerPlus)}`:''}${p.nextIncrease?`. Próxima subida de nivel: ${new Date(p.nextIncrease+'T12:00').toLocaleDateString('es-ES')}`:''}.`;
-  if(p.basePay && Math.abs(p.basePay-expected)>1) html += ` <br>Ojo: tu salario base (${eur.format(p.basePay)}) no coincide con la tabla del convenio (${eur.format(expected)}). Revisa el nivel en Mis datos de contrato.`;
-  if(!Object.keys(state.months).length) html += ' Ahora sube tu roster con <b>＋ PDF</b>.';
+  const mes = p.period ? monthName(p.period.year,p.period.month,{month:'long',year:'numeric'}) : '';
+  let html = t('ps_read',{m: mes?t('ps_of',{m:mes}):'', r: rankName(p.rank), l: p.level, c: s.contract!==100?t('ps_at',{c:s.contract}):'', irpf: n2.format(s.irpf),
+    t: s.isTrainer?t('ps_plus',{v:eur.format(s.trainerPlus)}):'', n: p.nextIncrease?t('ps_next',{d:new Date(p.nextIncrease+'T12:00').toLocaleDateString(LOC)}):''});
+  if(p.basePay && Math.abs(p.basePay-expected)>1) html += ' <br>'+t('ps_mismatch',{a:eur.format(p.basePay),b:eur.format(expected)});
+  if(!Object.keys(state.months).length) html += ' '+t('ps_nowRoster');
   showMsg(html, p.basePay && Math.abs(p.basePay-expected)>1);
 }
 function saveSetup(){
@@ -859,11 +1395,11 @@ function saveSetup(){
   const table = PR.BASE[rank];
   if(pay && inc){
     const full = pay / ((+v('p-contract')||100)/100); let level = table.findIndex(x=>x!=null && Math.abs(x-full)<0.5);
-    if(level<0){ $('p-err').textContent = `${n2.format(pay)} € no aparece en la tabla de ${rank==='PU'?'sobrecargo':'auxiliar'}. Revisa la categoría o elige el nivel a mano.`; return; }
+    if(level<0){ $('p-err').textContent = t('e_notInTable',{v:n2.format(pay),r:rankName(rank)}); return; }
     const d = new Date(inc+'T12:00'); d.setFullYear(d.getFullYear()-level);
     s.levelMode='date'; s.since = d.toISOString().slice(0,10); s.level = level;
   } else if(lv!==''){ s.levelMode='manual'; s.level=+lv; s.since=''; }
-  else { $('p-err').textContent = 'Pon el salario base y la fecha de incremento, o elige el nivel a mano.'; return; }
+  else { $('p-err').textContent = t('e_fill'); return; }
   s.rank = rank; s.irpf = parseFloat(String(v('p-irpf')).replace(',','.'))||0; s.contract = +v('p-contract');
   s.isTrainer = $('p-trainer').checked; s.trainerPlus = s.isTrainer ? (parseFloat(String(v('p-tplus')).replace(',','.'))||0) : 0;
   s.configured = true; $('form').dataset.ready=''; save(); render();
@@ -871,9 +1407,9 @@ function saveSetup(){
 
 function renderStored(){
   const keys = Object.keys(state.months).sort().reverse();
-  $('stored').innerHTML = keys.map(k=>{ const r=state.months[k]; const lbl=new Date(r.year,r.month-1,1).toLocaleDateString('es-ES',{month:'long',year:'numeric'});
+  $('stored').innerHTML = keys.map(k=>{ const r=state.months[k]; const lbl=monthName(r.year,r.month,{month:'long',year:'numeric'});
     return `<div class="row" style="justify-content:space-between"><span style="text-transform:capitalize">${lbl}${r.crew?` · <span class="note">${esc(r.crew)}</span>`:''}</span>
-      <span class="confirm" id="cf-${k}"><button class="btn danger" data-del="${k}" type="button">Borrar</button></span></div>`; }).join('') || '<span class="note">Ningún mes guardado.</span>';
+      <span class="confirm" id="cf-${k}"><button class="btn danger" data-del="${k}" type="button">${t('del')}</button></span></div>`; }).join('') || `<span class="note">${t('noneStored')}</span>`;
 }
 
 // ---- events ----
@@ -881,7 +1417,7 @@ document.addEventListener('click', e=>{
   const go = e.target.closest('[data-go]');
   if(go){ const el = $('d-'+go.dataset.go); if(el){ el.open = true; el.scrollIntoView({behavior: matchMedia('(prefers-reduced-motion: reduce)').matches?'auto':'smooth', block:'center'}); } return; }
   const del = e.target.closest('[data-del]');
-  if(del){ const k=del.dataset.del; $('cf-'+k).innerHTML = `<span class="note">¿Borrar este mes?</span><button class="btn danger" data-delok="${k}" type="button">Sí, borrar</button><button class="btn ghost" data-delno type="button">No</button>`; return; }
+  if(del){ const k=del.dataset.del; $('cf-'+k).innerHTML = `<span class="note">${t('delQ')}</span><button class="btn danger" data-delok="${k}" type="button">${t('delYes')}</button><button class="btn ghost" data-delno type="button">${t('no')}</button>`; return; }
   const ok = e.target.closest('[data-delok]');
   if(ok){ delete state.months[ok.dataset.delok]; state.current = Object.keys(state.months).sort().pop()||null; save(); render(); return; }
   if(e.target.closest('[data-delno]')){ renderStored(); return; }
@@ -894,6 +1430,7 @@ $('prevM').onclick = ()=>{ const k=Object.keys(state.months).sort(); const i=k.i
 $('nextM').onclick = ()=>{ const k=Object.keys(state.months).sort(); const i=k.indexOf(state.current); if(i<k.length-1){state.current=k[i+1]; save(); render();} };
 
 document.addEventListener('change', e=>{
+  if(e.target.id==='f-lang' || e.target.id==='p-lang'){ state.lang = e.target.value; setLang(state.lang); save(); $('form').dataset.ready=''; $('setup').innerHTML=''; $('setup').hidden=true; render(); return; }
   const t = e.target;
   const box = t.closest('.extras');
   if(box && t.dataset.f){
@@ -914,7 +1451,7 @@ document.addEventListener('change', e=>{
 
 // ---- PDF import ----
 const PDFJS = './lib/';
-function loadScript(src){ return new Promise((res,rej)=>{ const s=document.createElement('script'); s.src=src; s.onload=res; s.onerror=()=>rej(new Error('No se pudo cargar el lector de PDF. Comprueba la conexión e inténtalo otra vez.')); document.head.appendChild(s); }); }
+function loadScript(src){ return new Promise((res,rej)=>{ const s=document.createElement('script'); s.src=src; s.onload=res; s.onerror=()=>rej(new Error(t('e_pdfLib'))); document.head.appendChild(s); }); }
 async function readPdf(file){
   if(!window.pdfjsLib){ await loadScript(PDFJS+'pdf.min.js'); pdfjsLib.GlobalWorkerOptions.workerSrc = PDFJS+'pdf.worker.min.js'; }
   const doc = await pdfjsLib.getDocument({data:new Uint8Array(await file.arrayBuffer())}).promise;
@@ -928,7 +1465,7 @@ async function readPdf(file){
 function showMsg(html, err){ const m=$('importMsg'); m.hidden=false; m.className='msg'+(err?' err':''); m.innerHTML=html; }
 $('pdfIn').addEventListener('change', async e=>{
   const f = e.target.files[0]; if(!f) return;
-  showMsg('Leyendo '+esc(f.name)+'…');
+  showMsg(t('reading',{f:esc(f.name)}));
   try{
     const pages = await readPdf(f);
     const slip = PR.parsePayslip(pages[0] ? pages[0].items : []);
@@ -937,8 +1474,8 @@ $('pdfIn').addEventListener('change', async e=>{
     const k = key(ro);
     state.months[k] = ro; state.current = k; save(); render();
     const flights = ro.days.filter(d=>d.events.some(x=>x.type==='flt')).length;
-    showMsg(`Importado <b>${new Date(ro.year,ro.month-1,1).toLocaleDateString('es-ES',{month:'long',year:'numeric'})}</b>: ${ro.days.length} días, ${flights} con vuelo.`);
-  }catch(err){ showMsg(esc(err.message||err), true); }
+    showMsg(t('imported',{m:monthName(ro.year,ro.month,{month:'long',year:'numeric'}),d:ro.days.length,f:flights}));
+  }catch(err){ const m=String(err.message||err); showMsg(/^No encuentro el periodo/.test(m)?t('e_noPeriod'):esc(m), true); }
   e.target.value='';
 });
 
