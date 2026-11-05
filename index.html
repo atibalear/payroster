@@ -191,7 +191,7 @@ details.box[open]>summary::after{content:"–"}
   </section>
 
   <section class="panel">
-    <h2 style="margin-top:0" data-i18n="slipTitle"></h2>
+    <h2 style="margin-top:0" id="slipH"></h2>
     <p class="note" id="slipNote"></p>
     <div class="tablewrap"><table class="slip" id="slip"></table></div>
   </section>
@@ -596,6 +596,7 @@ var PR = (function () {
       uniform: (get('1047')[0] && amt(get('1047')[0])) || null,
       sales: get('5128').reduce((a, c) => a + (amt(c) || 0), 0),
       irpf: (get('/401')[0] && pctOf(get('/401')[0])) || null,
+      net: (() => { const v = under('Importe'); return v && /[\d.]+,\d{2}/.test(v) ? num(v) : null; })(),
       ss: ['/350', '/370', '/380'].map(k => get(k)[0]).filter(Boolean).reduce((a, c) => a + (pctOf(c) || 0), 0) || null
     };
     // derive the anniversary: level L applies from (next increase − 1 year), level 1 from (next increase − L years)
@@ -606,7 +607,23 @@ var PR = (function () {
     return out;
   }
 
-  return { parsePayslip, parseRoster, compute, rates, defaultSettings, levelFor, normRank, classify, DIETA, BASE, hm, r2, ES_AIRPORTS };
+  // ---------- the payslip of a given month, the way Eurowings pays it ----------
+  // Fixed pay (base, trainer/CT allowance, uniform) of that month + variable pay
+  // (hours, per diems, early check-in, extra trainer days, sales) generated in the month before.
+  function payslip(prev, s, year, month) {
+    const lvl = levelFor(s, year, month);
+    const baseSalary = r2((BASE[s.rank][lvl] || 0) * s.contract / 100);
+    const allowBase = s.isTrainer ? +s.tBase : (s.isCT ? +s.ctBase : 0);
+    const uniform = +s.uniform || 0;
+    const v = prev || { hourPay: 0, topUp: 0, early: 0, extraFix: 0, sales: +s.salesEstimate || 0, trainPay: 0, dietasPaid: 0, dietas: 0, tiers: [], dietaCounts: {}, trainDays: 0, ctDays: 0, salesFromDays: false };
+    const allowTotal = r2(allowBase + (v.trainPay || 0));
+    const taxable = r2(baseSalary + allowTotal + uniform + v.hourPay + v.topUp + v.early + v.extraFix + v.sales);
+    const ss = r2(taxable * s.ss / 100), irpf = r2(taxable * s.irpf / 100);
+    return { year, month, level: lvl, baseSalary, allowBase, allowTotal, uniform, prev: prev || null, v,
+      taxable, ss, irpf, dietas: v.dietasPaid, net: r2(taxable - ss - irpf + v.dietasPaid) };
+  }
+
+  return { payslip, parsePayslip, parseRoster, compute, rates, defaultSettings, levelFor, normRank, classify, DIETA, BASE, hm, r2, ES_AIRPORTS };
 })();
 if (typeof module !== 'undefined') module.exports = PR;
 
@@ -617,6 +634,7 @@ var I18N = {
   names: { es: 'Español', ca: 'Català', en: 'English', de: 'Deutsch', fr: 'Français', hu: 'Magyar', sk: 'Slovenčina', cs: 'Čeština' },
   locales: { es: 'es-ES', ca: 'ca-ES', en: 'en-GB', de: 'de-DE', fr: 'fr-FR', hu: 'hu-HU', sk: 'sk-SK', cs: 'cs-CZ' },
   es: {
+    paidIn: 'Se cobra en la nómina de <b>{m}</b>: ≈ {v} netos.', slipOf: 'Nómina de {m}', slipOfSub: 'Como la de Eurowings: sueldo de {m} + horas y dietas de {p}.', needPrev: 'Falta el roster de {p}: sin él solo cuento el sueldo fijo. Súbelo con ＋ PDF.', fixedOf: 'Sueldo fijo de {m}', variableOf: 'Horas y pluses de {p}', deductions: 'SS + IRPF', realSlip: 'Nómina real', difference: 'Diferencia', slipNote2: 'Mismo formato que tu nómina: sueldo base y pluses de {m}; horas, dietas y comisión de {p}. Tarifas por hora: FDP {f} €, adicional {a} €.', ps_saved: 'Guardada la nómina real de {m} para compararla.',
     footer2: 'Plus de trainer y Competence Team según el acuerdo de empresa «Works Agreement Cabin Trainers» (1.1.1.2): 270 € al mes con 1 día incluido, 340 € con 2 días y 105 € por cada día más; Competence Team 80 € con 1 día y 80 € por día más. Si tienes las dos funciones, se cobra una sola vez el plus mensual más alto.',
     ps_ct: ', Competence Team',
     ps_trainer: ', trainer',
@@ -694,6 +712,7 @@ var I18N = {
     e_noPeriod: 'No encuentro el periodo del roster. ¿Es el «Individual duty plan» de IDP en PDF?'
   },
   ca: {
+    paidIn: 'Es cobra a la nòmina de <b>{m}</b>: ≈ {v} nets.', slipOf: 'Nòmina de {m}', slipOfSub: 'Com la d’Eurowings: sou de {m} + hores i dietes de {p}.', needPrev: 'Falta el roster de {p}: sense ell només compto el sou fix. Puja’l amb ＋ PDF.', fixedOf: 'Sou fix de {m}', variableOf: 'Hores i plusos de {p}', deductions: 'SS + IRPF', realSlip: 'Nòmina real', difference: 'Diferència', slipNote2: 'Mateix format que la teva nòmina: sou base i plusos de {m}; hores, dietes i comissió de {p}. Tarifes per hora: FDP {f} €, addicional {a} €.', ps_saved: 'Desada la nòmina real de {m} per comparar-la.',
     footer2: 'Plus de trainer i Competence Team segons l’acord d’empresa «Works Agreement Cabin Trainers» (1.1.1.2): 270 € al mes amb 1 dia inclòs, 340 € amb 2 dies i 105 € per cada dia més; Competence Team 80 € amb 1 dia i 80 € per dia més. Si tens les dues funcions, es cobra una sola vegada el plus mensual més alt.',
     ps_ct: ', Competence Team',
     ps_trainer: ', trainer',
@@ -771,6 +790,7 @@ var I18N = {
     e_noPeriod: 'No trobo el període del roster. És l’«Individual duty plan» d’IDP en PDF?'
   },
   en: {
+    paidIn: 'Paid in the <b>{m}</b> payslip: ≈ {v} net.', slipOf: '{m} payslip', slipOfSub: 'Like Eurowings does it: {m} salary + {p} hours and per diems.', needPrev: 'The {p} roster is missing, so only the fixed pay is counted. Upload it with ＋ PDF.', fixedOf: 'Fixed pay for {m}', variableOf: 'Hours and extras from {p}', deductions: 'Social security + IRPF', realSlip: 'Actual payslip', difference: 'Difference', slipNote2: 'Same layout as your payslip: base salary and allowances for {m}; hours, per diems and commission from {p}. Hourly rates: FDP {f} €, additional {a} €.', ps_saved: 'Saved the actual {m} payslip for comparison.',
     footer2: 'Trainer and Competence Team pay under the Works Agreement Cabin Trainers (1.1.1.2): 270 € a month with 1 day included, 340 € with 2 days and 105 € for each further day; Competence Team 80 € with 1 day and 80 € per further day. With both functions, only the higher monthly allowance is paid, once.',
     ps_ct: ', Competence Team',
     ps_trainer: ', trainer',
@@ -848,6 +868,7 @@ var I18N = {
     e_noPeriod: 'I can’t find the roster period. Is this the IDP “Individual duty plan” PDF?'
   },
   de: {
+    paidIn: 'Wird mit der Abrechnung für <b>{m}</b> bezahlt: ≈ {v} netto.', slipOf: 'Abrechnung {m}', slipOfSub: 'Wie bei Eurowings: Gehalt {m} + Stunden und Spesen aus {p}.', needPrev: 'Der Dienstplan für {p} fehlt, daher zählt nur das Fixgehalt. Mit ＋ PDF hochladen.', fixedOf: 'Fixgehalt {m}', variableOf: 'Stunden und Zulagen aus {p}', deductions: 'SV + IRPF', realSlip: 'Echte Abrechnung', difference: 'Differenz', slipNote2: 'Aufbau wie deine Abrechnung: Grundgehalt und Zulagen für {m}; Stunden, Spesen und Provision aus {p}. Stundensätze: FDP {f} €, zusätzlich {a} €.', ps_saved: 'Echte Abrechnung {m} zum Vergleich gespeichert.',
     footer2: 'Trainer- und Competence-Team-Zulage nach der Betriebsvereinbarung „Works Agreement Cabin Trainers“ (1.1.1.2): 270 € im Monat mit 1 Tag inklusive, 340 € mit 2 Tagen und 105 € für jeden weiteren Tag; Competence Team 80 € mit 1 Tag und 80 € je weiteren Tag. Bei beiden Funktionen wird nur die höhere Monatszulage einmal gezahlt.',
     ps_ct: ', Competence Team',
     ps_trainer: ', Trainer',
@@ -925,6 +946,7 @@ var I18N = {
     e_noPeriod: 'Ich finde den Zeitraum des Dienstplans nicht. Ist das der „Individual duty plan“ aus IDP als PDF?'
   },
   fr: {
+    paidIn: 'Payé sur la fiche de <b>{m}</b> : ≈ {v} net.', slipOf: 'Fiche de paie de {m}', slipOfSub: 'Comme chez Eurowings : salaire de {m} + heures et indemnités de {p}.', needPrev: 'Il manque le planning de {p} : seul le fixe est compté. Importe-le avec ＋ PDF.', fixedOf: 'Fixe de {m}', variableOf: 'Heures et primes de {p}', deductions: 'Sécu + IRPF', realSlip: 'Fiche de paie réelle', difference: 'Écart', slipNote2: 'Même présentation que ta fiche : salaire de base et primes de {m} ; heures, indemnités et commission de {p}. Taux horaires : FDP {f} €, additionnel {a} €.', ps_saved: 'Fiche réelle de {m} enregistrée pour comparaison.',
     footer2: 'Primes formateur et Competence Team selon l’accord d’entreprise « Works Agreement Cabin Trainers » (1.1.1.2) : 270 € par mois avec 1 jour inclus, 340 € avec 2 jours et 105 € par jour supplémentaire ; Competence Team 80 € avec 1 jour et 80 € par jour supplémentaire. Avec les deux fonctions, seule la prime mensuelle la plus élevée est versée, une fois.',
     ps_ct: ', Competence Team',
     ps_trainer: ', formateur',
@@ -1002,6 +1024,7 @@ var I18N = {
     e_noPeriod: 'Je ne trouve pas la période du planning. Est-ce bien l’« Individual duty plan » d’IDP en PDF ?'
   },
   hu: {
+    paidIn: 'A(z) <b>{m}</b> havi bérrel fizetik: ≈ {v} nettó.', slipOf: '{m} havi bérjegyzék', slipOfSub: 'Ahogy a Eurowings számolja: {m} havi bér + {p} órái és napidíjai.', needPrev: 'Hiányzik a(z) {p} beosztás, így csak a fix bért számolom. Töltsd fel a ＋ PDF gombbal.', fixedOf: 'Fix bér ({m})', variableOf: 'Órák és pótlékok ({p})', deductions: 'TB + IRPF', realSlip: 'Valódi bérjegyzék', difference: 'Eltérés', slipNote2: 'Ugyanaz a felépítés, mint a bérjegyzékeden: {m} alapbére és pótlékai; {p} órái, napidíjai és jutaléka. Órabérek: FDP {f} €, kiegészítő {a} €.', ps_saved: 'A valódi {m} havi bérjegyzék elmentve összehasonlításhoz.',
     footer2: 'Tréner- és Competence Team-pótlék a „Works Agreement Cabin Trainers” üzemi megállapodás szerint (1.1.1.2): havi 270 € 1 nappal, 340 € 2 nappal, és minden további napért 105 €; Competence Team 80 € 1 nappal és további naponként 80 €. Mindkét funkció esetén csak a magasabb havi pótlék jár, egyszer.',
     ps_ct: ', Competence Team',
     ps_trainer: ', tréner',
@@ -1079,6 +1102,7 @@ var I18N = {
     e_noPeriod: 'Nem találom a beosztás időszakát. Ez az IDP „Individual duty plan” PDF-je?'
   },
   sk: {
+    paidIn: 'Vyplatí sa vo výplatnej páske za <b>{m}</b>: ≈ {v} v čistom.', slipOf: 'Výplatná páska za {m}', slipOfSub: 'Ako v Eurowings: mzda za {m} + hodiny a diéty za {p}.', needPrev: 'Chýba rozpis za {p}, preto rátam iba pevnú mzdu. Nahraj ho cez ＋ PDF.', fixedOf: 'Pevná mzda za {m}', variableOf: 'Hodiny a príplatky za {p}', deductions: 'Odvody + IRPF', realSlip: 'Skutočná výplatná páska', difference: 'Rozdiel', slipNote2: 'Rovnaká štruktúra ako tvoja páska: základná mzda a príplatky za {m}; hodiny, diéty a provízia za {p}. Hodinové sadzby: FDP {f} €, doplnková {a} €.', ps_saved: 'Skutočná páska za {m} uložená na porovnanie.',
     footer2: 'Trénerský príplatok a Competence Team podľa podnikovej dohody „Works Agreement Cabin Trainers“ (1.1.1.2): 270 € mesačne s 1 dňom, 340 € s 2 dňami a 105 € za každý ďalší deň; Competence Team 80 € s 1 dňom a 80 € za každý ďalší deň. Pri oboch funkciách sa vypláca raz iba vyšší mesačný príplatok.',
     ps_ct: ', Competence Team',
     ps_trainer: ', tréner',
@@ -1156,6 +1180,7 @@ var I18N = {
     e_noPeriod: 'Nenachádzam obdobie rozpisu. Je to „Individual duty plan“ z IDP v PDF?'
   },
   cs: {
+    paidIn: 'Vyplatí se ve výplatní pásce za <b>{m}</b>: ≈ {v} čistého.', slipOf: 'Výplatní páska za {m}', slipOfSub: 'Jako v Eurowings: mzda za {m} + hodiny a diety za {p}.', needPrev: 'Chybí rozpis za {p}, proto počítám jen pevnou mzdu. Nahraj ho přes ＋ PDF.', fixedOf: 'Pevná mzda za {m}', variableOf: 'Hodiny a příplatky za {p}', deductions: 'Odvody + IRPF', realSlip: 'Skutečná výplatní páska', difference: 'Rozdíl', slipNote2: 'Stejná struktura jako tvoje páska: základní mzda a příplatky za {m}; hodiny, diety a provize za {p}. Hodinové sazby: FDP {f} €, doplňková {a} €.', ps_saved: 'Skutečná páska za {m} uložena pro porovnání.',
     footer2: 'Trenérský příplatek a Competence Team podle podnikové dohody „Works Agreement Cabin Trainers“ (1.1.1.2): 270 € měsíčně s 1 dnem, 340 € se 2 dny a 105 € za každý další den; Competence Team 80 € s 1 dnem a 80 € za každý další den. Při obou funkcích se vyplácí jednou jen vyšší měsíční příplatek.',
     ps_ct: ', Competence Team',
     ps_trainer: ', trenér',
@@ -1238,7 +1263,7 @@ var I18N = {
 <script>
 const SEED = null;
 const SEED_SETTINGS = null;
-const APP_VERSION = '2026.11.05-1406';
+const APP_VERSION = '2026.11.05-1744';
 const IS_PWA_BUILD = true;
 const LS = 'payroster.v1';
 const KC = { flight:'--k-flight', deadhead:'--k-dh', training:'--k-train', standby:'--k-sby', reserve:'--k-sby', ground:'--k-ground', off:'--k-off', empty:'--k-off', other:'--k-ground' };
@@ -1280,10 +1305,13 @@ function load(){
   if(!s.settings && SEED_SETTINGS) s.settings = SEED_SETTINGS;
   s.settings = Object.assign(PR.defaultSettings(), s.settings||{});
   if(s.settings.ctCodes==='DT_CT, DT_COMP, CT') s.settings.ctCodes='COMP';
+  if(!s.settings.v2slip){ s.settings.salesEstimate = 0; s.settings.v2slip = true; }
+  s.slips = s.slips || {};
   if(!Object.keys(s.months).length && SEED){ s.months[key(SEED)] = SEED; s.current = key(SEED); }
   if(!s.current || !s.months[s.current]) s.current = Object.keys(s.months).sort().pop();
   return s;
 }
+function prevKey(y,m){ return m===1 ? (y-1)+'-12' : y+'-'+String(m-1).padStart(2,'0'); }
 function save(){ try{ localStorage.setItem(LS, JSON.stringify(state)); }catch(e){} }
 function key(r){ return r.year+'-'+String(r.month).padStart(2,'0'); }
 function todayISO(){ const d=new Date(); return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'); }
@@ -1303,6 +1331,12 @@ function render(){
     w.innerHTML = `${t('rankWarn',{a:rankName(ro.rankNorm),b:rankName(s.rank)})} <button class="btn ghost" id="useRosterRank" type="button" style="margin-left:6px">${t('useRank',{a:rankName(ro.rankNorm)})}</button>`;
   } else w.hidden=true;
   const c = PR.compute(ro, s, state.extras);
+  const pk = prevKey(ro.year, ro.month), roPrev = state.months[pk];
+  const cPrev = roPrev ? PR.compute(roPrev, s, state.extras) : null;
+  const slipNow = PR.payslip(cPrev, s, ro.year, ro.month);           // the payslip of this month
+  const nx = ro.month===12 ? [ro.year+1,1] : [ro.year, ro.month+1];
+  const slipNext = PR.payslip(c, s, nx[0], nx[1]);                     // where this month's work is paid
+  c._slipNow = slipNow; c._slipNext = slipNext; c._prevLoaded = !!roPrev;
   const mDate = new Date(ro.year, ro.month-1, 1);
   $('mLabel').textContent = mDate.toLocaleDateString(LOC,{month:'short',year:'numeric'}).replace('.','');
   renderHero(c, ro); renderStrip(c, ro); renderDays(c, ro); renderSlip(c, ro); renderForm(); renderStored();
@@ -1316,11 +1350,15 @@ function renderHero(c, ro){
   const nextMsg = tierNow===1 ? t('tier1Msg',{h:hhmm(L1-c.T)}) : tierNow===2 ? t('tier2Msg',{h:hhmm(L2-c.T)}) : t('tier3Msg');
   const dc = c.dietaCounts;
   const dietLine = ['intlNight','intlDay','natNight','natDay'].filter(k=>dc[k]).map(k=>t('dc_'+k,{n:dc[k]})).join(' · ') || t('noAway');
+  const P = c._slipNow, N = c._slipNext;
+  const mNow = monthName(ro.year, ro.month), mPrev = monthName(ro.year, ro.month-1), mNext = monthName(ro.year, ro.month+1);
+  const real = (state.slips||{})[key(ro)];
+  const diff = real && real.net!=null ? PR.r2(P.net - real.net) : null;
   $('hero').innerHTML = `
   <div class="panel">
-    <div class="eyebrow">${t('variableIn',{m:monthName(ro.year,ro.month)})}</div>
+    <div class="eyebrow">${t('variableIn',{m:mNow})}</div>
     <div class="big num">${eur0.format(c.variable).replace(/\s?€/,'')}<small>€</small></div>
-    <div class="sub">${t('variableSub')}</div>
+    <div class="sub">${t('paidIn',{m:mNext,v:eur.format(N.net)})}</div>
     <dl class="kv">
       <dt>${t('dutyTime',{h:hhmm(c.T)})}</dt><dd>${eur.format(c.hourPay + c.topUp)}</dd>
       <dt>${t('perDiems')} · ${dietLine}</dt><dd>${eur.format(c.dietasPaid)}</dd>
@@ -1328,23 +1366,27 @@ function renderHero(c, ro){
       ${c.trainDays+c.ctDays>0?`<dt>${t('trainDaysLine',{n:c.trainDays,c:c.ctDays})}</dt><dd>${eur.format(c.trainPay)}</dd>`:''}
       ${c.extraFix?`<dt>${t('daysBought')}</dt><dd>${eur.format(c.extraFix)}</dd>`:''}
       ${c.sales?`<dt>${t('sales')} ${c.salesFromDays?'':t('estimated')}</dt><dd>${eur.format(c.sales)}</dd>`:''}
+      ${c.topUp?`<dt>${t('minGuar')}</dt><dd>+${eur.format(c.topUp)}</dd>`:''}
     </dl>
     <div class="gauge" aria-label="${t('gaugeAria')}">
       <div class="gtrack">${seg(0,L1,'var(--accent)')}${seg(L1,L2,'var(--pay)')}${seg(L2,Infinity,'var(--warn)')}</div>
       <div class="gscale"><span style="left:0;transform:none">0</span><span style="left:${L1/max*100}%">${L1} h</span><span style="left:${L2/max*100}%">${L2} h</span></div>
       <div class="gnote">${nextMsg}</div>
+      <div class="gnote mono">FDP ${hhmm(c.TF)} · ${t('addDuty')} ${hhmm(c.TA)} · Block ${hhmm(c.blockHours)} · ${Math.round(c.r*100)} % FDP</div>
     </div>
   </div>
   <div class="panel">
-    <div class="eyebrow">${t('netTitle')}</div>
-    <div class="netfig num">${eur.format(c.net)}</div>
-    <div class="sub">${t('netSub',{ss:n2.format(state.settings.ss),irpf:n2.format(state.settings.irpf)})}</div>
+    <div class="eyebrow">${t('slipOf',{m:mNow})}</div>
+    <div class="netfig num">${eur.format(P.net)}</div>
+    <div class="sub">${t('slipOfSub',{m:mNow,p:mPrev})}</div>
+    ${c._prevLoaded?'':`<p class="msg err" style="margin:10px 0 0;font-size:13px">${t('needPrev',{p:mPrev})}</p>`}
     <dl class="kv">
-      <dt>FDP</dt><dd class="mono">${hhmm(c.TF)} h</dd>
-      <dt>${t('addDuty')}</dt><dd class="mono">${hhmm(c.TA)} h</dd>
-      <dt>Block</dt><dd class="mono">${hhmm(c.blockHours)} h</dd>
-      <dt>${t('fdpShare')}</dt><dd class="mono">${Math.round(c.r*100)} %</dd>
-      ${c.topUp?`<dt>${t('minGuar')}</dt><dd>+${eur.format(c.topUp)}</dd>`:''}
+      <dt>${t('fixedOf',{m:mNow})}</dt><dd>${eur.format(P.baseSalary+P.allowBase+P.uniform)}</dd>
+      <dt>${t('variableOf',{p:mPrev})}</dt><dd>${eur.format(P.taxable-(P.baseSalary+P.allowBase+P.uniform))}</dd>
+      <dt>${t('deductions')}</dt><dd>−${eur.format(P.ss+P.irpf)}</dd>
+      <dt>${t('perDiems')} (${mPrev})</dt><dd>${eur.format(P.dietas)}</dd>
+      <dt class="tot">${t('slip_net')}</dt><dd class="tot">${eur.format(P.net)}</dd>
+      ${real && real.net!=null?`<dt>${t('realSlip')}</dt><dd>${eur.format(real.net)}</dd><dt>${t('difference')}</dt><dd style="color:${Math.abs(diff)<5?'var(--pay)':'var(--warn)'}">${diff>0?'+':''}${eur.format(diff)}</dd>`:''}
     </dl>
   </div>`;
 }
@@ -1410,33 +1452,37 @@ function renderDays(c, ro){
 }
 
 function renderSlip(c, ro){
-  const s = state.settings, R = c.rates;
+  const s = state.settings, P = c._slipNow, v = P.v, R = (P.prev||c).rates;
+  const mNow = monthName(ro.year, ro.month), mPrev = monthName(ro.year, ro.month-1);
+  $('slipH').textContent = t('slipOf',{m:mNow});
   const rows = [];
   const add = (name, info, val, cls='') => rows.push(`<tr class="${cls}"><td>${name}</td><td>${info||''}</td><td>${val}</td></tr>`);
-  add(t('slip_base',{r:rankName(s.rank),l:c.level}), s.contract!==100?s.contract+' %':'', eur.format(c.baseSalary));
-  if(c.allowTotal) add(t('slip_trainer'), t('slip_trainerInfo',{n:c.trainDays,c:c.ctDays}), eur.format(c.allowTotal));
-  if(+s.uniform) add(t('slip_uniform'),'',eur.format(+s.uniform));
+  add(t('slip_base',{r:rankName(s.rank),l:P.level}), s.contract!==100?s.contract+' %':'', eur.format(P.baseSalary));
+  if(P.allowTotal) add(t('slip_trainer'), P.prev?t('slip_trainerInfo',{n:v.trainDays,c:v.ctDays}):'', eur.format(P.allowTotal));
+  if(P.uniform) add(t('slip_uniform'),'',eur.format(P.uniform));
   const tn = ['<70','70–110','>110'];
-  c.tiers.forEach(tr=>{ if(tr.h<=0) return;
+  (v.tiers||[]).forEach(tr=>{ if(tr.h<=0) return;
     add(t('slip_fdp',{t:tn[tr.i]}), `${n2.format(tr.hF)} h × ${n2.format(tr.rateF)}`, eur.format(tr.payF));
     add(t('slip_add',{t:tn[tr.i]}), `${n2.format(tr.hA)} h × ${n2.format(tr.rateA)}`, eur.format(tr.payA)); });
-  if(c.topUp) add(t('slip_min'),'',eur.format(c.topUp));
-  if(c.early) add('Early check-in', `${c.early/s.earlyCheckin} × ${s.earlyCheckin} €`, eur.format(c.early));
-  if(c.extraFix) add(t('slip_buy'),'',eur.format(c.extraFix));
-  if(c.sales) add(t('slip_sales'), c.salesFromDays?'':t('estimatedW'), eur.format(c.sales));
-  add(`<b>${t('slip_taxable')}</b>`,'',`<b>${eur.format(c.taxable)}</b>`);
-  add(t('slip_ss'), n2.format(s.ss)+' %', '−'+eur.format(c.ss), 'ded');
-  add(t('slip_irpf'), n2.format(s.irpf)+' %', '−'+eur.format(c.irpf), 'ded');
-  const dc=c.dietaCounts;
+  if(v.topUp) add(t('slip_min'),'',eur.format(v.topUp));
+  if(v.early) add('Early check-in', `${v.early/s.earlyCheckin} × ${s.earlyCheckin} €`, eur.format(v.early));
+  if(v.extraFix) add(t('slip_buy'),'',eur.format(v.extraFix));
+  if(v.sales) add(t('slip_sales'), v.salesFromDays?'':t('estimatedW'), eur.format(v.sales));
+  add(`<b>${t('slip_taxable')}</b>`,'',`<b>${eur.format(P.taxable)}</b>`);
+  add(t('slip_ss'), n2.format(s.ss)+' %', '−'+eur.format(P.ss), 'ded');
+  add(t('slip_irpf'), n2.format(s.irpf)+' %', '−'+eur.format(P.irpf), 'ded');
+  const dc=v.dietaCounts||{};
   if(dc.intlNight) add(t('slip_intlNight'), `${dc.intlNight} × ${n2.format(PR.DIETA.intlNight)}`, eur.format(dc.intlNight*PR.DIETA.intlNight), 'ex');
   if(dc.intlDay) add(t('slip_intlDay'), `${dc.intlDay} × ${n2.format(PR.DIETA.intlDay)}`, eur.format(dc.intlDay*PR.DIETA.intlDay), 'ex');
   if(dc.natNight) add(t('slip_natNight'), `${dc.natNight} × ${n2.format(PR.DIETA.natNight)}`, eur.format(dc.natNight*PR.DIETA.natNight), 'ex');
   if(dc.natDay) add(t('slip_natDay'), `${dc.natDay} × ${n2.format(PR.DIETA.natDay)}`, eur.format(dc.natDay*PR.DIETA.natDay), 'ex');
-  if(c.dietasPaid>c.dietas) add(t('slip_minDiet'),'',eur.format(c.dietasPaid-c.dietas),'ex');
-  rows.push(`<tr class="sum"><td>${t('slip_net')}</td><td></td><td>${eur.format(c.net)}</td></tr>`);
+  if(v.dietasPaid>v.dietas) add(t('slip_minDiet'),'',eur.format(v.dietasPaid-v.dietas),'ex');
+  rows.push(`<tr class="sum"><td>${t('slip_net')}</td><td></td><td>${eur.format(P.net)}</td></tr>`);
+  const real = (state.slips||{})[key(ro)];
+  if(real && real.net!=null){ const d=PR.r2(P.net-real.net);
+    rows.push(`<tr><td>${t('realSlip')}</td><td></td><td>${eur.format(real.net)}</td></tr><tr><td>${t('difference')}</td><td></td><td style="color:${Math.abs(d)<5?'var(--pay)':'var(--warn)'}">${d>0?'+':''}${eur.format(d)}</td></tr>`); }
   $('slip').innerHTML = rows.join('');
-  const next = monthName(ro.year, ro.month+1);
-  $('slipNote').innerHTML = t('slipNote',{m:next,f:R.fdp.map(x=>n2.format(x)).join(' / '),a:R.add.map(x=>n2.format(x)).join(' / ')});
+  $('slipNote').innerHTML = (P.prev?'':`<b>${t('needPrev',{p:mPrev})}</b> `) + t('slipNote2',{m:mNow,p:mPrev,f:R.fdp.map(x=>n2.format(x)).join(' / '),a:R.add.map(x=>n2.format(x)).join(' / ')});
 }
 
 function renderForm(){
@@ -1504,13 +1550,14 @@ function applyPayslip(p){
   if(p.uniform) s.uniform = p.uniform;
   if(p.irpf!=null) s.irpf = p.irpf;
   if(p.ss) s.ss = PR.r2(p.ss);
-  if(p.sales>0) s.salesEstimate = PR.r2(p.sales);
+  if(p.period && p.net!=null){ state.slips = state.slips||{}; state.slips[p.period.year+'-'+String(p.period.month).padStart(2,'0')] = { net: p.net }; }
   s.configured = true; $('form').dataset.ready=''; save(); render();
   const expected = (PR.BASE[p.rank][p.level]||0) * s.contract/100;
   const mes = p.period ? monthName(p.period.year,p.period.month,{month:'long',year:'numeric'}) : '';
   let html = t('ps_read',{m: mes?t('ps_of',{m:mes}):'', r: rankName(p.rank), l: p.level, c: s.contract!==100?t('ps_at',{c:s.contract}):'', irpf: n2.format(s.irpf),
     t: s.isTrainer?t('ps_trainer'):(s.isCT?t('ps_ct'):''), n: p.nextIncrease?t('ps_next',{d:new Date(p.nextIncrease+'T12:00').toLocaleDateString(LOC)}):''});
   if(p.basePay && Math.abs(p.basePay-expected)>1) html += ' <br>'+t('ps_mismatch',{a:eur.format(p.basePay),b:eur.format(expected)});
+  if(p.period && p.net!=null) html += ' '+t('ps_saved',{m:mes});
   if(!Object.keys(state.months).length) html += ' '+t('ps_nowRoster');
   showMsg(html, p.basePay && Math.abs(p.basePay-expected)>1);
 }
