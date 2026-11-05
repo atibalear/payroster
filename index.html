@@ -1131,7 +1131,7 @@ var I18N = {
 <script>
 const SEED = null;
 const SEED_SETTINGS = null;
-const APP_VERSION = '2026.11.05-1343';
+const APP_VERSION = '2026.11.05-1348';
 const IS_PWA_BUILD = true;
 const LS = 'payroster.v1';
 const KC = { flight:'--k-flight', deadhead:'--k-dh', training:'--k-train', standby:'--k-sby', reserve:'--k-sby', ground:'--k-ground', off:'--k-off', empty:'--k-off', other:'--k-ground' };
@@ -1443,18 +1443,18 @@ $('nextM').onclick = ()=>{ const k=Object.keys(state.months).sort(); const i=k.i
 
 document.addEventListener('change', e=>{
   if(e.target.id==='f-lang' || e.target.id==='p-lang'){ state.lang = e.target.value; setLang(state.lang); if(IS_PWA_BUILD) $('verTxt').textContent = t('version',{v:APP_VERSION}); save(); $('form').dataset.ready=''; $('setup').innerHTML=''; $('setup').hidden=true; render(); return; }
-  const t = e.target;
-  const box = t.closest('.extras');
-  if(box && t.dataset.f){
+  const el = e.target;
+  const box = el.closest('.extras');
+  if(box && el.dataset.f){
     const d = box.dataset.date; const ex = state.extras[d] = state.extras[d]||{};
-    ex[t.dataset.f] = t.type==='checkbox' ? t.checked : (t.dataset.f==='sales' ? (parseFloat(String(t.value).replace(',','.'))||0) : t.value);
+    ex[el.dataset.f] = el.type==='checkbox' ? el.checked : (el.dataset.f==='sales' ? (parseFloat(String(el.value).replace(',','.'))||0) : el.value);
     save(); render(); return;
   }
-  if(t.id && t.id.startsWith('f-')){
-    const f = t.id.slice(2), s = state.settings;
-    if(t.type==='checkbox') s[f]=t.checked;
-    else if(['level','contract','trainerPlus','uniform','irpf','ss','salesEstimate','earlyCheckin','trainingIncluded','trainingDayPay'].includes(f)) s[f]=parseFloat(String(t.value).replace(',','.'))||0;
-    else s[f]=f==='base'?t.value.toUpperCase().trim():t.value;
+  if(el.id && el.id.startsWith('f-')){
+    const f = el.id.slice(2), s = state.settings;
+    if(el.type==='checkbox') s[f]=el.checked;
+    else if(['level','contract','trainerPlus','uniform','irpf','ss','salesEstimate','earlyCheckin','trainingIncluded','trainingDayPay'].includes(f)) s[f]=parseFloat(String(el.value).replace(',','.'))||0;
+    else s[f]=f==='base'?el.value.toUpperCase().trim():el.value;
     if(f==='base') s.baseSetByUser = true;
     if(['rank','levelMode','isTrainer','since'].includes(f)){ if(f==='rank') s.level=1; $('form').dataset.ready=''; }
     save(); render();
