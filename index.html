@@ -228,7 +228,7 @@ details.box[open]>summary::after{content:"–"}
 // Payroster engine: roster parser + pay rules (Convenio TCP Eurowings Europe, bases España)
 // Pure functions; no DOM. Used by the page and by node tests.
 var PR = (function () {
-  const PARSER_V = 2; // bump when the roster reader changes, so saved months get re-read
+  const PARSER_V = 3; // bump when the roster reader changes, so saved months get re-read
   const MONTHS = { Jan: 1, Feb: 2, Mar: 3, Apr: 4, May: 5, Jun: 6, Jul: 7, Aug: 8, Sep: 9, Oct: 10, Nov: 11, Dec: 12 };
   const ES_AIRPORTS = new Set(('PMI IBZ MAH MAD BCN AGP ALC VLC SVQ BIO SCQ VGO OVD SDR LPA TFS TFN ACE FUE SPC GMZ VDE ' +
     'GRX XRY LEI REU GRO ZAZ VIT PNA LCG MJV RMU VLL SLM LEN BJZ EAS SDR HSK ODB RGS CDT MLN JCU').split(' '));
@@ -478,8 +478,13 @@ var PR = (function () {
       const absence = codes.some(c => absenceSet.has(c));
       // hours
       let F = d.fdp || 0;
-      let DT = d.dtLimit != null ? d.dtLimit : (d.dt || 0);
-      let A = Math.max(0, DT - F);
+      // Additional duty = the day's duty time [DT] minus its FDP (art. 24.5.3 a). The "DT limit" page only
+      // adds what the [DT] bracket leaves out: the 25 % credit of a standby at home. Checked against the
+      // October 2026 payslip: 12:57 h additional, exactly as Eurowings paid it.
+      const isSby = codes.some(c => /^(STBY|SBY)/.test(c));
+      let A;
+      if (d.dt != null) A = Math.max(0, d.dt - F) + (isSby && d.dtLimit != null ? Math.max(0, d.dtLimit - d.dt) : 0);
+      else A = Math.max(0, (d.dtLimit || 0) - F);
       if (absence) { F = 3.5; A = 1.2; }
       // locations
       const startLoc = loc;
@@ -1392,7 +1397,7 @@ var I18N = {
 <script>
 const SEED = null;
 const SEED_SETTINGS = null;
-const APP_VERSION = '2026.11.05-1920';
+const APP_VERSION = '2026.11.05-1959';
 const IS_PWA_BUILD = true;
 const LS = 'payroster.v1';
 const KC = { flight:'--k-flight', deadhead:'--k-dh', training:'--k-train', standby:'--k-sby', reserve:'--k-sby', ground:'--k-ground', off:'--k-off', empty:'--k-off', other:'--k-ground' };
