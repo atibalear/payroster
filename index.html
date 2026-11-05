@@ -140,6 +140,8 @@ input[type=number],input[type=text],select{background:var(--surface);border:1px 
 .sumbox .op{color:var(--muted);font-family:var(--f-mono);margin-right:6px}
 .sumbox .gross{background:var(--pay-soft);color:var(--pay);font-weight:700;padding:6px 8px;border-radius:6px}
 .sumbox dt.gross{border-radius:6px 0 0 6px} .sumbox dd.gross{border-radius:0 6px 6px 0}
+.salesm{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-top:12px;font-size:13px;color:var(--muted);background:var(--sunk);border-radius:8px;padding:8px 10px}
+.salesm input{width:110px;text-align:right}
 .sumbox .netrow{border-top:2px solid var(--pay);padding-top:8px;color:var(--pay);font-weight:800;font-size:17px}
 .slip tr.ded td:nth-child(3){color:var(--warn)}
 .slip tr.ex td:nth-child(3){color:var(--pay)}
@@ -226,9 +228,34 @@ details.box[open]>summary::after{content:"–"}
 // Payroster engine: roster parser + pay rules (Convenio TCP Eurowings Europe, bases España)
 // Pure functions; no DOM. Used by the page and by node tests.
 var PR = (function () {
+  const PARSER_V = 2; // bump when the roster reader changes, so saved months get re-read
   const MONTHS = { Jan: 1, Feb: 2, Mar: 3, Apr: 4, May: 5, Jun: 6, Jul: 7, Aug: 8, Sep: 9, Oct: 10, Nov: 11, Dec: 12 };
   const ES_AIRPORTS = new Set(('PMI IBZ MAH MAD BCN AGP ALC VLC SVQ BIO SCQ VGO OVD SDR LPA TFS TFN ACE FUE SPC GMZ VDE ' +
     'GRX XRY LEI REU GRO ZAZ VIT PNA LCG MJV RMU VLL SLM LEN BJZ EAS SDR HSK ODB RGS CDT MLN JCU').split(' '));
+
+  // ---------- time zones (IDP prints every time in UTC) ----------
+  const TZ = {};
+  const tzList = {
+    'Europe/London': 'LHR LGW STN LTN MAN EDI GLA BHX BRS NCL LPL BFS EMA ABZ',
+    'Europe/Dublin': 'DUB ORK SNN',
+    'Europe/Lisbon': 'LIS OPO FAO FNC PDL',
+    'Atlantic/Canary': 'LPA TFS TFN ACE FUE SPC VDE GMZ',
+    'Europe/Athens': 'ATH HER RHO CFU SKG KGS JTR JMK CHQ ZTH KLX EFL PVK',
+    'Asia/Nicosia': 'LCA PFO', 'Europe/Helsinki': 'HEL', 'Europe/Riga': 'RIX', 'Europe/Vilnius': 'VNO', 'Europe/Tallinn': 'TLL',
+    'Europe/Bucharest': 'OTP', 'Europe/Sofia': 'SOF VAR BOJ', 'Europe/Kiev': 'KBP',
+    'Europe/Istanbul': 'IST SAW AYT ADB DLM BJV ESB', 'Africa/Casablanca': 'RAK AGA CMN TNG FEZ',
+    'Africa/Cairo': 'HRG SSH CAI RMF', 'Asia/Jerusalem': 'TLV', 'Asia/Dubai': 'DXB', 'Atlantic/Reykjavik': 'KEF'
+  };
+  for (const z in tzList) tzList[z].split(' ').forEach(a => TZ[a] = z);
+  const tzOf = st => TZ[st] || 'Europe/Madrid'; // the rest of Europe shares CET/CEST
+  function localHour(dateISO, hhmm, st) {
+    const [y, m, d] = dateISO.split('-').map(Number);
+    const utc = Date.UTC(y, m - 1, d, Math.floor(+hhmm / 100), +hhmm % 100);
+    try {
+      const p = new Intl.DateTimeFormat('en-GB', { timeZone: tzOf(st), hour: '2-digit', minute: '2-digit', hourCycle: 'h23' }).formatToParts(new Date(utc));
+      return +p.find(x => x.type === 'hour').value + (+p.find(x => x.type === 'minute').value) / 60;
+    } catch (e) { return Math.floor(+hhmm / 100) + 1; }
+  }
 
   // ---------- convenio tables ----------
   const BASE = {
@@ -290,7 +317,10 @@ var PR = (function () {
     // The duty detail ends where the summary block ("Flight time", "Crew Information…") starts
     const stop = raw.filter(i => /^(Flight time|Crew Information|Hotels)/.test(i.str.trim()))
       .sort((a, b) => a.page - b.page || a.y - b.y)[0];
-    const all = raw.filter(i => !stop || i.page < stop.page || (i.page === stop.page && i.y < stop.y - 4) || /Period:|Individual duty plan|contract:/.test(i.str));
+    // The summary (flight time, hotels, crew list) can start inside the last day column of a page:
+    // drop only what sits below it in that column, and everything on later pages.
+    const all = raw.filter(i => !stop || i.page < stop.page ||
+      (i.page === stop.page && (i.y < stop.y - 4 || i.x < stop.x - 12)) || /Period:|Individual duty plan|contract:/.test(i.str));
     const text = raw.map(i => i.str).join(' ');
     const per = /Period:\s*(\d{2})([A-Z][a-z]{2})(\d{2})\s*-\s*(\d{2})([A-Z][a-z]{2})(\d{2})/.exec(text);
     if (!per) throw new Error('No encuentro el periodo del roster. ¿Es el "Individual duty plan" de IDP en PDF?');
@@ -400,7 +430,7 @@ var PR = (function () {
       x.date = `${year}-${String(month).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
       out.push(x);
     }
-    return { year, month, crew: nameM ? nameM[1] : '', crewId: nameM ? nameM[2] : '', contract, rank, rankNorm: normRank(rank), base, days: out, summary };
+    return { parser: PARSER_V, year, month, crew: nameM ? nameM[1] : '', crewId: nameM ? nameM[2] : '', contract, rank, rankNorm: normRank(rank), base, days: out, summary };
   }
 
   // ---------- classification ----------
@@ -474,7 +504,11 @@ var PR = (function () {
       // early check-in off base (00:00–05:00 local)
       let early = 0;
       const ci = d.events.find(e => e.type === 'ci' || e.type === 'su');
-      if (ci && ci.st && ci.st !== base && startLoc !== base && ci.t1 && +ci.t1 < 500) early = s.earlyCheckin;
+      // art. 24.9: check-in at a night stop between 00:00 and 05:00 local time
+      if (ci && ci.st && ci.st !== base && startLoc !== base && ci.t1) {
+        const lh = localHour(d.date, ci.t1, ci.st);
+        if (lh >= 0 && lh < 5) early = s.earlyCheckin;
+      }
       const ex = extras[d.date] || {};
       const pct = R.base / 100;
       const extraFix = (ex.buy === 'full' ? 9 * pct : ex.buy === 'half' ? 4.5 * pct : 0) + (ex.omDefer ? 4.5 * pct : 0);
@@ -539,7 +573,9 @@ var PR = (function () {
     // monthly allowance: the higher table entry applies once (trainer 270 € beats competence team 80 €)
     const allowBase = s.isTrainer ? +s.tBase : (s.isCT ? +s.ctBase : 0);
     const salesDays = r2(days.reduce((a, d) => a + d.sales, 0));
-    const sales = salesDays > 0 ? salesDays : (+s.salesEstimate || 0);
+    const mk = roster.year + '-' + String(roster.month).padStart(2, '0');
+    const monthSales = extras[mk] && extras[mk].sales != null && extras[mk].sales !== '' ? +extras[mk].sales : null;
+    const sales = monthSales != null ? monthSales : (salesDays > 0 ? salesDays : (+s.salesEstimate || 0));
     const baseSalary = r2(R.base * s.contract / 100);
     const fixed = r2(baseSalary + allowBase + (+s.uniform || 0));
     const taxable = r2(fixed + hourPay + topUp + early + extraFix + sales + trainPay);
@@ -549,7 +585,7 @@ var PR = (function () {
     const count = k => days.filter(d => d.dietaType === k).length;
     return {
       level: s.level, days, rates: R, TF, TA, T, r, tiers, hourPay: r2(hourPay), minGuarantee, topUp, dietas, dietasPaid, early, extraFix, sales,
-      salesFromDays: salesDays > 0, trainPay, trainDays, ctDays, allowBase, allowTotal: r2(allowBase + trainPay), baseSalary, fixed, taxable, ss, irpf, net,
+      salesFromDays: monthSales != null || salesDays > 0, trainPay, trainDays, ctDays, allowBase, allowTotal: r2(allowBase + trainPay), baseSalary, fixed, taxable, ss, irpf, net,
       variable: r2(hourPay + topUp + dietasPaid + early + extraFix + sales + trainPay),
       dietaCounts: { intlNight: count('intlNight'), intlDay: count('intlDay'), natNight: count('natNight'), natDay: count('natDay') },
       blockHours: days.reduce((a, d) => a + d.legs.filter(l => l.type === 'flt').reduce((b, l) => b + blockLen(l), 0), 0)
@@ -636,7 +672,7 @@ var PR = (function () {
       taxable, ss, irpf, dietas: v.dietasPaid, net: r2(taxable - ss - irpf + v.dietasPaid) };
   }
 
-  return { payslip, parsePayslip, parseRoster, compute, rates, defaultSettings, levelFor, normRank, classify, DIETA, BASE, hm, r2, ES_AIRPORTS };
+  return { PARSER_V, localHour, payslip, parsePayslip, parseRoster, compute, rates, defaultSettings, levelFor, normRank, classify, DIETA, BASE, hm, r2, ES_AIRPORTS };
 })();
 if (typeof module !== 'undefined') module.exports = PR;
 
@@ -647,6 +683,8 @@ var I18N = {
   names: { es: 'Español', ca: 'Català', en: 'English', de: 'Deutsch', fr: 'Français', hu: 'Magyar', sk: 'Slovenčina', cs: 'Čeština' },
   locales: { es: 'es-ES', ca: 'ca-ES', en: 'en-GB', de: 'de-DE', fr: 'fr-FR', hu: 'hu-HU', sk: 'sk-SK', cs: 'cs-CZ' },
   es: {
+    salesMonth: 'Comisión de ventas de {m} €',
+    staleMsg: 'He corregido el lector de rosters. Vuelve a subir el PDF de: {m}. Hasta entonces esos meses pueden salir mal.',
     nextPayHead: 'Cobrarás en la nómina de {m}', nextPaySub: 'Fijo de {m} + lo que generas en {p} con tus vuelos, con SS e IRPF descontados. Llega hacia el día 23 de {m}.', realOnly: 'Nómina real que subiste. Sube el roster de {p} para comprobarla.', needPrev2: 'Para verla, sube el roster de {p} o tu nómina de {m} en PDF.',
     youGet: 'Cobras (neto)',
     netHeadEstSub: 'Fijo y variable de {m}, con SS e IRPF ya descontados. Sube el roster de {p} para ver la nómina exacta de {m}.',
@@ -733,6 +771,8 @@ var I18N = {
     e_noPeriod: 'No encuentro el periodo del roster. ¿Es el «Individual duty plan» de IDP en PDF?'
   },
   ca: {
+    salesMonth: 'Comissió de vendes de {m} €',
+    staleMsg: 'He corregit el lector de rosters. Torna a pujar el PDF de: {m}. Fins llavors aquests mesos poden sortir malament.',
     nextPayHead: 'Cobraràs a la nòmina de {m}', nextPaySub: 'Fix de {m} + el que generes a {p} amb els teus vols, amb SS i IRPF descomptats. Arriba cap al dia 23 de {m}.', realOnly: 'Nòmina real que vas pujar. Puja el roster de {p} per comprovar-la.', needPrev2: 'Per veure-la, puja el roster de {p} o la teva nòmina de {m} en PDF.',
     youGet: 'Cobres (net)',
     netHeadEstSub: 'Fix i variable de {m}, amb SS i IRPF ja descomptats. Puja el roster de {p} per veure la nòmina exacta de {m}.',
@@ -819,6 +859,8 @@ var I18N = {
     e_noPeriod: 'No trobo el període del roster. És l’«Individual duty plan» d’IDP en PDF?'
   },
   en: {
+    salesMonth: 'Sales commission for {m} €',
+    staleMsg: 'The roster reader has been fixed. Please upload the PDF again for: {m}. Until then those months may be wrong.',
     nextPayHead: 'You will get in the {m} payslip', nextPaySub: '{m} fixed pay + what your {p} flying earns, after social security and IRPF. Paid around the 23rd of {m}.', realOnly: 'Actual payslip you uploaded. Upload the {p} roster to check it.', needPrev2: 'To see it, upload the {p} roster or your {m} payslip PDF.',
     youGet: 'You get (net)',
     netHeadEstSub: '{m} fixed and variable pay, after social security and IRPF. Upload the {p} roster to see the exact {m} payslip.',
@@ -905,6 +947,8 @@ var I18N = {
     e_noPeriod: 'I can’t find the roster period. Is this the IDP “Individual duty plan” PDF?'
   },
   de: {
+    salesMonth: 'Verkaufsprovision {m} €',
+    staleMsg: 'Der Dienstplan-Leser wurde korrigiert. Bitte lade das PDF erneut hoch für: {m}. Bis dahin können diese Monate falsch sein.',
     nextPayHead: 'Das bekommst du mit der Abrechnung {m}', nextPaySub: 'Fixgehalt {m} + was deine Flüge im {p} bringen, nach SV und IRPF. Zahlung um den 23. {m}.', realOnly: 'Echte Abrechnung, die du hochgeladen hast. Lade den Dienstplan {p} hoch, um sie zu prüfen.', needPrev2: 'Dafür den Dienstplan {p} oder die Abrechnung {m} als PDF hochladen.',
     youGet: 'Du bekommst (netto)',
     netHeadEstSub: 'Fix und variabel {m}, nach SV und IRPF. Lade den Dienstplan {p} hoch für die genaue Abrechnung {m}.',
@@ -991,6 +1035,8 @@ var I18N = {
     e_noPeriod: 'Ich finde den Zeitraum des Dienstplans nicht. Ist das der „Individual duty plan“ aus IDP als PDF?'
   },
   fr: {
+    salesMonth: 'Commission ventes de {m} €',
+    staleMsg: 'Le lecteur de planning a été corrigé. Importe à nouveau le PDF de : {m}. D’ici là, ces mois peuvent être faux.',
     nextPayHead: 'Tu toucheras sur la fiche de {m}', nextPaySub: 'Fixe de {m} + ce que tes vols de {p} rapportent, après sécu et IRPF. Versé vers le 23 {m}.', realOnly: 'Fiche de paie réelle importée. Importe le planning de {p} pour la vérifier.', needPrev2: 'Pour la voir, importe le planning de {p} ou ta fiche de {m} en PDF.',
     youGet: 'Tu touches (net)',
     netHeadEstSub: 'Fixe et variable de {m}, après sécu et IRPF. Importe le planning de {p} pour voir la fiche exacte de {m}.',
@@ -1077,6 +1123,8 @@ var I18N = {
     e_noPeriod: 'Je ne trouve pas la période du planning. Est-ce bien l’« Individual duty plan » d’IDP en PDF ?'
   },
   hu: {
+    salesMonth: 'Értékesítési jutalék ({m}) €',
+    staleMsg: 'Javítottam a beosztásolvasót. Töltsd fel újra a PDF-et: {m}. Addig ezek a hónapok hibásak lehetnek.',
     nextPayHead: 'Ennyit kapsz a(z) {m} havi bérrel', nextPaySub: '{m} fix bére + amit {p} repüléseivel keresel, TB és IRPF levonása után. Kifizetés {m} 23. körül.', realOnly: 'A feltöltött valódi bérjegyzék. Töltsd fel a(z) {p} beosztást az ellenőrzéshez.', needPrev2: 'Ehhez töltsd fel a(z) {p} beosztást vagy a(z) {m} havi bérjegyzéket PDF-ben.',
     youGet: 'Ennyit kapsz (nettó)',
     netHeadEstSub: '{m} fix és változó része, TB és IRPF levonása után. Töltsd fel a(z) {p} beosztást a pontos {m} havi bérhez.',
@@ -1163,6 +1211,8 @@ var I18N = {
     e_noPeriod: 'Nem találom a beosztás időszakát. Ez az IDP „Individual duty plan” PDF-je?'
   },
   sk: {
+    salesMonth: 'Provízia z predaja za {m} €',
+    staleMsg: 'Opravil som čítačku rozpisov. Nahraj znova PDF za: {m}. Dovtedy môžu byť tieto mesiace nesprávne.',
     nextPayHead: 'Dostaneš vo výplate za {m}', nextPaySub: 'Pevná mzda za {m} + čo zarobíš letmi v {p}, po odvodoch a IRPF. Vyplatí sa okolo 23. {m}.', realOnly: 'Skutočná páska, ktorú si nahral. Nahraj rozpis za {p} na kontrolu.', needPrev2: 'Na zobrazenie nahraj rozpis za {p} alebo výplatnú pásku za {m} v PDF.',
     youGet: 'Dostaneš (v čistom)',
     netHeadEstSub: 'Pevná a pohyblivá zložka za {m}, po odvodoch a IRPF. Nahraj rozpis za {p} pre presnú výplatu za {m}.',
@@ -1249,6 +1299,8 @@ var I18N = {
     e_noPeriod: 'Nenachádzam obdobie rozpisu. Je to „Individual duty plan“ z IDP v PDF?'
   },
   cs: {
+    salesMonth: 'Provize z prodeje za {m} €',
+    staleMsg: 'Opravil jsem čtečku rozpisů. Nahraj znovu PDF za: {m}. Do té doby mohou být tyto měsíce špatně.',
     nextPayHead: 'Dostaneš ve výplatě za {m}', nextPaySub: 'Pevná mzda za {m} + co vyděláš lety v {p}, po odvodech a IRPF. Vyplatí se kolem 23. {m}.', realOnly: 'Skutečná páska, kterou jsi nahrál. Nahraj rozpis za {p} pro kontrolu.', needPrev2: 'Pro zobrazení nahraj rozpis za {p} nebo výplatní pásku za {m} v PDF.',
     youGet: 'Dostaneš (čistého)',
     netHeadEstSub: 'Pevná a pohyblivá složka za {m}, po odvodech a IRPF. Nahraj rozpis za {p} pro přesnou výplatu za {m}.',
@@ -1340,7 +1392,7 @@ var I18N = {
 <script>
 const SEED = null;
 const SEED_SETTINGS = null;
-const APP_VERSION = '2026.11.05-1914';
+const APP_VERSION = '2026.11.05-1920';
 const IS_PWA_BUILD = true;
 const LS = 'payroster.v1';
 const KC = { flight:'--k-flight', deadhead:'--k-dh', training:'--k-train', standby:'--k-sby', reserve:'--k-sby', ground:'--k-ground', off:'--k-off', empty:'--k-off', other:'--k-ground' };
@@ -1386,11 +1438,18 @@ function load(){
   if(!s.settings.v2slip){ s.settings.salesEstimate = 0; s.settings.v2slip = true; }
   s.slips = s.slips || {};
   if(!Object.keys(s.months).length && SEED){ s.months[key(SEED)] = SEED; s.current = key(SEED); }
+  s.stale = [];
+  for(const k of Object.keys(s.months)){
+    const m = s.months[k];
+    if(m.parser === PR.PARSER_V) continue;
+    if(m.raw){ try{ const r = PR.parseRoster(m.raw.map(p=>({items:p.map(([x,y,str])=>({x,y,str}))}))); r.raw = m.raw; s.months[k] = r; }catch(e){} }
+    else if(!(SEED && k===key(SEED))) s.stale.push(k);
+  }
   if(!s.current || !s.months[s.current]) s.current = Object.keys(s.months).sort().pop();
   return s;
 }
 function prevKey(y,m){ return m===1 ? (y-1)+'-12' : y+'-'+String(m-1).padStart(2,'0'); }
-function save(){ try{ localStorage.setItem(LS, JSON.stringify(state)); }catch(e){} }
+function save(){ try{ const {stale, ...keep} = state; localStorage.setItem(LS, JSON.stringify(keep)); }catch(e){} }
 function key(r){ return r.year+'-'+String(r.month).padStart(2,'0'); }
 function todayISO(){ const d=new Date(); return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'); }
 
@@ -1432,7 +1491,7 @@ function renderHero(c, ro){
   const P = c._slipNow, N = c._slipNext, ok = c._prevLoaded;
   const mNow = monthName(ro.year, ro.month), mPrev = monthName(ro.year, ro.month-1), mNext = monthName(ro.year, ro.month+1);
   const slips = state.slips||{};
-  const realNow = slips[key(ro)], realNext = slips[c._nextKey];
+  const realNow = slips[key(ro)], realNext = slips[c._nextKey], pk = prevKey(ro.year, ro.month);
   const cmp = (calc, real) => { if(!real || real.net==null) return ''; const d = PR.r2(calc - real.net);
     return `<dt>${t('realSlip')}</dt><dd>${eur.format(real.net)}</dd><dt>${t('difference')}</dt><dd style="color:${Math.abs(d)<5?'var(--pay)':'var(--warn)'}">${d>0?'+':''}${eur.format(d)}</dd>`; };
   $('hero').innerHTML = `
@@ -1448,6 +1507,7 @@ function renderHero(c, ro){
       <dt class="netrow"><span class="op">=</span>${t('youGet')}</dt><dd class="netrow">${eur.format(N.net)}</dd>
       ${cmp(N.net, realNext)}
     </dl>
+    <label class="salesm">${t('salesMonth',{m:mNow})}<input type="text" inputmode="decimal" id="ms-${key(ro)}" data-msales="${key(ro)}" value="${(state.extras[key(ro)]||{}).sales ?? ''}" placeholder="0,00"></label>
     <div class="eyebrow" style="margin-top:16px">${t('variableOf',{p:mNow})}</div>
     <dl class="kv">
       <dt>${t('dutyTime',{h:hhmm(c.T)})}</dt><dd>${eur.format(c.hourPay + c.topUp)}</dd>
@@ -1477,7 +1537,8 @@ function renderHero(c, ro){
         <dt><span class="op">−</span>${t('deductions')}</dt><dd>${eur.format(P.ss+P.irpf)}</dd>
         <dt class="netrow"><span class="op">=</span>${t('youGet')}</dt><dd class="netrow">${eur.format(P.net)}</dd>
         ${cmp(P.net, realNow)}
-      </dl>`
+      </dl>
+      <label class="salesm">${t('salesMonth',{m:mPrev})}<input type="text" inputmode="decimal" id="ms-${pk}" data-msales="${pk}" value="${(state.extras[pk]||{}).sales ?? ''}" placeholder="0,00"></label>`
     : realNow && realNow.net!=null ? `
       <div class="netfig num">${eur.format(realNow.net)}</div>
       <div class="sub">${t('realOnly',{p:mPrev})}</div>`
@@ -1705,6 +1766,8 @@ $('nextM').onclick = ()=>{ const k=Object.keys(state.months).sort(); const i=k.i
 document.addEventListener('change', e=>{
   if(e.target.id==='f-lang' || e.target.id==='p-lang'){ state.lang = e.target.value; setLang(state.lang); if(IS_PWA_BUILD) $('verTxt').textContent = t('version',{v:APP_VERSION}); save(); $('form').dataset.ready=''; $('setup').innerHTML=''; $('setup').hidden=true; render(); return; }
   const el = e.target;
+  if(el.dataset.msales){ const k = el.dataset.msales; const v = String(el.value).trim();
+    state.extras[k] = state.extras[k]||{}; state.extras[k].sales = v==='' ? null : (parseFloat(v.replace(',','.'))||0); save(); render(); return; }
   const box = el.closest('.extras');
   if(box && el.dataset.f){
     const d = box.dataset.date; const ex = state.extras[d] = state.extras[d]||{};
@@ -1744,8 +1807,9 @@ $('pdfIn').addEventListener('change', async e=>{
     const slip = PR.parsePayslip(pages[0] ? pages[0].items : []);
     if(slip){ applyPayslip(slip); e.target.value=''; return; }
     const ro = PR.parseRoster(pages);
+    ro.raw = pages.map(p => p.items.map(i => [Math.round(i.x*10)/10, Math.round(i.y*10)/10, i.str]));
     const k = key(ro);
-    state.months[k] = ro; state.current = k; save(); render();
+    state.months[k] = ro; state.current = k; if(state.stale) state.stale = state.stale.filter(x=>x!==k); save(); render();
     const flights = ro.days.filter(d=>d.events.some(x=>x.type==='flt')).length;
     showMsg(t('imported',{m:monthName(ro.year,ro.month,{month:'long',year:'numeric'}),d:ro.days.length,f:flights}));
   }catch(err){ const m=String(err.message||err); showMsg(/^No encuentro el periodo/.test(m)?t('e_noPeriod'):esc(m), true); }
@@ -1753,6 +1817,7 @@ $('pdfIn').addEventListener('change', async e=>{
 });
 
 render();
+if(state.stale && state.stale.length) showMsg(t('staleMsg',{m:state.stale.map(k=>{const [y,m]=k.split('-');return monthName(+y,+m,{month:'long',year:'numeric'});}).join(', ')}), true);
 // ---- updates (installed webapp) ----
 async function latestVersion(){
   const r = await fetch('version.json?t='+Date.now(), {cache:'no-store'});
