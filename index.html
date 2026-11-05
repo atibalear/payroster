@@ -155,7 +155,12 @@ details.box[open]>summary::after{content:"–"}
 .form{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:12px;margin-top:14px}
 .form label{display:flex;flex-direction:column;gap:4px;font-size:12.5px;color:var(--muted)}
 .form label.chk{flex-direction:row;align-items:center;color:var(--ink);font-size:13.5px}
-.form input,.form select{width:100%}
+.form input,.form select{width:100%;min-width:0}
+.form label.chk{grid-column:1/-1;flex-direction:row;align-items:center;gap:10px;color:var(--ink);font-size:14px;padding-block:4px;cursor:pointer}
+.form label.chk input{width:20px;height:20px;flex:none;margin:0;accent-color:var(--accent)}
+/* Safari (iPad/iPhone) draws an empty date field as a grey pill with no height */
+input[type=date]{-webkit-appearance:none;appearance:none;display:block;min-height:36px;line-height:1.3;text-align:left;background:var(--surface);border:1px solid var(--line);border-radius:6px;padding:5px 7px;font-size:14px;color:var(--ink)}
+input[type=date]::-webkit-date-and-time-value{text-align:left}
 .form .wide{grid-column:1/-1}
 .btn{border:0;border-radius:8px;background:var(--accent);color:var(--surface);padding:9px 14px;font-weight:600;cursor:pointer}
 .btn.ghost{background:transparent;color:var(--ink);border:1px solid var(--line)}
@@ -1397,7 +1402,7 @@ var I18N = {
 <script>
 const SEED = null;
 const SEED_SETTINGS = null;
-const APP_VERSION = '2026.11.05-1959';
+const APP_VERSION = '2026.11.05-2011';
 const IS_PWA_BUILD = true;
 const LS = 'payroster.v1';
 const KC = { flight:'--k-flight', deadhead:'--k-dh', training:'--k-train', standby:'--k-sby', reserve:'--k-sby', ground:'--k-ground', off:'--k-off', empty:'--k-off', other:'--k-ground' };
