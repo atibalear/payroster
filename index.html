@@ -285,7 +285,7 @@ var PR = (function () {
       salesEstimate: 0, minDietas: false,
       absenceCodes: 'U, UL, URL, VAC, SICK, KRANK, PERM, PR',
       earlyCheckin: 30,
-      trainingCodes: 'DT_TRNG, CATR, CAB_K', ctCodes: 'COMP',
+      trainingCodes: 'DT_TRNG, CATR, CAB_K', joined: '', fiscalAid: 500, ctCodes: 'COMP',
       // Works Agreement Cabin Trainers (Eurowings Europe Spain), 1.1.1.2
       tBase: 270, tTwo: 340, tExtra: 105, ctBase: 80, ctExtra: 80
     };
@@ -698,6 +698,7 @@ var PR = (function () {
       uniform: (get('1047')[0] && amt(get('1047')[0])) || null,
       sales: get('5128').reduce((a, c) => a + (amt(c) || 0), 0),
       irpf: (get('/401')[0] && pctOf(get('/401')[0])) || null,
+      joined: (() => { const v = under('Antigüedad') || under('Antiguedad'); const m = v && /(\d{2})\/(\d{2})\/(\d{4})/.exec(v); return m ? `${m[3]}-${m[2]}-${m[1]}` : null; })(),
       net: (() => { const v = under('Importe'); return v && /[\d.]+,\d{2}/.test(v) ? num(v) : null; })(),
       ss: ['/350', '/370', '/380'].map(k => get(k)[0]).filter(Boolean).reduce((a, c) => a + (pctOf(c) || 0), 0) || null
     };
@@ -721,11 +722,18 @@ var PR = (function () {
     const allowTotal = r2(allowBase + (v.trainPay || 0));
     const taxable = r2(baseSalary + allowTotal + uniform + v.hourPay + v.topUp + v.early + v.extraFix + v.sales);
     const ss = r2(taxable * s.ss / 100), irpf = r2(taxable * s.irpf / 100);
-    const fixed = r2(baseSalary + allowBase + uniform);
-    const variable = r2(taxable - fixed + v.dietasPaid);         // hours, extras and per diems of the month before
-    return { year, month, level: lvl, baseSalary, allowBase, allowTotal, uniform, prev: prev || null, v,
-      fixed, variable, gross: r2(fixed + variable),
-      taxable, ss, irpf, dietas: v.dietasPaid, net: r2(taxable - ss - irpf + v.dietasPaid) };
+    // December: "Ayuda asesoramiento fiscal" for crew with seniority before 01/01/2023. No social
+    // security and outside the normal IRPF base, but with its own "Ingreso a cuenta IRPF" at the
+    // same rate (December 2025 payslip: 500,00 − 77,80 at 15,56 %).
+    const fiscalAid = (month === 12 && s.joined && s.joined < '2023-01-01') ? (+s.fiscalAid || 0) : 0;
+    const ingresoCta = r2(fiscalAid * s.irpf / 100);
+    const fixedPay = r2(baseSalary + allowBase + uniform);
+    const fixed = r2(fixedPay + fiscalAid);
+    const variable = r2(taxable - fixedPay + v.dietasPaid);      // hours, extras and per diems of the month before
+    const ded = r2(ss + irpf + ingresoCta);
+    return { year, month, level: lvl, baseSalary, allowBase, allowTotal, uniform, fiscalAid, ingresoCta, prev: prev || null, v,
+      fixed, variable, gross: r2(fixed + variable), ded,
+      taxable, ss, irpf, dietas: v.dietasPaid, net: r2(taxable - ss - irpf + v.dietasPaid + fiscalAid - ingresoCta) };
   }
 
   return { PARSER_V, localHour, payslip, parsePayslip, parseRoster, compute, rates, defaultSettings, levelFor, normRank, classify, DIETA, BASE, hm, r2, ES_AIRPORTS };
@@ -739,6 +747,7 @@ var I18N = {
   names: { es: 'Español', ca: 'Català', en: 'English', de: 'Deutsch', fr: 'Français', hu: 'Magyar', sk: 'Slovenčina', cs: 'Čeština' },
   locales: { es: 'es-ES', ca: 'ca-ES', en: 'en-GB', de: 'de-DE', fr: 'fr-FR', hu: 'hu-HU', sk: 'sk-SK', cs: 'cs-CZ' },
   es: {
+    slip_fiscalAid: 'Ayuda asesoramiento fiscal', slip_ingCta: 'Ingreso a cuenta IRPF', f_joined: 'Antigüedad (fecha en tu nómina) — antes del 01/01/2023: +500 € cada diciembre',
     buyFullWhy: 'firma {h} en base, antes de las 16:00', buyHalfLate: 'firma {h}, después de las 16:00', buyHalfEarly: 'termina {h}, antes de las 08:00', rateNote: 'El €/h de cada día es el del tramo en el que caen sus horas. El convenio (art. 24.5.1 d) mezcla en cada tramo la tarifa FDP y la de adicional según la proporción FDP/adicional del mes, así que una hora adicional en tramo 3 vale más que la tarifa de adicional sola. El total del mes es el mismo que en la nómina.',
     buyAuto: 'Automático: {v}',
     salesMonth: 'Comisión de ventas de {m} €',
@@ -829,6 +838,7 @@ var I18N = {
     e_noPeriod: 'No encuentro el periodo del roster. ¿Es el «Individual duty plan» de IDP en PDF?'
   },
   ca: {
+    slip_fiscalAid: 'Ajuda assessorament fiscal', slip_ingCta: 'Ingrés a compte IRPF', f_joined: 'Antiguitat (data a la nòmina) — abans de l’01/01/2023: +500 € cada desembre',
     buyFullWhy: 'signatura {h} a la base, abans de les 16:00', buyHalfLate: 'signatura {h}, després de les 16:00', buyHalfEarly: 'acaba {h}, abans de les 08:00', rateNote: 'El €/h de cada dia és el del tram on cauen les seves hores. El conveni (art. 24.5.1 d) barreja a cada tram la tarifa FDP i la d’addicional segons la proporció FDP/addicional del mes, així que una hora addicional al tram 3 val més que la tarifa d’addicional sola. El total del mes és el mateix que a la nòmina.',
     buyAuto: 'Automàtic: {v}',
     salesMonth: 'Comissió de vendes de {m} €',
@@ -919,6 +929,7 @@ var I18N = {
     e_noPeriod: 'No trobo el període del roster. És l’«Individual duty plan» d’IDP en PDF?'
   },
   en: {
+    slip_fiscalAid: 'Tax advice allowance (Ayuda asesoramiento fiscal)', slip_ingCta: 'IRPF payment on account (Ingreso a cuenta)', f_joined: 'Seniority date (Antigüedad on your payslip) — before 01/01/2023: +500 € every December',
     buyFullWhy: 'check-in {h} at base, before 16:00', buyHalfLate: 'check-in {h}, after 16:00', buyHalfEarly: 'ends {h}, before 08:00', rateNote: 'Each day’s €/h is the rate of the tier its hours fall in. The CLA (art. 24.5.1 d) blends the FDP and additional-duty rates in every tier by the month’s FDP/additional ratio, so an additional-duty hour in tier 3 is worth more than the additional rate alone. The month total matches the payslip.',
     buyAuto: 'Automatic: {v}',
     salesMonth: 'Sales commission for {m} €',
@@ -1009,6 +1020,7 @@ var I18N = {
     e_noPeriod: 'I can’t find the roster period. Is this the IDP “Individual duty plan” PDF?'
   },
   de: {
+    slip_fiscalAid: 'Steuerberatungszuschuss (Ayuda asesoramiento fiscal)', slip_ingCta: 'IRPF-Vorauszahlung (Ingreso a cuenta)', f_joined: 'Betriebszugehörigkeit (Antigüedad in der Abrechnung) — vor 01.01.2023: +500 € jeden Dezember',
     buyFullWhy: 'Check-in {h} an der Basis, vor 16:00', buyHalfLate: 'Check-in {h}, nach 16:00', buyHalfEarly: 'Ende {h}, vor 08:00', rateNote: 'Der €/h-Wert jedes Tages ist der Satz der Stufe, in die seine Stunden fallen. Der Tarifvertrag (Art. 24.5.1 d) mischt in jeder Stufe FDP- und Zusatzsatz nach dem FDP/Zusatz-Verhältnis des Monats, daher ist eine Zusatzstunde in Stufe 3 mehr wert als der reine Zusatzsatz. Die Monatssumme entspricht der Abrechnung.',
     buyAuto: 'Automatisch: {v}',
     salesMonth: 'Verkaufsprovision {m} €',
@@ -1099,6 +1111,7 @@ var I18N = {
     e_noPeriod: 'Ich finde den Zeitraum des Dienstplans nicht. Ist das der „Individual duty plan“ aus IDP als PDF?'
   },
   fr: {
+    slip_fiscalAid: 'Aide conseil fiscal (Ayuda asesoramiento fiscal)', slip_ingCta: 'Acompte IRPF (Ingreso a cuenta)', f_joined: 'Ancienneté (Antigüedad sur ta fiche) — avant le 01/01/2023 : +500 € chaque décembre',
     buyFullWhy: 'check-in {h} à la base, avant 16:00', buyHalfLate: 'check-in {h}, après 16:00', buyHalfEarly: 'fin {h}, avant 08:00', rateNote: 'Le €/h de chaque jour est le taux du palier où tombent ses heures. La convention (art. 24.5.1 d) mélange dans chaque palier le taux FDP et le taux additionnel selon la proportion FDP/additionnel du mois : une heure additionnelle au palier 3 vaut donc plus que le seul taux additionnel. Le total du mois est celui de la fiche de paie.',
     buyAuto: 'Automatique : {v}',
     salesMonth: 'Commission ventes de {m} €',
@@ -1189,6 +1202,7 @@ var I18N = {
     e_noPeriod: 'Je ne trouve pas la période du planning. Est-ce bien l’« Individual duty plan » d’IDP en PDF ?'
   },
   hu: {
+    slip_fiscalAid: 'Adótanácsadási támogatás (Ayuda asesoramiento fiscal)', slip_ingCta: 'IRPF-előleg (Ingreso a cuenta)', f_joined: 'Szolgálati idő kezdete (Antigüedad a bérjegyzéken) — 2023.01.01. előtt: +500 € minden decemberben',
     buyFullWhy: 'check-in {h} a bázison, 16:00 előtt', buyHalfLate: 'check-in {h}, 16:00 után', buyHalfEarly: 'vége {h}, 08:00 előtt', rateNote: 'Az egyes napok €/óra értéke annak a sávnak a díja, amelyikbe az órái esnek. A szerződés (24.5.1 d) minden sávban a hónap FDP/kiegészítő aránya szerint keveri az FDP- és a kiegészítő díjat, ezért egy kiegészítő óra a 3. sávban többet ér, mint a kiegészítő díj önmagában. A havi összeg megegyezik a bérjegyzékkel.',
     buyAuto: 'Automatikus: {v}',
     salesMonth: 'Értékesítési jutalék ({m}) €',
@@ -1279,6 +1293,7 @@ var I18N = {
     e_noPeriod: 'Nem találom a beosztás időszakát. Ez az IDP „Individual duty plan” PDF-je?'
   },
   sk: {
+    slip_fiscalAid: 'Príspevok na daňové poradenstvo (Ayuda asesoramiento fiscal)', slip_ingCta: 'Preddavok IRPF (Ingreso a cuenta)', f_joined: 'Odpracované od (Antigüedad na páske) — pred 01.01.2023: +500 € každý december',
     buyFullWhy: 'check-in {h} na základni, pred 16:00', buyHalfLate: 'check-in {h}, po 16:00', buyHalfEarly: 'koniec {h}, pred 08:00', rateNote: '€/h pri každom dni je sadzba pásma, do ktorého padnú jeho hodiny. Zmluva (čl. 24.5.1 d) v každom pásme mieša sadzbu FDP a doplnkovú podľa pomeru FDP/doplnková za mesiac, takže doplnková hodina v pásme 3 má vyššiu hodnotu než samotná doplnková sadzba. Súčet za mesiac sa zhoduje s páskou.',
     buyAuto: 'Automaticky: {v}',
     salesMonth: 'Provízia z predaja za {m} €',
@@ -1369,6 +1384,7 @@ var I18N = {
     e_noPeriod: 'Nenachádzam obdobie rozpisu. Je to „Individual duty plan“ z IDP v PDF?'
   },
   cs: {
+    slip_fiscalAid: 'Příspěvek na daňové poradenství (Ayuda asesoramiento fiscal)', slip_ingCta: 'Záloha IRPF (Ingreso a cuenta)', f_joined: 'Odpracováno od (Antigüedad na pásce) — před 01.01.2023: +500 € každý prosinec',
     buyFullWhy: 'check-in {h} na základně, před 16:00', buyHalfLate: 'check-in {h}, po 16:00', buyHalfEarly: 'konec {h}, před 08:00', rateNote: '€/h u každého dne je sazba pásma, do kterého padnou jeho hodiny. Smlouva (čl. 24.5.1 d) v každém pásmu míchá sazbu FDP a doplňkovou podle poměru FDP/doplňková za měsíc, takže doplňková hodina v pásmu 3 má vyšší hodnotu než samotná doplňková sazba. Součet za měsíc odpovídá pásce.',
     buyAuto: 'Automaticky: {v}',
     salesMonth: 'Provize z prodeje za {m} €',
@@ -1464,7 +1480,7 @@ var I18N = {
 <script>
 const SEED = null;
 const SEED_SETTINGS = null;
-const APP_VERSION = '2026.11.06-1505';
+const APP_VERSION = '2026.11.06-1646';
 const IS_PWA_BUILD = true;
 const LS = 'payroster.v1';
 const KC = { flight:'--k-flight', deadhead:'--k-dh', training:'--k-train', standby:'--k-sby', reserve:'--k-sby', ground:'--k-ground', off:'--k-off', empty:'--k-off', other:'--k-ground' };
@@ -1500,7 +1516,7 @@ let state = load();
 setLang(state.lang || detectLang());
 function load(){
   let s=null; try{ s = JSON.parse(localStorage.getItem(LS)||'null'); }catch(e){}
-  if(!s || !s.months) s = { months:{}, extras:{}, settings: SEED_SETTINGS || PR.defaultSettings(), current:null, example:true };
+  if(!s || !s.months) s = { months:{}, extras:{}, settings: (s && s.settings) || SEED_SETTINGS || PR.defaultSettings(), current:null, example:true, lang: s && s.lang };
   if(s.settings && s.settings.configured===undefined){ // profile saved before profiles existed
     s.settings.configured = true; s.settings.isTrainer = +s.settings.trainerPlus>0; s.settings.levelMode = 'manual';
   }
@@ -1576,7 +1592,7 @@ function renderHero(c, ro){
       <dt><span class="op"> </span>${t('fixedOf',{m:mNext})}</dt><dd>${eur.format(N.fixed)}</dd>
       <dt><span class="op">+</span>${t('variableOf',{p:mNow})}</dt><dd>${eur.format(N.variable)}</dd>
       <dt><span class="op">=</span>${t('grossTotal')}</dt><dd>${eur.format(N.gross)}</dd>
-      <dt><span class="op">−</span>${t('deductions')}</dt><dd>${eur.format(N.ss+N.irpf)}</dd>
+      <dt><span class="op">−</span>${t('deductions')}</dt><dd>${eur.format(N.ded)}</dd>
       <dt class="netrow"><span class="op">=</span>${t('youGet')}</dt><dd class="netrow">${eur.format(N.net)}</dd>
       ${cmp(N.net, realNext)}
     </dl>
@@ -1607,7 +1623,7 @@ function renderHero(c, ro){
         <dt><span class="op"> </span>${t('fixedOf',{m:mNow})}</dt><dd>${eur.format(P.fixed)}</dd>
         <dt><span class="op">+</span>${t('variableOf',{p:mPrev})}</dt><dd>${eur.format(P.variable)}</dd>
         <dt><span class="op">=</span>${t('grossTotal')}</dt><dd>${eur.format(P.gross)}</dd>
-        <dt><span class="op">−</span>${t('deductions')}</dt><dd>${eur.format(P.ss+P.irpf)}</dd>
+        <dt><span class="op">−</span>${t('deductions')}</dt><dd>${eur.format(P.ded)}</dd>
         <dt class="netrow"><span class="op">=</span>${t('youGet')}</dt><dd class="netrow">${eur.format(P.net)}</dd>
         ${cmp(P.net, realNow)}
       </dl>
@@ -1698,6 +1714,7 @@ function renderSlip(c, ro){
   add(t('slip_base',{r:rankName(s.rank),l:P.level}), s.contract!==100?s.contract+' %':'', eur.format(P.baseSalary));
   if(P.allowBase) add(t('slip_trainer'), '', eur.format(P.allowBase));
   if(P.uniform) add(t('slip_uniform'),'',eur.format(P.uniform));
+  if(P.fiscalAid) add(t('slip_fiscalAid'),'',eur.format(P.fiscalAid));
   sec(t('variableOf',{p:mPrev}), eur.format(P.variable));
   const tn = ['<70','70–110','>110'];
   (v.tiers||[]).forEach(tr=>{ if(tr.h<=0) return;
@@ -1718,6 +1735,7 @@ function renderSlip(c, ro){
   add(t('slip_taxable'),'',eur.format(P.taxable),'info');
   add(t('slip_ss'), n2.format(s.ss)+' %', '−'+eur.format(P.ss), 'ded');
   add(t('slip_irpf'), n2.format(s.irpf)+' %', '−'+eur.format(P.irpf), 'ded');
+  if(P.ingresoCta) add(t('slip_ingCta'), `${n2.format(P.fiscalAid)} × ${n2.format(s.irpf)} %`, '−'+eur.format(P.ingresoCta), 'ded');
   rows.push(`<tr class="sum"><td>${t('slip_net')}</td><td></td><td>${eur.format(P.net)}</td></tr>`);
   const real = (state.slips||{})[c._nextKey];
   if(real && real.net!=null){ const d=PR.r2(P.net-real.net);
@@ -1737,6 +1755,7 @@ function renderForm(){
     ${s.levelMode==='date'
       ? `<label>${t('f_since')}<input type="date" id="f-since" value="${esc(s.since)}"></label><div class="note" style="align-self:end">${t('levelToday',{l:PR.levelFor(s,new Date().getFullYear(),new Date().getMonth()+1)})}</div>`
       : `<label>${t('f_level')}<select id="f-level">${lvl(s.rank).map(l=>`<option${l==s.level?' selected':''}>${l}</option>`).join('')}</select></label>`}
+    <label>${t('f_joined')}<input type="date" id="f-joined" value="${esc(s.joined)}"></label>
     <label>${t('f_contract')}<select id="f-contract">${[100,95,90,85,80,75,70,65,60,55,50].map(p=>`<option value="${p}"${p==s.contract?' selected':''}>${p} %</option>`).join('')}</select></label>
     <label>${t('f_base')}<input type="text" id="f-base" maxlength="3" value="${esc(s.base)}"></label>
     <label class="chk"><input type="checkbox" id="f-isTrainer"${s.isTrainer?' checked':''}> ${t('f_isTrainer')}</label>
@@ -1790,6 +1809,7 @@ function applyPayslip(p){
   s.isTrainer = p.trainerPlus >= (+s.tBase||270); s.isCT = !s.isTrainer && p.trainerPlus > 0;
   if(p.uniform) s.uniform = p.uniform;
   if(p.irpf!=null) s.irpf = p.irpf;
+  if(p.joined) s.joined = p.joined;
   if(p.ss) s.ss = PR.r2(p.ss);
   if(p.period && p.net!=null){ state.slips = state.slips||{}; state.slips[p.period.year+'-'+String(p.period.month).padStart(2,'0')] = { net: p.net }; }
   s.configured = true; $('form').dataset.ready=''; save(); render();
