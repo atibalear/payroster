@@ -204,6 +204,7 @@ input[type=date]::-webkit-date-and-time-value{text-align:left}
   <section>
     <h2 data-i18n="dayByDay"></h2>
     <p class="note" data-i18n="dayByDayNote"></p>
+    <p class="note" data-i18n="rateNote"></p>
     <div class="days" id="days"></div>
   </section>
 
@@ -549,13 +550,14 @@ var PR = (function () {
       const pct = R.base / 100;   // full-time table base, without complements (art. 18.1)
       // art. 18.1.2: a day off bought by the company is marked OFF_BEZ in the roster. 9 % of the base,
       // half (4,5 %) when the duty starts after 16:00 or ends before 08:00 local time at base.
-      let autoBuy = null;
+      let autoBuy = null, buyWhy = null;
       if (codes.some(c => /^OFF_BEZ/.test(c))) {
         const ciE = d.events.find(x => x.type === 'ci' || x.type === 'su' || (x.type === 'code' && /^STBY|^SBY/.test(x.code)));
         const coE = [...d.events].reverse().find(x => x.type === 'co');
         const startH = ciE && ciE.t1 ? localHour(d.date, ciE.t1, base) : null;
         const endH = coE && coE.t1 ? localHour(d.date, coE.t1, base) : null;
         autoBuy = ((startH != null && startH >= 16) || (endH != null && endH < 8)) ? 'half' : 'full';
+        buyWhy = { start: startH, end: endH };
       }
       const buy = ex.buy === 'none' ? null : (ex.buy || autoBuy);
       const extraFix = (buy === 'full' ? 9 * pct : buy === 'half' ? 4.5 * pct : 0) + (ex.omDefer ? 4.5 * pct : 0);
@@ -576,7 +578,7 @@ var PR = (function () {
       const codeEv = d.events.find(e => e.type === 'code' && !/^TAXI/.test(e.code));
       return {
         date: d.date, day: d.day, kind, codes, absence, F, A, H: F + A, startLoc, endLoc, away, dieta, dietaType, early,
-        extraFix: r2(extraFix), sales, isTrain, isCTday, trainNo, ctNo, trainPay, buy, autoBuy, buyManual: !!ex.buy, omDefer: !!ex.omDefer,
+        extraFix: r2(extraFix), sales, isTrain, isCTday, trainNo, ctNo, trainPay, buy, autoBuy, buyWhy, buyManual: !!ex.buy, omDefer: !!ex.omDefer,
         legs, route, ci: ciEv ? ciEv.t1 : (codeEv ? codeEv.t1 : null),
         co: coEv ? coEv.t1 : (legs.length ? legs[legs.length - 1].t2 : (codeEv ? codeEv.t2 : null)),
         label: codeEv ? codeEv.code : (legs.length ? '' : (codes[0] || '')), hotel: d.hotel, events: d.events
@@ -603,6 +605,7 @@ var PR = (function () {
       });
       cum += h;
       d.hourPay = pay;
+      d.hourRate = h > 0 ? pay / h : 0;
       d.tierEnd = cum;
       d.total = pay + d.dieta + d.early + d.extraFix + d.sales + d.trainPay;
     }
@@ -736,6 +739,7 @@ var I18N = {
   names: { es: 'Español', ca: 'Català', en: 'English', de: 'Deutsch', fr: 'Français', hu: 'Magyar', sk: 'Slovenčina', cs: 'Čeština' },
   locales: { es: 'es-ES', ca: 'ca-ES', en: 'en-GB', de: 'de-DE', fr: 'fr-FR', hu: 'hu-HU', sk: 'sk-SK', cs: 'cs-CZ' },
   es: {
+    buyFullWhy: 'firma {h} en base, antes de las 16:00', buyHalfLate: 'firma {h}, después de las 16:00', buyHalfEarly: 'termina {h}, antes de las 08:00', rateNote: 'El €/h de cada día es el del tramo en el que caen sus horas. El convenio (art. 24.5.1 d) mezcla en cada tramo la tarifa FDP y la de adicional según la proporción FDP/adicional del mes, así que una hora adicional en tramo 3 vale más que la tarifa de adicional sola. El total del mes es el mismo que en la nómina.',
     buyAuto: 'Automático: {v}',
     salesMonth: 'Comisión de ventas de {m} €',
     staleMsg: 'He corregido el lector de rosters. Vuelve a subir el PDF de: {m}. Hasta entonces esos meses pueden salir mal.',
@@ -825,6 +829,7 @@ var I18N = {
     e_noPeriod: 'No encuentro el periodo del roster. ¿Es el «Individual duty plan» de IDP en PDF?'
   },
   ca: {
+    buyFullWhy: 'signatura {h} a la base, abans de les 16:00', buyHalfLate: 'signatura {h}, després de les 16:00', buyHalfEarly: 'acaba {h}, abans de les 08:00', rateNote: 'El €/h de cada dia és el del tram on cauen les seves hores. El conveni (art. 24.5.1 d) barreja a cada tram la tarifa FDP i la d’addicional segons la proporció FDP/addicional del mes, així que una hora addicional al tram 3 val més que la tarifa d’addicional sola. El total del mes és el mateix que a la nòmina.',
     buyAuto: 'Automàtic: {v}',
     salesMonth: 'Comissió de vendes de {m} €',
     staleMsg: 'He corregit el lector de rosters. Torna a pujar el PDF de: {m}. Fins llavors aquests mesos poden sortir malament.',
@@ -914,6 +919,7 @@ var I18N = {
     e_noPeriod: 'No trobo el període del roster. És l’«Individual duty plan» d’IDP en PDF?'
   },
   en: {
+    buyFullWhy: 'check-in {h} at base, before 16:00', buyHalfLate: 'check-in {h}, after 16:00', buyHalfEarly: 'ends {h}, before 08:00', rateNote: 'Each day’s €/h is the rate of the tier its hours fall in. The CLA (art. 24.5.1 d) blends the FDP and additional-duty rates in every tier by the month’s FDP/additional ratio, so an additional-duty hour in tier 3 is worth more than the additional rate alone. The month total matches the payslip.',
     buyAuto: 'Automatic: {v}',
     salesMonth: 'Sales commission for {m} €',
     staleMsg: 'The roster reader has been fixed. Please upload the PDF again for: {m}. Until then those months may be wrong.',
@@ -1003,6 +1009,7 @@ var I18N = {
     e_noPeriod: 'I can’t find the roster period. Is this the IDP “Individual duty plan” PDF?'
   },
   de: {
+    buyFullWhy: 'Check-in {h} an der Basis, vor 16:00', buyHalfLate: 'Check-in {h}, nach 16:00', buyHalfEarly: 'Ende {h}, vor 08:00', rateNote: 'Der €/h-Wert jedes Tages ist der Satz der Stufe, in die seine Stunden fallen. Der Tarifvertrag (Art. 24.5.1 d) mischt in jeder Stufe FDP- und Zusatzsatz nach dem FDP/Zusatz-Verhältnis des Monats, daher ist eine Zusatzstunde in Stufe 3 mehr wert als der reine Zusatzsatz. Die Monatssumme entspricht der Abrechnung.',
     buyAuto: 'Automatisch: {v}',
     salesMonth: 'Verkaufsprovision {m} €',
     staleMsg: 'Der Dienstplan-Leser wurde korrigiert. Bitte lade das PDF erneut hoch für: {m}. Bis dahin können diese Monate falsch sein.',
@@ -1092,6 +1099,7 @@ var I18N = {
     e_noPeriod: 'Ich finde den Zeitraum des Dienstplans nicht. Ist das der „Individual duty plan“ aus IDP als PDF?'
   },
   fr: {
+    buyFullWhy: 'check-in {h} à la base, avant 16:00', buyHalfLate: 'check-in {h}, après 16:00', buyHalfEarly: 'fin {h}, avant 08:00', rateNote: 'Le €/h de chaque jour est le taux du palier où tombent ses heures. La convention (art. 24.5.1 d) mélange dans chaque palier le taux FDP et le taux additionnel selon la proportion FDP/additionnel du mois : une heure additionnelle au palier 3 vaut donc plus que le seul taux additionnel. Le total du mois est celui de la fiche de paie.',
     buyAuto: 'Automatique : {v}',
     salesMonth: 'Commission ventes de {m} €',
     staleMsg: 'Le lecteur de planning a été corrigé. Importe à nouveau le PDF de : {m}. D’ici là, ces mois peuvent être faux.',
@@ -1181,6 +1189,7 @@ var I18N = {
     e_noPeriod: 'Je ne trouve pas la période du planning. Est-ce bien l’« Individual duty plan » d’IDP en PDF ?'
   },
   hu: {
+    buyFullWhy: 'check-in {h} a bázison, 16:00 előtt', buyHalfLate: 'check-in {h}, 16:00 után', buyHalfEarly: 'vége {h}, 08:00 előtt', rateNote: 'Az egyes napok €/óra értéke annak a sávnak a díja, amelyikbe az órái esnek. A szerződés (24.5.1 d) minden sávban a hónap FDP/kiegészítő aránya szerint keveri az FDP- és a kiegészítő díjat, ezért egy kiegészítő óra a 3. sávban többet ér, mint a kiegészítő díj önmagában. A havi összeg megegyezik a bérjegyzékkel.',
     buyAuto: 'Automatikus: {v}',
     salesMonth: 'Értékesítési jutalék ({m}) €',
     staleMsg: 'Javítottam a beosztásolvasót. Töltsd fel újra a PDF-et: {m}. Addig ezek a hónapok hibásak lehetnek.',
@@ -1270,6 +1279,7 @@ var I18N = {
     e_noPeriod: 'Nem találom a beosztás időszakát. Ez az IDP „Individual duty plan” PDF-je?'
   },
   sk: {
+    buyFullWhy: 'check-in {h} na základni, pred 16:00', buyHalfLate: 'check-in {h}, po 16:00', buyHalfEarly: 'koniec {h}, pred 08:00', rateNote: '€/h pri každom dni je sadzba pásma, do ktorého padnú jeho hodiny. Zmluva (čl. 24.5.1 d) v každom pásme mieša sadzbu FDP a doplnkovú podľa pomeru FDP/doplnková za mesiac, takže doplnková hodina v pásme 3 má vyššiu hodnotu než samotná doplnková sadzba. Súčet za mesiac sa zhoduje s páskou.',
     buyAuto: 'Automaticky: {v}',
     salesMonth: 'Provízia z predaja za {m} €',
     staleMsg: 'Opravil som čítačku rozpisov. Nahraj znova PDF za: {m}. Dovtedy môžu byť tieto mesiace nesprávne.',
@@ -1359,6 +1369,7 @@ var I18N = {
     e_noPeriod: 'Nenachádzam obdobie rozpisu. Je to „Individual duty plan“ z IDP v PDF?'
   },
   cs: {
+    buyFullWhy: 'check-in {h} na základně, před 16:00', buyHalfLate: 'check-in {h}, po 16:00', buyHalfEarly: 'konec {h}, před 08:00', rateNote: '€/h u každého dne je sazba pásma, do kterého padnou jeho hodiny. Smlouva (čl. 24.5.1 d) v každém pásmu míchá sazbu FDP a doplňkovou podle poměru FDP/doplňková za měsíc, takže doplňková hodina v pásmu 3 má vyšší hodnotu než samotná doplňková sazba. Součet za měsíc odpovídá pásce.',
     buyAuto: 'Automaticky: {v}',
     salesMonth: 'Provize z prodeje za {m} €',
     staleMsg: 'Opravil jsem čtečku rozpisů. Nahraj znovu PDF za: {m}. Do té doby mohou být tyto měsíce špatně.',
@@ -1453,7 +1464,7 @@ var I18N = {
 <script>
 const SEED = null;
 const SEED_SETTINGS = null;
-const APP_VERSION = '2026.11.06-1452';
+const APP_VERSION = '2026.11.06-1505';
 const IS_PWA_BUILD = true;
 const LS = 'payroster.v1';
 const KC = { flight:'--k-flight', deadhead:'--k-dh', training:'--k-train', standby:'--k-sby', reserve:'--k-sby', ground:'--k-ground', off:'--k-off', empty:'--k-off', other:'--k-ground' };
@@ -1650,18 +1661,18 @@ function renderDays(c, ro){
       <div class="detail">
         ${legs}
         <dl class="brk">
-          ${d.H?`<dt>${t('payHours',{f:hhmm(d.F),a:hhmm(d.A)})}${d.absence?t('absenceCredit'):''} · ${tier}</dt><dd>${eur.format(d.hourPay)}</dd>`:''}
+          ${d.H?`<dt>${t('payHours',{f:hhmm(d.F),a:hhmm(d.A)})}${d.absence?t('absenceCredit'):''} · ${tier} · ${n2.format(d.hourRate)} €/h</dt><dd>${eur.format(d.hourPay)}</dd>`:''}
           ${d.dieta?`<dt>${t('d_'+d.dietaType)}</dt><dd>${eur.format(d.dieta)}</dd>`:''}
           ${d.early?`<dt>${t('earlyAt',{t:t4(d.ci)})}</dt><dd>${eur.format(d.early)}</dd>`:''}
           ${d.isTrain?`<dt>${t('trainDay',{n:d.trainNo})}${d.trainNo===1?t('inPlus'):''}</dt><dd>${eur.format(d.trainPay)}</dd>`:''}
           ${d.isCTday?`<dt>${t('ctDay',{n:d.ctNo})}${d.ctNo===1?t('inPlus'):''}</dt><dd>${eur.format(d.trainPay)}</dd>`:''}
-          ${d.extraFix?`<dt>${t('buyDefer')}</dt><dd>${eur.format(d.extraFix)}</dd>`:''}
+          ${d.extraFix?`<dt>${t('buyDefer')}${d.autoBuy && !d.buyManual && d.buyWhy ? ' · '+buyWhyText(d) : ''}</dt><dd>${eur.format(d.extraFix)}</dd>`:''}
           ${d.sales?`<dt>${t('sales')}</dt><dd>${eur.format(d.sales)}</dd>`:''}
           <dt class="t">${t('dayTotal')}</dt><dd class="t">${eur.format(d.total)}</dd>
         </dl>
         <div class="extras" data-date="${d.date}">
           ${d.kind==='flight'?`<label>${t('salesEur')} <input type="number" step="0.01" min="0" id="s-${d.date}" data-f="sales" value="${ex.sales||''}" placeholder="0,00"></label>`:''}
-          ${offish?`<label>${t('dayBought')} <select id="b-${d.date}" data-f="buy"><option value="">${t('buyAuto',{v: d.autoBuy==='full'?t('full'):d.autoBuy==='half'?t('half'):t('no')})}</option><option value="none"${ex.buy==='none'?' selected':''}>${t('no')}</option><option value="full"${ex.buy==='full'?' selected':''}>${t('full')}</option><option value="half"${ex.buy==='half'?' selected':''}>${t('half')}</option></select></label>`:''}
+          ${offish?`<label>${t('dayBought')} <select id="b-${d.date}" data-f="buy"><option value="">${t('buyAuto',{v: d.autoBuy==='full'?t('full'):d.autoBuy==='half'?t('half'):t('no')})}${d.buyWhy?' · '+buyWhyText(d):''}</option><option value="none"${ex.buy==='none'?' selected':''}>${t('no')}</option><option value="full"${ex.buy==='full'?' selected':''}>${t('full')}</option><option value="half"${ex.buy==='half'?' selected':''}>${t('half')}</option></select></label>`:''}
           ${d.codes.includes('O_M')?`<label><input type="checkbox" id="o-${d.date}" data-f="omDefer"${ex.omDefer?' checked':''}> ${t('omDeferred')}</label>`:''}
           ${(!offish && d.kind!=='flight')?`<span class="note">${t('noExtras')}</span>`:''}
         </div>
@@ -1670,6 +1681,12 @@ function renderDays(c, ro){
   }).join('');
 }
 
+const hm2 = h => { if(h==null) return ''; h=((h%24)+24)%24; return String(Math.floor(h)).padStart(2,'0')+':'+String(Math.round((h%1)*60)).padStart(2,'0'); };
+function buyWhyText(d){
+  const w = d.buyWhy;
+  if(d.autoBuy==='half') return w.start!=null && w.start>=16 ? t('buyHalfLate',{h:hm2(w.start)}) : t('buyHalfEarly',{h:hm2(w.end)});
+  return t('buyFullWhy',{h:hm2(w.start)});
+}
 function renderSlip(c, ro){
   const s = state.settings, P = c._slipNext, v = P.v, R = c.rates;
   const mNow = monthName(ro.year, ro.month+1), mPrev = monthName(ro.year, ro.month);
