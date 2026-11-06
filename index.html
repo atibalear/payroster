@@ -233,7 +233,7 @@ input[type=date]::-webkit-date-and-time-value{text-align:left}
 // Payroster engine: roster parser + pay rules (Convenio TCP Eurowings Europe, bases España)
 // Pure functions; no DOM. Used by the page and by node tests.
 var PR = (function () {
-  const PARSER_V = 3; // bump when the roster reader changes, so saved months get re-read
+  const PARSER_V = 4; // bump when the roster reader changes, so saved months get re-read
   const MONTHS = { Jan: 1, Feb: 2, Mar: 3, Apr: 4, May: 5, Jun: 6, Jul: 7, Aug: 8, Sep: 9, Oct: 10, Nov: 11, Dec: 12 };
   const ES_AIRPORTS = new Set(('PMI IBZ MAH MAD BCN AGP ALC VLC SVQ BIO SCQ VGO OVD SDR LPA TFS TFN ACE FUE SPC GMZ VDE ' +
     'GRX XRY LEI REU GRO ZAZ VIT PNA LCG MJV RMU VLL SLM LEN BJZ EAS SDR HSK ODB RGS CDT MLN JCU').split(' '));
@@ -344,16 +344,26 @@ var PR = (function () {
 
     // detail blocks: dates like "Mon09" at the left of a column
     const days = {};
-    const dayAnchors = all.filter(i => dateRe.test(i.str.trim()) && i.y > 60);
-    const colXs = [...new Set(dayAnchors.map(a => Math.round(a.x / 10)))].map(v => v * 10).sort((a, b) => a - b);
-    const colOf = x => { let c = -1; for (let k = 0; k < colXs.length; k++) if (x >= colXs[k] - 12) c = k; return c; };
+    // Columns are found per page: each page has its own left edges (e.g. 31 / 298), and a
+    // stray date elsewhere on another page (crew-leg list) must not shift them.
+    const colsByPage = {};
+    for (const i of all) {
+      if (!(dateRe.test(i.str.trim()) && i.y > 60)) continue;
+      (colsByPage[i.page] = colsByPage[i.page] || []).push(i.x);
+    }
+    for (const p in colsByPage) {
+      const xs = colsByPage[p].sort((a, b) => a - b), cl = [];
+      for (const x of xs) { if (!cl.length || x - cl[cl.length - 1].max > 15) cl.push({ min: x, max: x }); else cl[cl.length - 1].max = x; }
+      colsByPage[p] = cl.map(c => c.min);
+    }
+    const colOf = (page, x) => { const cx = colsByPage[page] || []; let c = -1; for (let k = 0; k < cx.length; k++) if (x >= cx[k] - 12) c = k; return c; };
 
     const byPageCol = {};
     for (const it of all) {
       if (it.y < 60 && it.page === 0) continue; // header grid
-      const c = colOf(it.x); if (c < 0) continue;
+      const c = colOf(it.page, it.x); if (c < 0) continue;
       const key = it.page + ':' + c;
-      (byPageCol[key] = byPageCol[key] || []).push({ ...it, rx: it.x - colXs[c], s: it.str.trim() });
+      (byPageCol[key] = byPageCol[key] || []).push({ ...it, rx: it.x - colsByPage[it.page][c], s: it.str.trim() });
     }
     const pageKeys = Object.keys(byPageCol).sort((a, b) => { const [pa, ca] = a.split(':').map(Number), [pb, cb] = b.split(':').map(Number); return pa - pb || ca - cb; });
     for (const key of pageKeys) {
@@ -478,6 +488,12 @@ var PR = (function () {
     let trainSeen = 0, ctSeen = 0;
     let loc = base; // where you wake up
     let carryDuty = false;
+    // A duty that started on the last night of the previous month (night rotation) shows up
+    // on day 1 as legs from away without a check-in: it was already counted last month.
+    { const d1 = roster.days[0], ev = d1 ? d1.events : [];
+      const iFirstLeg = ev.findIndex(x => x.type === 'flt' || x.type === 'dh');
+      const iCi = ev.findIndex(x => x.type === 'ci' || x.type === 'su');
+      if (iFirstLeg >= 0 && ev[iFirstLeg].dep !== base && (iCi < 0 || iCi > iFirstLeg)) { loc = ev[iFirstLeg].dep; carryDuty = !d1.hotel; } }
     const days = roster.days.map(d => {
       const kind = classify(d);
       const codes = d.events.filter(e => e.type === 'code').map(e => e.code.toUpperCase());
@@ -1409,7 +1425,7 @@ var I18N = {
 <script>
 const SEED = null;
 const SEED_SETTINGS = null;
-const APP_VERSION = '2026.11.06-1255';
+const APP_VERSION = '2026.11.06-1418';
 const IS_PWA_BUILD = true;
 const LS = 'payroster.v1';
 const KC = { flight:'--k-flight', deadhead:'--k-dh', training:'--k-train', standby:'--k-sby', reserve:'--k-sby', ground:'--k-ground', off:'--k-off', empty:'--k-off', other:'--k-ground' };
