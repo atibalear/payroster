@@ -618,7 +618,9 @@ var PR = (function () {
     const minGuarantee = r2(49 * (s.contract / 100) * R.fdp[0] + 21 * (s.contract / 100) * R.add[0]);
     const topUp = hourPay < minGuarantee ? r2(minGuarantee - hourPay) : 0;
     const dietas = r2(days.reduce((a, d) => a + d.dieta, 0));
-    const guarantee = (roster.year * 12 + roster.month <= 2025 * 12 + 12) || !!s.minDietas;
+    // art. 11 h: per diems below 500 € (purser) / 400 € (cabin attendant) in a month are topped up.
+    // The CLA text says until 31.12.2025; Eurowings keeps applying it in 2026 and 2027 (confirmed by crew).
+    const guarantee = true;
     const dietaFloor = guarantee ? (s.rank === 'PU' ? 500 : 400) : 0;
     const dietasPaid = Math.max(dietas, dietaFloor);
     const early = days.reduce((a, d) => a + d.early, 0);
@@ -1480,7 +1482,7 @@ var I18N = {
 <script>
 const SEED = null;
 const SEED_SETTINGS = null;
-const APP_VERSION = '2026.11.06-1646';
+const APP_VERSION = '2026.11.06-1701';
 const IS_PWA_BUILD = true;
 const LS = 'payroster.v1';
 const KC = { flight:'--k-flight', deadhead:'--k-dh', training:'--k-train', standby:'--k-sby', reserve:'--k-sby', ground:'--k-ground', off:'--k-off', empty:'--k-off', other:'--k-ground' };
@@ -1773,7 +1775,6 @@ function renderForm(){
     <label>${t('f_salesEst')}<input type="number" step="0.01" id="f-salesEstimate" value="${s.salesEstimate}"></label>
     <label>${t('f_early')}<input type="number" step="0.01" id="f-earlyCheckin" value="${s.earlyCheckin}"></label>
     <label class="wide">${t('f_absence')}<input type="text" id="f-absenceCodes" value="${esc(s.absenceCodes)}"></label>
-    <label class="chk wide"><input type="checkbox" id="f-minDietas"${s.minDietas?' checked':''}> ${t('f_minDiet')}</label>
     <div class="wide row"><button class="btn ghost" id="resetSet" type="button">${t('resetSet')}</button><button class="btn ghost" id="redoSetup" type="button">${t('redoSetup')}</button></div>`;
   $('form').dataset.ready = '1';
 }
