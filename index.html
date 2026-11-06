@@ -283,7 +283,7 @@ var PR = (function () {
       rank: 'PU', level: 1, levelMode: 'date', since: '', contract: 100, base: 'PMI',
       isTrainer: false, isCT: false, uniform: 66.66, irpf: 15, ss: 6.5, configured: false,
       salesEstimate: 0, minDietas: false,
-      absenceCodes: 'U, UL, URL, VAC, SICK, KRANK, PERM, PR',
+      absenceCodes: 'U, SU, UL, URL, VAC, SICK, KRANK, PERM, PR',
       earlyCheckin: 30,
       trainingCodes: 'DT_TRNG, CATR, CAB_K', joined: '', fiscalAid: 500, ctCodes: 'COMP',
       // Works Agreement Cabin Trainers (Eurowings Europe Spain), 1.1.1.2
@@ -298,7 +298,7 @@ var PR = (function () {
       base,
       fdp: p.fdp.map(x => r2(base * x / 100)),
       add: p.add.map(x => r2(base * x / 100)),
-      limits: TIER_LIMITS[s.contract] || interpLimits(s.contract)
+      limits: [70, 110]   // payslips of part-time crew (80 %) use the same 70 / 110 h tiers
     };
   }
   function interpLimits(c) {
@@ -529,9 +529,10 @@ var PR = (function () {
       // A night rotation out of base that lands back after midnight has no hotel: one duty,
       // one per diem "sin pernocta", given on the day it starts and not again the next day.
       let dieta = 0, dietaType = null;
-      const continuing = carryDuty && !d.hotel;
+      // Every calendar day with time away from base earns one per diem (a night rotation PMI–NUE–PMI
+      // over midnight = two days at 66,11 €), checked against the October 2026 payslip of an 80 % purser.
       carryDuty = false;
-      if (away && !continuing) {
+      if (away) {
         const intl = visited.some(st => !ES_AIRPORTS.has(st));
         const night = !!d.hotel;
         dietaType = (intl ? 'intl' : 'nat') + (night ? 'Night' : 'Day');
@@ -1490,7 +1491,7 @@ var I18N = {
 <script>
 const SEED = null;
 const SEED_SETTINGS = null;
-const APP_VERSION = '2026.11.06-1709';
+const APP_VERSION = '2026.11.06-2229';
 const IS_PWA_BUILD = true;
 const LS = 'payroster.v1';
 const KC = { flight:'--k-flight', deadhead:'--k-dh', training:'--k-train', standby:'--k-sby', reserve:'--k-sby', ground:'--k-ground', off:'--k-off', empty:'--k-off', other:'--k-ground' };
@@ -1534,6 +1535,7 @@ function load(){
   s.settings = Object.assign(PR.defaultSettings(), s.settings||{});
   if(s.settings.ctCodes==='DT_CT, DT_COMP, CT') s.settings.ctCodes='COMP';
   if(s.settings.trainingCodes==='DT_TRNG') s.settings.trainingCodes='DT_TRNG, CATR, CAB_K';
+  if(s.settings.absenceCodes && !/\bSU\b/.test(s.settings.absenceCodes)) s.settings.absenceCodes = s.settings.absenceCodes.replace(/^U,/, 'U, SU,');
   if(!s.settings.v2slip){ s.settings.salesEstimate = 0; s.settings.v2slip = true; }
   s.slips = s.slips || {};
   if(!Object.keys(s.months).length && SEED){ s.months[key(SEED)] = SEED; s.current = key(SEED); }
