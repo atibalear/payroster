@@ -477,6 +477,7 @@ var PR = (function () {
     const ctSet = new Set(String(s.ctCodes || '').split(/[,\s]+/).filter(Boolean).map(x => x.toUpperCase()));
     let trainSeen = 0, ctSeen = 0;
     let loc = base; // where you wake up
+    let carryDuty = false;
     const days = roster.days.map(d => {
       const kind = classify(d);
       const codes = d.events.filter(e => e.type === 'code').map(e => e.code.toUpperCase());
@@ -504,13 +505,19 @@ var PR = (function () {
       loc = endLoc;
       const visited = [startLoc, ...stations, endLoc].filter(Boolean);
       const away = visited.some(st => st !== base);
+      // Per diem (art. 11 h). "Con pernocta" only when the roster books a hotel (H1 line).
+      // A night rotation out of base that lands back after midnight has no hotel: one duty,
+      // one per diem "sin pernocta", given on the day it starts and not again the next day.
       let dieta = 0, dietaType = null;
-      if (away) {
+      const continuing = carryDuty && !d.hotel;
+      carryDuty = false;
+      if (away && !continuing) {
         const intl = visited.some(st => !ES_AIRPORTS.has(st));
-        const night = endLoc !== base;
+        const night = !!d.hotel;
         dietaType = (intl ? 'intl' : 'nat') + (night ? 'Night' : 'Day');
         dieta = DIETA[dietaType];
       }
+      if (!d.hotel && endLoc !== base) carryDuty = true;   // duty runs past midnight
       // early check-in off base (00:00–05:00 local)
       let early = 0;
       const ci = d.events.find(e => e.type === 'ci' || e.type === 'su');
@@ -1402,7 +1409,7 @@ var I18N = {
 <script>
 const SEED = null;
 const SEED_SETTINGS = null;
-const APP_VERSION = '2026.11.05-2011';
+const APP_VERSION = '2026.11.06-1255';
 const IS_PWA_BUILD = true;
 const LS = 'payroster.v1';
 const KC = { flight:'--k-flight', deadhead:'--k-dh', training:'--k-train', standby:'--k-sby', reserve:'--k-sby', ground:'--k-ground', off:'--k-off', empty:'--k-off', other:'--k-ground' };
