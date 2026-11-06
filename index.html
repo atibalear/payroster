@@ -1490,7 +1490,7 @@ var I18N = {
 <script>
 const SEED = null;
 const SEED_SETTINGS = null;
-const APP_VERSION = '2026.11.06-1706';
+const APP_VERSION = '2026.11.06-1709';
 const IS_PWA_BUILD = true;
 const LS = 'payroster.v1';
 const KC = { flight:'--k-flight', deadhead:'--k-dh', training:'--k-train', standby:'--k-sby', reserve:'--k-sby', ground:'--k-ground', off:'--k-off', empty:'--k-off', other:'--k-ground' };
@@ -1802,6 +1802,7 @@ function renderSetup(){
       <label>${t('f_rank')}<select id="p-rank"><option value="PU"${s.rank==='PU'?' selected':''}>${t('optPU')}</option><option value="CA"${s.rank==='CA'?' selected':''}>${t('optCA')}</option></select></label>
       <label>${t('su_basepay')}<input type="number" step="0.01" id="p-basepay" placeholder="2250,00"></label>
       <label>${t('su_inc')}<input type="date" id="p-inc"></label>
+      <label>${t('f_joined')}<input type="date" id="p-joined" value="${esc(s.joined)}"></label>
       <label>${t('su_level')}<select id="p-level"><option value="">—</option>${[...Array(16)].map((_,i)=>i).map(l=>`<option>${l}</option>`).join('')}</select></label>
       <label>${t('su_irpf')}<input type="number" step="0.01" id="p-irpf" value="${s.irpf}"></label>
       <label>${t('f_contract')}<select id="p-contract">${[100,95,90,85,80,75,70,65,60,55,50].map(p=>`<option value="${p}"${p==s.contract?' selected':''}>${p} %</option>`).join('')}</select></label>
@@ -1845,6 +1846,7 @@ function saveSetup(){
   else { $('p-err').textContent = t('e_fill'); return; }
   s.rank = rank; s.irpf = parseFloat(String(v('p-irpf')).replace(',','.'))||0; s.contract = +v('p-contract');
   s.isTrainer = $('p-trainer').checked; s.isCT = $('p-ct').checked;
+  if(v('p-joined')) s.joined = v('p-joined');
   s.configured = true; $('form').dataset.ready=''; save(); render();
 }
 
