@@ -883,7 +883,14 @@ var PR = (function () {
     const amt = c => { const n = c.numbers.filter(n => n.x > 380); return n.length ? n[n.length - 1].v : null; };
     const pctOf = c => { const n = c.numbers.find(n => n.x > 320 && n.x < 380); return n ? n.v : null; };
     const get = code => concepts.filter(c => c.code === code && !c.retro);
-    const per = /Periodo de liquidaci[óo]n\s*:?\s*(\d{2})\/(\d{2})\/(\d{4})/.exec(text);
+    let per = /Periodo de liquidaci[óo]n\s*:?\s*(\d{2})\/(\d{2})\/(\d{4})/.exec(text);
+    if (!per) {
+      // some payslips put the dates before the label in the text stream: take the first date on its line
+      const h = items.find(i => /Periodo de liquidaci[óo]n/.test(i.str));
+      const ds = h ? items.filter(i => Math.abs(i.y - h.y) < 4 && i.x > h.x && /^\s*\d{2}\/\d{2}\/\d{4}/.test(i.str)).sort((a, b) => a.x - b.x) : [];
+      per = ds.length ? /(\d{2})\/(\d{2})\/(\d{4})/.exec(ds[0].str)
+        : /(\d{2})\/(\d{2})\/(\d{4})\s*-\s*\d{2}\/\2\/\3/.exec(text);
+    }
     const cat = under('Categoría profesional') || '';
     const cm = /^([CD])-?(\d{1,2})$/.exec(cat);
     const inc = under('Incremento Salarial');
@@ -915,25 +922,27 @@ var PR = (function () {
   // ---------- the payslip of a given month, the way Eurowings pays it ----------
   // Fixed pay (base, trainer/CT allowance, uniform) of that month + variable pay
   // (hours, per diems, early check-in, extra trainer days, sales) generated in the month before.
-  function payslip(prev, s, year, month) {
+  // oneOff: a one-time payment on this payslip (e.g. 5196 «Pago único»), taxed like salary
+  function payslip(prev, s, year, month, oneOff) {
+    oneOff = r2(+oneOff || 0);
     const lvl = levelFor(s, year, month);
     const baseSalary = r2((BASE[s.rank][lvl] || 0) * s.contract / 100);
     const allowBase = s.isTrainer ? +s.tBase : (s.isCT ? +s.ctBase : 0);
     const uniform = +s.uniform || 0;
     const v = prev || { hourPay: 0, topUp: 0, early: 0, extraFix: 0, sales: +s.salesEstimate || 0, trainPay: 0, dietasPaid: 0, dietas: 0, tiers: [], dietaCounts: {}, trainDays: 0, ctDays: 0, salesFromDays: false };
     const allowTotal = r2(allowBase + (v.trainPay || 0));
-    const taxable = r2(baseSalary + allowTotal + uniform + v.hourPay + v.topUp + v.early + v.extraFix + v.sales);
+    const taxable = r2(baseSalary + allowTotal + uniform + oneOff + v.hourPay + v.topUp + v.early + v.extraFix + v.sales);
     const ss = r2(taxable * s.ss / 100), irpf = r2(taxable * s.irpf / 100);
     // December: "Ayuda asesoramiento fiscal" for crew with seniority before 01/01/2023. No social
     // security and outside the normal IRPF base, but with its own "Ingreso a cuenta IRPF" at the
     // same rate (December 2025 payslip: 500,00 − 77,80 at 15,56 %).
     const fiscalAid = (month === 12 && s.joined && s.joined < '2023-01-01') ? (+s.fiscalAid || 0) : 0;
     const ingresoCta = r2(fiscalAid * s.irpf / 100);
-    const fixedPay = r2(baseSalary + allowBase + uniform);
+    const fixedPay = r2(baseSalary + allowBase + uniform + oneOff);
     const fixed = r2(fixedPay + fiscalAid);
     const variable = r2(taxable - fixedPay + v.dietasPaid);      // hours, extras and per diems of the month before
     const ded = r2(ss + irpf + ingresoCta);
-    return { year, month, level: lvl, baseSalary, allowBase, allowTotal, uniform, fiscalAid, ingresoCta, prev: prev || null, v,
+    return { year, month, level: lvl, baseSalary, allowBase, allowTotal, uniform, oneOff, fiscalAid, ingresoCta, prev: prev || null, v,
       fixed, variable, gross: r2(fixed + variable), ded,
       taxable, ss, irpf, dietas: v.dietasPaid, net: r2(taxable - ss - irpf + v.dietasPaid + fiscalAid - ingresoCta) };
   }
@@ -949,6 +958,8 @@ var I18N = {
   names: { es: 'Español', ca: 'Català', en: 'English', de: 'Deutsch', fr: 'Français', it: 'Italiano', pt: 'Português', ro: 'Română', hu: 'Magyar', sk: 'Slovenčina', cs: 'Čeština' },
   locales: { es: 'es-ES', ca: 'ca-ES', en: 'en-GB', de: 'de-DE', fr: 'fr-FR', it: 'it-IT', pt: 'pt-PT', ro: 'ro-RO', hu: 'hu-HU', sk: 'sk-SK', cs: 'cs-CZ' },
   es: {
+    slip_oneOff: 'Pago único / extra',
+    oneOffMonth: 'Pago único / extra en la nómina de {m}',
     e_image: '{f}: este PDF es una imagen (foto o captura) y no tiene texto, así que no se puede leer. Descarga el PDF original del portal de Eurowings.',
     importedMany: 'Importado el roster de <b>{a}</b> a <b>{b}</b>: {n} meses, {f} días con vuelos. Cada mes está ya en su sitio.',
     fdpNote: 'FDP máximo de cada servicio según la tabla EASA ORO.FTL.205 para tripulación aclimatada (hora local de firma y sectores). La discreción del comandante permite hasta 2 h más en circunstancias imprevistas. Es una guía: mandan el OM-A de Eurowings y el comandante.',
@@ -1176,6 +1187,8 @@ var I18N = {
     e_noPeriod: 'No encuentro el periodo del roster. ¿Es el «Individual duty plan» de IDP en PDF?'
   },
   ca: {
+    slip_oneOff: 'Pagament únic / extra',
+    oneOffMonth: 'Pagament únic / extra a la nòmina de {m}',
     e_image: '{f}: aquest PDF és una imatge (foto o captura) i no té text, per això no es pot llegir. Descarrega el PDF original del portal d’Eurowings.',
     importedMany: 'Importat el roster de <b>{a}</b> a <b>{b}</b>: {n} mesos, {f} dies amb vol. Cada mes ja és al seu lloc.',
     fdpNote: 'FDP màxim de cada servei segons la taula EASA ORO.FTL.205 per a tripulació aclimatada (hora local de signatura i sectors). La discreció del comandant permet fins a 2 h més en circumstàncies imprevistes. És una guia: manen l’OM-A d’Eurowings i el comandant.',
@@ -1403,6 +1416,8 @@ var I18N = {
     e_noPeriod: 'No trobo el període del roster. És l’«Individual duty plan» d’IDP en PDF?'
   },
   en: {
+    slip_oneOff: 'One-off payment / bonus',
+    oneOffMonth: 'One-off payment / bonus in the {m} payslip',
     e_image: '{f}: this PDF is an image (photo or screenshot) with no text, so it can’t be read. Download the original PDF from the Eurowings portal.',
     importedMany: 'Imported the roster from <b>{a}</b> to <b>{b}</b>: {n} months, {f} days with flights. Each month is now in its place.',
     fdpNote: 'Max FDP of each duty from the EASA ORO.FTL.205 table for acclimatised crew (local check-in time and sectors). Commander’s discretion allows up to 2 h more in unforeseen circumstances. A guide only: the Eurowings OM-A and the commander decide.',
@@ -1630,6 +1645,8 @@ var I18N = {
     e_noPeriod: 'I can’t find the roster period. Is this the IDP “Individual duty plan” PDF?'
   },
   de: {
+    slip_oneOff: 'Einmalzahlung / Extra',
+    oneOffMonth: 'Einmalzahlung / Extra in der Abrechnung {m}',
     e_image: '{f}: Dieses PDF ist ein Bild (Foto oder Screenshot) ohne Text und kann nicht gelesen werden. Lade das Original-PDF im Eurowings-Portal herunter.',
     importedMany: 'Dienstplan von <b>{a}</b> bis <b>{b}</b> importiert: {n} Monate, {f} Tage mit Flügen. Jeder Monat ist jetzt an seinem Platz.',
     fdpNote: 'Max. FDP jedes Dienstes nach der EASA-Tabelle ORO.FTL.205 für akklimatisierte Crew (Ortszeit des Check-ins und Sektoren). Der Kommandantenentscheid erlaubt bei unvorhergesehenen Umständen bis zu 2 h mehr. Nur eine Orientierung: maßgeblich sind das Eurowings OM-A und der Kommandant.',
@@ -1857,6 +1874,8 @@ var I18N = {
     e_noPeriod: 'Ich finde den Zeitraum des Dienstplans nicht. Ist das der „Individual duty plan“ aus IDP als PDF?'
   },
   fr: {
+    slip_oneOff: 'Paiement unique / prime',
+    oneOffMonth: 'Paiement unique / prime sur la fiche de paie de {m}',
     e_image: '{f} : ce PDF est une image (photo ou capture) sans texte, il ne peut pas être lu. Télécharge le PDF original sur le portail Eurowings.',
     importedMany: 'Planning importé de <b>{a}</b> à <b>{b}</b> : {n} mois, {f} jours avec vols. Chaque mois est à sa place.',
     fdpNote: 'FDP max de chaque service selon le tableau EASA ORO.FTL.205 pour équipage acclimaté (heure locale du check-in et étapes). La discrétion du commandant permet jusqu’à 2 h de plus en cas d’imprévu. Indicatif : l’OM-A d’Eurowings et le commandant décident.',
@@ -2084,6 +2103,8 @@ var I18N = {
     e_noPeriod: 'Je ne trouve pas la période du planning. Est-ce bien l’« Individual duty plan » d’IDP en PDF ?'
   },
   hu: {
+    slip_oneOff: 'Egyszeri kifizetés / extra',
+    oneOffMonth: 'Egyszeri kifizetés / extra a(z) {m} havi bérjegyzékben',
     e_image: '{f}: ez a PDF egy kép (fotó vagy képernyőkép), nincs benne szöveg, ezért nem olvasható. Töltsd le az eredeti PDF-et az Eurowings portálról.',
     importedMany: 'Beosztás importálva <b>{a}</b> – <b>{b}</b>: {n} hónap, {f} nap repüléssel. Minden hónap a helyén van.',
     fdpNote: 'Az egyes szolgálatok max. FDP-je az EASA ORO.FTL.205 táblázata szerint akklimatizált személyzetre (helyi jelentkezési idő és szektorok). A parancsnoki döntés előre nem látható esetben legfeljebb 2 órát enged pluszban. Csak tájékoztató: a Eurowings OM-A és a parancsnok dönt.',
@@ -2311,6 +2332,8 @@ var I18N = {
     e_noPeriod: 'Nem találom a beosztás időszakát. Ez az IDP „Individual duty plan” PDF-je?'
   },
   sk: {
+    slip_oneOff: 'Jednorazová platba / extra',
+    oneOffMonth: 'Jednorazová platba / extra vo výplatnej páske za {m}',
     e_image: '{f}: toto PDF je obrázok (fotka alebo snímka obrazovky) bez textu, preto sa nedá prečítať. Stiahni pôvodné PDF z portálu Eurowings.',
     importedMany: 'Rozpis importovaný od <b>{a}</b> do <b>{b}</b>: {n} mesiacov, {f} dní s letmi. Každý mesiac je na svojom mieste.',
     fdpNote: 'Max. FDP každej služby podľa tabuľky EASA ORO.FTL.205 pre aklimatizovanú posádku (miestny čas nástupu a sektory). Rozhodnutie kapitána umožňuje pri nepredvídaných okolnostiach najviac o 2 h viac. Len orientačne: rozhoduje OM-A Eurowings a kapitán.',
@@ -2538,6 +2561,8 @@ var I18N = {
     e_noPeriod: 'Nenachádzam obdobie rozpisu. Je to „Individual duty plan“ z IDP v PDF?'
   },
   cs: {
+    slip_oneOff: 'Jednorázová platba / extra',
+    oneOffMonth: 'Jednorázová platba / extra ve výplatní pásce za {m}',
     e_image: '{f}: toto PDF je obrázek (fotka nebo snímek obrazovky) bez textu, proto ho nelze přečíst. Stáhni původní PDF z portálu Eurowings.',
     importedMany: 'Rozpis importován od <b>{a}</b> do <b>{b}</b>: {n} měsíců, {f} dní s lety. Každý měsíc je na svém místě.',
     fdpNote: 'Max. FDP každé služby podle tabulky EASA ORO.FTL.205 pro aklimatizovanou posádku (místní čas nástupu a sektory). Rozhodnutí kapitána umožňuje při nepředvídaných okolnostech nejvýše o 2 h více. Jen orientačně: rozhoduje OM-A Eurowings a kapitán.',
@@ -2765,6 +2790,8 @@ var I18N = {
     e_noPeriod: 'Nenacházím období rozpisu. Je to „Individual duty plan“ z IDP v PDF?'
   },
   it: {
+    "slip_oneOff": "Pagamento unico / extra",
+    "oneOffMonth": "Pagamento unico / extra nella busta paga di {m}",
     "e_image": "{f}: questo PDF è un’immagine (foto o screenshot) senza testo, quindi non si può leggere. Scarica il PDF originale dal portale Eurowings.",
     "importedMany": "Roster importato da <b>{a}</b> a <b>{b}</b>: {n} mesi, {f} giorni con voli. Ogni mese è al suo posto.",
     "fdpNote": "FDP massimo di ogni servizio secondo la tabella EASA ORO.FTL.205 per equipaggio acclimatato (ora locale di presentazione e settori). La discrezionalità del comandante consente fino a 2 h in più in circostanze impreviste. È una guida: decidono l’OM-A di Eurowings e il comandante.",
@@ -3098,6 +3125,8 @@ var I18N = {
     "e_noPeriod": "Non trovo il periodo del turno. È l’«Individual duty plan» di IDP in PDF?"
   },
   pt: {
+    "slip_oneOff": "Pagamento único / extra",
+    "oneOffMonth": "Pagamento único / extra no recibo de {m}",
     "e_image": "{f}: este PDF é uma imagem (foto ou captura) sem texto, por isso não pode ser lido. Descarrega o PDF original no portal da Eurowings.",
     "importedMany": "Escala importada de <b>{a}</b> a <b>{b}</b>: {n} meses, {f} dias com voos. Cada mês já está no seu lugar.",
     "fdpNote": "FDP máximo de cada serviço segundo a tabela EASA ORO.FTL.205 para tripulação aclimatada (hora local de apresentação e setores). A discrição do comandante permite até 2 h a mais em circunstâncias imprevistas. É uma orientação: decidem o OM-A da Eurowings e o comandante.",
@@ -3431,6 +3460,8 @@ var I18N = {
     "e_noPeriod": "Não encontro o período da escala. É o «Individual duty plan» do IDP em PDF?"
   },
   ro: {
+    "slip_oneOff": "Plată unică / extra",
+    "oneOffMonth": "Plată unică / extra în fluturașul din {m}",
     "e_image": "{f}: acest PDF este o imagine (poză sau captură) fără text, deci nu poate fi citit. Descarcă PDF-ul original din portalul Eurowings.",
     "importedMany": "Roster importat de la <b>{a}</b> la <b>{b}</b>: {n} luni, {f} zile cu zboruri. Fiecare lună e la locul ei.",
     "fdpNote": "FDP maxim al fiecărui serviciu conform tabelului EASA ORO.FTL.205 pentru echipaj aclimatizat (ora locală a prezentării și sectoarele). Decizia comandantului permite până la 2 h în plus în situații neprevăzute. Este orientativ: decid OM-A Eurowings și comandantul.",
@@ -6108,13 +6139,13 @@ function slipBuckets(lines){
   const dType = l => (/inter/.test(L(l)) ? 'intl' : 'nat') + (/con pern/.test(L(l)) ? 'Night' : 'Day');
   const counts = {intlNight:0,intlDay:0,natNight:0,natDay:0}, dAmt = {intlNight:0,intlDay:0,natNight:0,natDay:0};
   lines.filter(viaje).forEach(l => { const k = dType(l); dAmt[k] += +l.dev||0; counts[k] += Math.round((+l.dev||0) / PR.DIETA[k]); });
-  const known = l => l.code==='1000' || /uniforme|formaci[oó]n de cabina|compra|comisi|asesoramiento|early|check/.test(L(l)) || isH(l) || viaje(l) || /^\//.test(l.code);
+  const known = l => l.code==='1000' || isOneOff(l) || /uniforme|formaci[oó]n de cabina|compra|comisi|asesoramiento|early|check/.test(L(l)) || isH(l) || viaje(l) || /^\//.test(l.code);
   return {
     base: sum(l=>l.code==='1000'), uniform: sum(l=>/uniforme/.test(L(l))), trainer: sum(l=>/formaci[oó]n de cabina/.test(L(l))),
     buy: sum(l=>/compra/.test(L(l))), buyN: sum(l=>/compra/.test(L(l)),'units'),
     hF: sum(l=>isH(l)&&!isAdd(l),'units'), hA: sum(l=>isH(l)&&isAdd(l),'units'), hours: sum(isH),
     early: sum(l=>/early|check/.test(L(l))), sales: sum(l=>/comisi/.test(L(l))),
-    fiscal: sum(l=>/asesoramiento/.test(L(l))), ingCta: sum(l=>/ingreso a cuenta/.test(L(l)),'ded'),
+    fiscal: sum(l=>/asesoramiento/.test(L(l))), oneOff: sum(isOneOff), ingCta: sum(l=>/ingreso a cuenta/.test(L(l)),'ded'),
     ss: sum(l=>/^\/3[5-9]\d/.test(l.code),'ded'), irpf: sum(l=>l.code==='/401','ded'),
     dietas: Object.values(dAmt).reduce((a,b)=>a+b,0), dCounts: counts,
     other: lines.filter(l=>!known(l) && !/ingreso a cuenta/.test(L(l)))
@@ -6128,13 +6159,14 @@ function renderCheck(kSel){
   const [y,m] = k.split('-').map(Number), [py,pm] = prevYM(y,m), prev = state.months[kOf(py,pm)];
   const pick = `<label class="note">${t('chk_month')} <select id="chk-k">${keys.map(x=>{const [a,b]=x.split('-').map(Number);return `<option value="${x}"${x===k?' selected':''}>${nm(a,b)}</option>`;}).join('')}</select></label>`;
   if(!prev){ pnl(hdr('check', t('chk_intro')) + pick + `<p class="msg err">${t('chk_needPrev',{m:nm(y,m),p:nm(py,pm)})}</p>`); return; }
-  const s = state.settings, c = PR.compute(prev, s, state.extras), P = PR.payslip(c, s, y, m), v = P.v, R = slipBuckets(state.slips[k].lines);
+  const s = state.settings, c = PR.compute(prev, s, state.extras), P = slipFor(c, s, y, m), v = P.v, R = slipBuckets(state.slips[k].lines);
   const rows = [];
   const money = (lbl, real, app, hint) => rows.push({lbl, real:eur.format(real), app:eur.format(app), d:real-app, ok:Math.abs(real-app)<1, txt:eur.format(real-app), hint});
   const daysOf = f => c.days.filter(f).map(d=>d.day).join(', ');
   money(t('slip_base',{r:rankName(s.rank),l:P.level}), R.base, P.baseSalary, t('chk_hBase'));
   if(R.trainer || P.allowTotal) money(t('slip_trainer'), R.trainer, P.allowTotal, t('chk_hTrainer',{d:daysOf(d=>d.isTrain||d.isCTday)||'—'}));
   money(t('slip_uniform'), R.uniform, P.uniform);
+  if(R.oneOff || P.oneOff) money(t('slip_oneOff'), R.oneOff, P.oneOff);
   // hours
   const appF = (v.tiers||[]).reduce((a,x)=>a+x.hF,0), appA = (v.tiers||[]).reduce((a,x)=>a+x.hA,0);
   rows.push({lbl:t('chk_hoursF'), real:fmtH(R.hF)+' h', app:fmtH(appF)+' h', d:R.hF-appF, ok:Math.abs(R.hF-appF)<0.1, small:Math.abs(R.hF-appF)<2, txt:(R.hF-appF>=0?'+':'−')+fmtH(Math.abs(R.hF-appF))+' h', hint:t('chk_hFdp')});
@@ -6191,7 +6223,7 @@ function runSim(){
     : { F:parseHM($('sim-F').value), A:parseHM($('sim-A').value), dieta:$('sim-d').value||null, early:$('sim-e').checked, buy:$('sim-b').value||null, train: $('sim-t') ? $('sim-t').checked : false };
   const ex2 = JSON.parse(JSON.stringify(state.extras||{})); ex2[simDate] = Object.assign({}, ex2[simDate]||{}, {sim});
   const a = PR.compute(ro, s, state.extras), b = PR.compute(ro, s, ex2);
-  const [ny,nmn] = nextYM(ro.year, ro.month), Na = PR.payslip(a, s, ny, nmn), Nb = PR.payslip(b, s, ny, nmn);
+  const [ny,nmn] = nextYM(ro.year, ro.month), Na = slipFor(a, s, ny, nmn), Nb = slipFor(b, s, ny, nmn);
   const tier = x => x.T>110?3:x.T>70?2:1, dv = b.variable-a.variable, dn = Nb.net-Na.net;
   const sign = x => (x>=0?'+':'−')+eur.format(Math.abs(x));
   $('sim-out').innerHTML = `<dl class="sumbox" style="margin-top:14px">
@@ -6369,7 +6401,7 @@ function yearData(year){
     }
     const [py,pm] = prevYM(year,m), prev = state.months[kOf(py,pm)];
     if(!prev && !state.months[k]) continue;
-    const c = prev ? PR.compute(prev, s, state.extras) : null, P = PR.payslip(c, s, year, m);
+    const c = prev ? PR.compute(prev, s, state.extras) : null, P = slipFor(c, s, year, m);
     out.push({ m, real:false, partial:!prev, gross:P.gross, dietas:P.dietas, ss:P.ss, irpf:P.irpf + P.ingresoCta, net:P.net });
   }
   return out;
@@ -6440,7 +6472,7 @@ document.addEventListener('click', async e=>{
 <script>
 const SEED = null;
 const SEED_SETTINGS = null;
-const APP_VERSION = '2026.11.08-1913';
+const APP_VERSION = '2026.11.08-1919';
 const IS_PWA_BUILD = true;
 const LS = 'payroster.v1';
 const KC = { flight:'--k-flight', deadhead:'--k-dh', training:'--k-train', standby:'--k-sby', reserve:'--k-sby', ground:'--k-ground', off:'--k-off', empty:'--k-off', other:'--k-ground' };
@@ -6524,6 +6556,20 @@ function pruneRaws(s){
   const used = new Set(Object.values(s.months).map(m=>m.rawId).filter(Boolean));
   for(const id of Object.keys(s.raws||{})) if(!used.has(id)) delete s.raws[id];
 }
+// one-off payments («Pago único», 5196): typed by the user for a payslip, or read from the uploaded one
+function isOneOff(l){ return l.code==='5196' || /pago [uú]nico|pago extraordinario|gratificaci/i.test(l.label||''); }
+function oneOffOf(y,m){
+  const k = y+'-'+String(m).padStart(2,'0'), ex = (state.extras[k]||{}).oneOff;
+  if(ex!=null) return {v:+ex||0, manual:true};
+  const sl = (state.slips||{})[k];
+  const v = sl && sl.lines ? sl.lines.filter(l=>isOneOff(l) && !l.retro).reduce((a,l)=>a+(+l.dev||0),0) : 0;
+  return {v: PR.r2(v), fromSlip: v>0};
+}
+function slipFor(c, s, y, m){ return PR.payslip(c, s, y, m, oneOffOf(y,m).v); }
+function oneOffInput(y,m){
+  const k = y+'-'+String(m).padStart(2,'0'), o = oneOffOf(y,m);
+  return `<label class="salesm">${t('oneOffMonth',{m:monthName(y,m)})}<input type="text" inputmode="decimal" id="mo-${k}" data-moneoff="${k}" value="${o.manual ? o.v : (o.v ? n2.format(o.v) : '')}" placeholder="0,00"></label>`;
+}
 function prevKey(y,m){ return m===1 ? (y-1)+'-12' : y+'-'+String(m-1).padStart(2,'0'); }
 function save(){ try{ const {stale, ...keep} = state; localStorage.setItem(LS, JSON.stringify(keep)); }catch(e){} }
 function key(r){ return r.year+'-'+String(r.month).padStart(2,'0'); }
@@ -6546,9 +6592,9 @@ function render(){
   const c = PR.compute(ro, s, state.extras);
   const pk = prevKey(ro.year, ro.month), roPrev = state.months[pk];
   const cPrev = roPrev ? PR.compute(roPrev, s, state.extras) : null;
-  const slipNow = PR.payslip(cPrev, s, ro.year, ro.month);           // the payslip of this month
+  const slipNow = slipFor(cPrev, s, ro.year, ro.month);           // the payslip of this month
   const nx = ro.month===12 ? [ro.year+1,1] : [ro.year, ro.month+1];
-  const slipNext = PR.payslip(c, s, nx[0], nx[1]);                     // where this month's work is paid
+  const slipNext = slipFor(c, s, nx[0], nx[1]);                     // where this month's work is paid
   c._slipNow = slipNow; c._slipNext = slipNext; c._prevLoaded = !!roPrev;
   c._nextKey = nx[0]+'-'+String(nx[1]).padStart(2,'0');
   const mDate = new Date(ro.year, ro.month-1, 1);
@@ -6585,6 +6631,7 @@ function renderHero(c, ro){
       ${cmp(N.net, realNext)}
     </dl>
     <label class="salesm">${t('salesMonth',{m:mNow})}<input type="text" inputmode="decimal" id="ms-${key(ro)}" data-msales="${key(ro)}" value="${(state.extras[key(ro)]||{}).sales ?? ''}" placeholder="0,00"></label>
+    ${oneOffInput(N.year, N.month)}
     ${N.month===12 && !state.settings.joined ? `<div class="askj"><span>${t('askJoined')}</span><label class="askjin">${t('f_joinedShort')}<input type="date" id="q-joined"></label><button class="btn" id="q-joined-save" type="button" style="align-self:flex-start">${t('saveDate')}</button></div>` : ''}
     <div class="eyebrow" style="margin-top:16px">${t('variableOf',{p:mNow})}</div>
     <dl class="kv">
@@ -6616,7 +6663,8 @@ function renderHero(c, ro){
         <dt class="netrow"><span class="op">=</span>${t('youGet')}</dt><dd class="netrow">${eur.format(P.net)}</dd>
         ${cmp(P.net, realNow)}
       </dl>
-      <label class="salesm">${t('salesMonth',{m:mPrev})}<input type="text" inputmode="decimal" id="ms-${pk}" data-msales="${pk}" value="${(state.extras[pk]||{}).sales ?? ''}" placeholder="0,00"></label>`
+      <label class="salesm">${t('salesMonth',{m:mPrev})}<input type="text" inputmode="decimal" id="ms-${pk}" data-msales="${pk}" value="${(state.extras[pk]||{}).sales ?? ''}" placeholder="0,00"></label>
+      ${oneOffInput(ro.year, ro.month)}`
     : realNow && realNow.net!=null ? `
       <div class="netfig num">${eur.format(realNow.net)}</div>
       <div class="sub">${t('realOnly',{p:mPrev})}</div>`
@@ -6706,6 +6754,7 @@ function renderSlip(c, ro){
   add(t('slip_base',{r:rankName(s.rank),l:P.level}), s.contract!==100?s.contract+' %':'', eur.format(P.baseSalary));
   if(P.allowBase) add(t('slip_trainer'), '', eur.format(P.allowBase));
   if(P.uniform) add(t('slip_uniform'),'',eur.format(P.uniform));
+  if(P.oneOff) add(t('slip_oneOff'),'',eur.format(P.oneOff));
   if(P.fiscalAid) add(t('slip_fiscalAid'),'',eur.format(P.fiscalAid));
   sec(t('variableOf',{p:mPrev}), eur.format(P.variable));
   const tn = ['<70','70–110','>110'];
@@ -6874,6 +6923,8 @@ document.addEventListener('change', e=>{
   if(e.target.id==='f-lang' || e.target.id==='p-lang'){ state.lang = e.target.value; setLang(state.lang); if(IS_PWA_BUILD) $('verTxt').textContent = t('version',{v:APP_VERSION}); save(); $('form').dataset.ready=''; $('setup').innerHTML=''; $('setup').hidden=true; render(); return; }
   const el = e.target;
   if(el.id==='q-joined') return;   // iOS fires change on every wheel move: wait for the Save button
+  if(el.dataset.moneoff){ const k = el.dataset.moneoff; const v = String(el.value).trim();
+    state.extras[k] = state.extras[k]||{}; state.extras[k].oneOff = v==='' ? null : (parseFloat(/,/.test(v) ? v.replace(/\./g,'').replace(',','.') : v)||0); save(); render(); return; }
   if(el.dataset.msales){ const k = el.dataset.msales; const v = String(el.value).trim();
     state.extras[k] = state.extras[k]||{}; state.extras[k].sales = v==='' ? null : (parseFloat(v.replace(',','.'))||0); save(); render(); return; }
   const box = el.closest('.extras');
