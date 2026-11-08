@@ -244,7 +244,7 @@ input[type=date]::-webkit-date-and-time-value{text-align:left}
       <button class="iconbtn" id="nextM" aria-label="" data-i18n-aria="nextMonth">›</button>
     </div>
     <label class="iconbtn" for="pdfIn" title="" data-i18n-title="importTitle">＋ PDF</label>
-    <input type="file" id="pdfIn" accept="application/pdf,.pdf" class="sr" multiple>
+    <input type="file" id="pdfIn" accept="application/pdf,.pdf,image/*" class="sr" multiple>
   </header>
 
   <div id="updBar" class="msg" hidden></div>
@@ -949,7 +949,102 @@ var PR = (function () {
       taxable, ss, irpf, dietas: v.dietasPaid, net: r2(taxable - ss - irpf + v.dietasPaid + fiscalAid - ingresoCta) };
   }
 
-  return { maxFdp, tzOf, PARSER_V, localHour, payslip, parsePayslip, parseRoster, parseRosterAll, compute, rates, defaultSettings, levelFor, normRank, classify, DIETA, BASE, hm, r2, ES_AIRPORTS };
+  // ---------- payslip from an image (screenshot / photo PDF), read with OCR ----------
+  // words: [{t, x0, y0, x1, y1}] in image pixels, W = image width. Layout of the HCM "RECIBO DE NÓMINA":
+  // label on the left, then right-aligned columns Imp./unidad · Número · Devengos · Deducciones.
+  const MES = { ENE: 1, FEB: 2, MAR: 3, ABR: 4, MAY: 5, JUN: 6, JUL: 7, AGO: 8, SEP: 9, SEPT: 9, OCT: 10, NOV: 11, DIC: 12 };
+  const OCR_CODES = [
+    [/^salario base/, '1000'], [/^formaci[oó]n de cabina/, '1046'], [/^uniforme/, '1047'],
+    [/^tiempo de vuelo\s*<\s*70/, '5122'], [/^tpo\.? vuelo adiciona\w*\s*<\s*70/, '5123'],
+    [/^tiempo de vuelo\s*70/, '5124'], [/^tpo\.? vuelo adiciona\w*\s*70/, '5125'],
+    [/^(tiempo|tpo\.?) de vuelo\s*>\s*110/, '5126'], [/^tpo\.? vuelo adiciona\w*\s*>\s*110/, '5127'],
+    [/^comisi[oó]n de ventas/, '5128'], [/^pago [uú]nico/, '5196'],
+    [/^viajes? inter\w* sin/, '8053'], [/^viajes? inter\w* con/, '8054'],
+    [/^viajes? nac\w* sin/, '8051'], [/^viajes? nac\w* con/, '8052'],
+    [/^trab\.?\s*cont\.?\s*comunes/, '/350'], [/^trab\.?\s*desempleo/, '/370'], [/^trab\.?\s*formac/, '/380'],
+    [/^retenci[oó]n a cta/, '/401']
+  ];
+  function parsePayslipOcr(words, W) {
+    const ws = words.filter(w => w.t && w.t.trim()).map(w => ({ ...w, t: w.t.trim(), cy: (w.y0 + w.y1) / 2 }));
+    const lh = ws.length ? ws.map(w => w.y1 - w.y0).sort((a, b) => a - b)[Math.floor(ws.length / 2)] : 20;
+    const lines = [];
+    for (const w of ws.slice().sort((a, b) => a.cy - b.cy)) {
+      const l = lines.find(l => Math.abs(l.cy - w.cy) < lh * 0.6);
+      if (l) l.w.push(w); else lines.push({ cy: w.cy, w: [w] });
+    }
+    lines.forEach(l => { l.w.sort((a, b) => a.x0 - b.x0); l.text = l.w.map(w => w.t).join(' '); });
+    const all = lines.map(l => l.text).join('\n');
+    if (!/RECIBO DE N[OÓ]MINA|Salario Base/i.test(all) || !/Total a percibir|Total Devengos/i.test(all)) return null;
+    const isNum = t => /^-?\d+([.,]\d{3})*[.,]\d{2,3}%?$/.test(t);
+    const val = t => { t = t.replace('%', ''); if (/,\d{2}$/.test(t)) t = t.replace(/\./g, '').replace(',', '.'); else t = t.replace(/,/g, ''); return parseFloat(t); };
+    const dateEs = t => { const m = /(\d{1,2})\.?\s*([A-Z]{3,4})\.?\s*(\d{4})/i.exec(t || ''); return m && MES[m[2].toUpperCase()] ? `${m[3]}-${String(MES[m[2].toUpperCase()]).padStart(2, '0')}-${String(+m[1]).padStart(2, '0')}` : null; };
+    const after = (re) => { const l = lines.find(l => re.test(l.text)); if (!l) return ''; return l.text.replace(new RegExp('^.*?' + re.source, re.flags.replace('g', '')), '').trim(); };
+    // the number under a heading (totals boxes)
+    const below = (re, idx) => {
+      const k = lines.findIndex(l => re.test(l.text)); if (k < 0) return null;
+      for (let j = k + 1; j < Math.min(lines.length, k + 3); j++) { const n = lines[j].w.filter(w => isNum(w.t)); if (n.length) return val(n[Math.min(idx || 0, n.length - 1)].t); }
+      return null;
+    };
+    // table: from "Salario Base" to "Informativo" / "Total Devengos"
+    const start = lines.findIndex(l => /^Salario Base/i.test(l.text));
+    let end = lines.findIndex((l, i) => i > start && /^(Informativo|Total Devengos)|Total Devengos/i.test(l.text));
+    if (end < 0) end = lines.length;
+    const baseNums = start >= 0 ? lines[start].w.filter(w => isNum(w.t)) : [];
+    const devEnd = baseNums.length ? baseNums[baseNums.length - 1].x1 : W * 0.751;
+    const step = W * 0.106;
+    const cols = { price: devEnd - 2 * step, units: devEnd - step, dev: devEnd, ded: devEnd + step };
+    const slipLines = [];
+    for (let i = start; i >= 0 && i < end; i++) {
+      const l = lines[i], nums = l.w.filter(w => isNum(w.t) && w.x0 > W * 0.4);
+      const labelW = l.w.filter(w => w.x1 < W * 0.45 && !nums.includes(w));
+      let label = labelW.map(w => w.t).join(' ').replace(/\s+/g, ' ').trim();
+      if (!label) continue;
+      const rm = /Atraso\s*\((\d{2})\/(\d{4})\)/i.exec(label);
+      const retro = rm ? rm[2] + rm[1] : null;
+      label = label.replace(/\s*-?\s*Atraso\s*\(\d{2}\/\d{4}\)/i, '').replace(/[|!]+$/, '').trim();
+      const ln = { code: '', label, retro, price: null, units: null, dev: null, ded: null };
+      const L = label.toLowerCase();
+      for (const [re, code] of OCR_CODES) if (re.test(L)) { ln.code = code; break; }
+      for (const n of nums) {
+        let best = null, bd = Infinity;
+        for (const [k, x] of Object.entries(cols)) { const d = Math.abs(n.x1 - x); if (d < bd) { bd = d; best = k; } }
+        ln[best] = val(n.t);
+      }
+      if (ln.dev == null && ln.ded == null) continue;
+      slipLines.push(ln);
+    }
+    const totals = { devengos: below(/Total Devengos/i, 0), deducciones: below(/Total Deducciones/i, 1), baseCC: null, baseIRPF: null };
+    const net = below(/Total a percibir/i, 0);
+    const pm = /(\d{2})\/(\d{4})/.exec(after(/PERIODO DE LIQUIDACI[OÓ]N/i)) || /PERIODO\.?\s*:?\s*\d{1,2}\.?\s*([A-Z]{3})\s*(\d{4})/i.exec(all);
+    const period = pm ? { month: MES[pm[1]] || +pm[1], year: +pm[2] } : null;
+    const cm = /([CD])\s*-\s*(\d{1,2})/.exec(after(/Categor[ií]a/i));
+    const get = code => slipLines.filter(l => l.code === code && !l.retro);
+    const sumDev = slipLines.reduce((a, l) => a + (l.dev || 0), 0), sumDed = slipLines.reduce((a, l) => a + (l.ded || 0), 0);
+    // OCR self-check: the items must add up to the totals printed on the payslip
+    const ok = totals.devengos != null && totals.deducciones != null && net != null &&
+      Math.abs(sumDev - totals.devengos) < 0.05 && Math.abs(sumDed - totals.deducciones) < 0.05 && Math.abs(totals.devengos - totals.deducciones - net) < 0.05;
+    const out = {
+      ocr: true, ocrOk: ok, lines: slipLines, totals, period,
+      rank: cm ? (cm[1] === 'C' ? 'PU' : 'CA') : null, level: cm ? +cm[2] : null,
+      contract: (() => { const m = /^(\d{2,3})/.exec(after(/Porcentaje de salario/i)); return m ? +m[1] : 100; })(),
+      nextIncrease: dateEs(after(/Incremento salarial/i)),
+      basePay: (get('1000')[0] || {}).dev || null,
+      trainerPlus: get('1046').filter(l => !/d[ií]a/i.test(l.label)).reduce((a, l) => a + (l.dev || 0), 0),
+      uniform: (get('1047')[0] || {}).dev || null,
+      sales: get('5128').reduce((a, l) => a + (l.dev || 0), 0),
+      irpf: (get('/401')[0] || {}).units || null,
+      joined: dateEs(after(/Antig[uü]edad/i)),
+      net,
+      ss: ['/350', '/370', '/380'].map(k => get(k)[0]).filter(Boolean).reduce((a, l) => a + (l.units || 0), 0) || null
+    };
+    if (out.nextIncrease && out.level != null) {
+      const [y, m, d] = out.nextIncrease.split('-').map(Number);
+      out.since = `${y - Math.max(out.level, 1)}-${String(m).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+    }
+    return out;
+  }
+
+  return { maxFdp, tzOf, PARSER_V, localHour, payslip, parsePayslip, parsePayslipOcr, parseRoster, parseRosterAll, compute, rates, defaultSettings, levelFor, normRank, classify, DIETA, BASE, hm, r2, ES_AIRPORTS };
 })();
 if (typeof module !== 'undefined') module.exports = PR;
 
@@ -960,13 +1055,16 @@ var I18N = {
   names: { es: 'Español', ca: 'Català', en: 'English', de: 'Deutsch', fr: 'Français', it: 'Italiano', pt: 'Português', ro: 'Română', hu: 'Magyar', sk: 'Slovenčina', cs: 'Čeština' },
   locales: { es: 'es-ES', ca: 'ca-ES', en: 'en-GB', de: 'de-DE', fr: 'fr-FR', it: 'it-IT', pt: 'pt-PT', ro: 'ro-RO', hu: 'hu-HU', sk: 'sk-SK', cs: 'cs-CZ' },
   es: {
+    ocr_check: '{f}: nómina de <b>{m}</b> leída de la imagen, pero algún número no cuadra con los totales. Revísala en Revisar nómina.',
+    ocr_ok: '{f}: nómina de <b>{m}</b> leída de la imagen. Los conceptos suman lo mismo que los totales de la nómina.',
+    ocr_reading: 'Leyendo {f} como imagen… La primera vez descarga el lector (unos 10 MB) y tarda un poco.',
     src_est: 'sin dato: uso tu estimación de {v}',
     src_none: 'sin dato: cuenta 0 €. Escríbelo o sube la nómina',
     src_manual: 'escrito por ti',
     src_slip: 'de tu nómina',
     slip_oneOff: 'Pago único / extra',
     oneOffMonth: 'Pago único en la nómina de {m} (si lo has tenido)',
-    e_image: '{f}: este PDF es una imagen (foto o captura) y no tiene texto, así que no se puede leer. Descarga el PDF original del portal de Eurowings.',
+    e_image: '{f}: no he podido leer esta imagen. Comprueba que se ve la nómina entera y nítida, o descarga el PDF original del portal de Eurowings.',
     importedMany: 'Importado el roster de <b>{a}</b> a <b>{b}</b>: {n} meses, {f} días con vuelos. Cada mes está ya en su sitio.',
     fdpNote: 'FDP máximo de cada servicio según la tabla EASA ORO.FTL.205 para tripulación aclimatada (hora local de firma y sectores). La discreción del comandante permite hasta 2 h más en circunstancias imprevistas. Es una guía: mandan el OM-A de Eurowings y el comandante.',
     fdp_overDisc: 'supera incluso la discreción del comandante',
@@ -1193,13 +1291,16 @@ var I18N = {
     e_noPeriod: 'No encuentro el periodo del roster. ¿Es el «Individual duty plan» de IDP en PDF?'
   },
   ca: {
+    ocr_check: '{f}: nòmina de <b>{m}</b> llegida de la imatge, però algun número no quadra amb els totals. Revisa-la a Revisar nòmina.',
+    ocr_ok: '{f}: nòmina de <b>{m}</b> llegida de la imatge. Els conceptes sumen el mateix que els totals.',
+    ocr_reading: 'Llegint {f} com a imatge… La primera vegada descarrega el lector (uns 10 MB) i triga una mica.',
     src_est: 'sense dada: faig servir la teva estimació de {v}',
     src_none: 'sense dada: compta 0 €. Escriu-lo o puja la nòmina',
     src_manual: 'escrit per tu',
     src_slip: 'de la teva nòmina',
     slip_oneOff: 'Pagament únic / extra',
     oneOffMonth: 'Pagament únic a la nòmina de {m} (si l’has tingut)',
-    e_image: '{f}: aquest PDF és una imatge (foto o captura) i no té text, per això no es pot llegir. Descarrega el PDF original del portal d’Eurowings.',
+    e_image: '{f}: no he pogut llegir aquesta imatge. Comprova que es veu la nòmina sencera i nítida, o descarrega el PDF original del portal d’Eurowings.',
     importedMany: 'Importat el roster de <b>{a}</b> a <b>{b}</b>: {n} mesos, {f} dies amb vol. Cada mes ja és al seu lloc.',
     fdpNote: 'FDP màxim de cada servei segons la taula EASA ORO.FTL.205 per a tripulació aclimatada (hora local de signatura i sectors). La discreció del comandant permet fins a 2 h més en circumstàncies imprevistes. És una guia: manen l’OM-A d’Eurowings i el comandant.',
     fdp_overDisc: 'supera fins i tot la discreció del comandant',
@@ -1426,13 +1527,16 @@ var I18N = {
     e_noPeriod: 'No trobo el període del roster. És l’«Individual duty plan» d’IDP en PDF?'
   },
   en: {
+    ocr_check: '{f}: <b>{m}</b> payslip read from the image, but some number doesn’t match the totals. Check it in Check payslip.',
+    ocr_ok: '{f}: <b>{m}</b> payslip read from the image. The items add up to the payslip totals.',
+    ocr_reading: 'Reading {f} as an image… The first time it downloads the reader (about 10 MB) and takes a little while.',
     src_est: 'no data: using your estimate of {v}',
     src_none: 'no data: counts as €0. Type it or upload the payslip',
     src_manual: 'typed by you',
     src_slip: 'from your payslip',
     slip_oneOff: 'One-off payment / bonus',
     oneOffMonth: 'One-off payment in the {m} payslip (if you had any)',
-    e_image: '{f}: this PDF is an image (photo or screenshot) with no text, so it can’t be read. Download the original PDF from the Eurowings portal.',
+    e_image: '{f}: I couldn’t read this image. Make sure the whole payslip is visible and sharp, or download the original PDF from the Eurowings portal.',
     importedMany: 'Imported the roster from <b>{a}</b> to <b>{b}</b>: {n} months, {f} days with flights. Each month is now in its place.',
     fdpNote: 'Max FDP of each duty from the EASA ORO.FTL.205 table for acclimatised crew (local check-in time and sectors). Commander’s discretion allows up to 2 h more in unforeseen circumstances. A guide only: the Eurowings OM-A and the commander decide.',
     fdp_overDisc: 'exceeds even commander’s discretion',
@@ -1659,13 +1763,16 @@ var I18N = {
     e_noPeriod: 'I can’t find the roster period. Is this the IDP “Individual duty plan” PDF?'
   },
   de: {
+    ocr_check: '{f}: Abrechnung <b>{m}</b> aus dem Bild gelesen, aber eine Zahl passt nicht zu den Summen. Prüfe sie unter Abrechnung prüfen.',
+    ocr_ok: '{f}: Abrechnung <b>{m}</b> aus dem Bild gelesen. Die Posten ergeben die Summen der Abrechnung.',
+    ocr_reading: '{f} wird als Bild gelesen… Beim ersten Mal wird der Leser geladen (ca. 10 MB), das dauert kurz.',
     src_est: 'keine Angabe: deine Schätzung von {v}',
     src_none: 'keine Angabe: zählt 0 €. Eintragen oder Abrechnung hochladen',
     src_manual: 'von dir eingegeben',
     src_slip: 'aus deiner Abrechnung',
     slip_oneOff: 'Einmalzahlung / Extra',
     oneOffMonth: 'Einmalzahlung in der Abrechnung {m} (falls du eine hattest)',
-    e_image: '{f}: Dieses PDF ist ein Bild (Foto oder Screenshot) ohne Text und kann nicht gelesen werden. Lade das Original-PDF im Eurowings-Portal herunter.',
+    e_image: '{f}: Dieses Bild konnte ich nicht lesen. Ist die ganze Abrechnung scharf zu sehen? Sonst lade das Original-PDF im Eurowings-Portal herunter.',
     importedMany: 'Dienstplan von <b>{a}</b> bis <b>{b}</b> importiert: {n} Monate, {f} Tage mit Flügen. Jeder Monat ist jetzt an seinem Platz.',
     fdpNote: 'Max. FDP jedes Dienstes nach der EASA-Tabelle ORO.FTL.205 für akklimatisierte Crew (Ortszeit des Check-ins und Sektoren). Der Kommandantenentscheid erlaubt bei unvorhergesehenen Umständen bis zu 2 h mehr. Nur eine Orientierung: maßgeblich sind das Eurowings OM-A und der Kommandant.',
     fdp_overDisc: 'überschreitet sogar den Kommandantenentscheid',
@@ -1892,13 +1999,16 @@ var I18N = {
     e_noPeriod: 'Ich finde den Zeitraum des Dienstplans nicht. Ist das der „Individual duty plan“ aus IDP als PDF?'
   },
   fr: {
+    ocr_check: '{f} : fiche de paie de <b>{m}</b> lue depuis l’image, mais un nombre ne correspond pas aux totaux. Vérifie-la dans Vérifier la fiche.',
+    ocr_ok: '{f} : fiche de paie de <b>{m}</b> lue depuis l’image. Les lignes correspondent aux totaux.',
+    ocr_reading: 'Lecture de {f} comme image… La première fois, le lecteur se télécharge (environ 10 Mo), cela prend un moment.',
     src_est: 'pas de donnée : ton estimation de {v}',
     src_none: 'pas de donnée : compte 0 €. Saisis-le ou importe la fiche',
     src_manual: 'saisi par toi',
     src_slip: 'de ta fiche de paie',
     slip_oneOff: 'Paiement unique / prime',
     oneOffMonth: 'Paiement unique sur la fiche de paie de {m} (si tu en as eu un)',
-    e_image: '{f} : ce PDF est une image (photo ou capture) sans texte, il ne peut pas être lu. Télécharge le PDF original sur le portail Eurowings.',
+    e_image: '{f} : je n’ai pas pu lire cette image. Vérifie que la fiche entière est visible et nette, ou télécharge le PDF original sur le portail Eurowings.',
     importedMany: 'Planning importé de <b>{a}</b> à <b>{b}</b> : {n} mois, {f} jours avec vols. Chaque mois est à sa place.',
     fdpNote: 'FDP max de chaque service selon le tableau EASA ORO.FTL.205 pour équipage acclimaté (heure locale du check-in et étapes). La discrétion du commandant permet jusqu’à 2 h de plus en cas d’imprévu. Indicatif : l’OM-A d’Eurowings et le commandant décident.',
     fdp_overDisc: 'dépasse même la discrétion du commandant',
@@ -2125,13 +2235,16 @@ var I18N = {
     e_noPeriod: 'Je ne trouve pas la période du planning. Est-ce bien l’« Individual duty plan » d’IDP en PDF ?'
   },
   hu: {
+    ocr_check: '{f}: <b>{m}</b> bérjegyzék beolvasva a képről, de egy szám nem egyezik a végösszegekkel. Nézd meg a Bérjegyzék ellenőrzésénél.',
+    ocr_ok: '{f}: <b>{m}</b> bérjegyzék beolvasva a képről. A tételek összege egyezik a végösszegekkel.',
+    ocr_reading: '{f} beolvasása képként… Először letölti az olvasót (kb. 10 MB), ez eltart egy kicsit.',
     src_est: 'nincs adat: a becslésedet használom ({v})',
     src_none: 'nincs adat: 0 €-val számol. Írd be vagy töltsd fel a bérjegyzéket',
     src_manual: 'te írtad be',
     src_slip: 'a bérjegyzékedből',
     slip_oneOff: 'Egyszeri kifizetés / extra',
     oneOffMonth: 'Egyszeri kifizetés a(z) {m} havi bérjegyzékben (ha volt)',
-    e_image: '{f}: ez a PDF egy kép (fotó vagy képernyőkép), nincs benne szöveg, ezért nem olvasható. Töltsd le az eredeti PDF-et az Eurowings portálról.',
+    e_image: '{f}: ezt a képet nem tudtam beolvasni. Nézd meg, hogy az egész bérjegyzék éles-e, vagy töltsd le az eredeti PDF-et az Eurowings portálról.',
     importedMany: 'Beosztás importálva <b>{a}</b> – <b>{b}</b>: {n} hónap, {f} nap repüléssel. Minden hónap a helyén van.',
     fdpNote: 'Az egyes szolgálatok max. FDP-je az EASA ORO.FTL.205 táblázata szerint akklimatizált személyzetre (helyi jelentkezési idő és szektorok). A parancsnoki döntés előre nem látható esetben legfeljebb 2 órát enged pluszban. Csak tájékoztató: a Eurowings OM-A és a parancsnok dönt.',
     fdp_overDisc: 'még a parancsnoki döntéssel is túllépi',
@@ -2358,13 +2471,16 @@ var I18N = {
     e_noPeriod: 'Nem találom a beosztás időszakát. Ez az IDP „Individual duty plan” PDF-je?'
   },
   sk: {
+    ocr_check: '{f}: výplatná páska za <b>{m}</b> prečítaná z obrázka, ale niektoré číslo nesedí so súčtami. Skontroluj ju v Kontrole pásky.',
+    ocr_ok: '{f}: výplatná páska za <b>{m}</b> prečítaná z obrázka. Položky sedia so súčtami.',
+    ocr_reading: 'Čítam {f} ako obrázok… Prvýkrát sa stiahne čítačka (asi 10 MB), chvíľu to trvá.',
     src_est: 'bez údaja: používam tvoj odhad {v}',
     src_none: 'bez údaja: počíta sa 0 €. Zadaj ho alebo nahraj pásku',
     src_manual: 'zadané tebou',
     src_slip: 'z tvojej výplatnej pásky',
     slip_oneOff: 'Jednorazová platba / extra',
     oneOffMonth: 'Jednorazová platba vo výplatnej páske za {m} (ak si nejakú mal)',
-    e_image: '{f}: toto PDF je obrázok (fotka alebo snímka obrazovky) bez textu, preto sa nedá prečítať. Stiahni pôvodné PDF z portálu Eurowings.',
+    e_image: '{f}: tento obrázok sa mi nepodarilo prečítať. Skontroluj, či je celá páska ostrá, alebo stiahni pôvodné PDF z portálu Eurowings.',
     importedMany: 'Rozpis importovaný od <b>{a}</b> do <b>{b}</b>: {n} mesiacov, {f} dní s letmi. Každý mesiac je na svojom mieste.',
     fdpNote: 'Max. FDP každej služby podľa tabuľky EASA ORO.FTL.205 pre aklimatizovanú posádku (miestny čas nástupu a sektory). Rozhodnutie kapitána umožňuje pri nepredvídaných okolnostiach najviac o 2 h viac. Len orientačne: rozhoduje OM-A Eurowings a kapitán.',
     fdp_overDisc: 'prekračuje aj rozhodnutie kapitána',
@@ -2591,13 +2707,16 @@ var I18N = {
     e_noPeriod: 'Nenachádzam obdobie rozpisu. Je to „Individual duty plan“ z IDP v PDF?'
   },
   cs: {
+    ocr_check: '{f}: výplatní páska za <b>{m}</b> přečtena z obrázku, ale některé číslo nesedí se součty. Zkontroluj ji v Kontrole pásky.',
+    ocr_ok: '{f}: výplatní páska za <b>{m}</b> přečtena z obrázku. Položky sedí se součty.',
+    ocr_reading: 'Čtu {f} jako obrázek… Poprvé se stáhne čtečka (asi 10 MB), chvíli to trvá.',
     src_est: 'bez údaje: používám tvůj odhad {v}',
     src_none: 'bez údaje: počítá se 0 €. Zadej ho nebo nahraj pásku',
     src_manual: 'zadáno tebou',
     src_slip: 'z tvé výplatní pásky',
     slip_oneOff: 'Jednorázová platba / extra',
     oneOffMonth: 'Jednorázová platba ve výplatní pásce za {m} (pokud jsi nějakou měl)',
-    e_image: '{f}: toto PDF je obrázek (fotka nebo snímek obrazovky) bez textu, proto ho nelze přečíst. Stáhni původní PDF z portálu Eurowings.',
+    e_image: '{f}: tento obrázek se mi nepodařilo přečíst. Zkontroluj, že je celá páska ostrá, nebo stáhni původní PDF z portálu Eurowings.',
     importedMany: 'Rozpis importován od <b>{a}</b> do <b>{b}</b>: {n} měsíců, {f} dní s lety. Každý měsíc je na svém místě.',
     fdpNote: 'Max. FDP každé služby podle tabulky EASA ORO.FTL.205 pro aklimatizovanou posádku (místní čas nástupu a sektory). Rozhodnutí kapitána umožňuje při nepředvídaných okolnostech nejvýše o 2 h více. Jen orientačně: rozhoduje OM-A Eurowings a kapitán.',
     fdp_overDisc: 'překračuje i rozhodnutí kapitána',
@@ -2824,13 +2943,16 @@ var I18N = {
     e_noPeriod: 'Nenacházím období rozpisu. Je to „Individual duty plan“ z IDP v PDF?'
   },
   it: {
+    "ocr_check": "{f}: busta paga di <b>{m}</b> letta dall’immagine, ma qualche numero non torna con i totali. Controllala in Controlla busta paga.",
+    "ocr_ok": "{f}: busta paga di <b>{m}</b> letta dall’immagine. Le voci tornano con i totali.",
+    "ocr_reading": "Lettura di {f} come immagine… La prima volta scarica il lettore (circa 10 MB) e ci mette un po’.",
     "src_est": "nessun dato: uso la tua stima di {v}",
     "src_none": "nessun dato: conta 0 €. Inseriscilo o carica la busta paga",
     "src_manual": "inserito da te",
     "src_slip": "dalla tua busta paga",
     "slip_oneOff": "Pagamento unico / extra",
     "oneOffMonth": "Pagamento unico nella busta paga di {m} (se l’hai avuto)",
-    "e_image": "{f}: questo PDF è un’immagine (foto o screenshot) senza testo, quindi non si può leggere. Scarica il PDF originale dal portale Eurowings.",
+    "e_image": "{f}: non sono riuscito a leggere questa immagine. Verifica che la busta paga si veda intera e nitida, o scarica il PDF originale dal portale Eurowings.",
     "importedMany": "Roster importato da <b>{a}</b> a <b>{b}</b>: {n} mesi, {f} giorni con voli. Ogni mese è al suo posto.",
     "fdpNote": "FDP massimo di ogni servizio secondo la tabella EASA ORO.FTL.205 per equipaggio acclimatato (ora locale di presentazione e settori). La discrezionalità del comandante consente fino a 2 h in più in circostanze impreviste. È una guida: decidono l’OM-A di Eurowings e il comandante.",
     "fdp_overDisc": "supera anche la discrezionalità del comandante",
@@ -3163,13 +3285,16 @@ var I18N = {
     "e_noPeriod": "Non trovo il periodo del turno. È l’«Individual duty plan» di IDP in PDF?"
   },
   pt: {
+    "ocr_check": "{f}: recibo de <b>{m}</b> lido da imagem, mas algum número não bate com os totais. Revê-o em Verificar recibo.",
+    "ocr_ok": "{f}: recibo de <b>{m}</b> lido da imagem. Os conceitos batem com os totais.",
+    "ocr_reading": "A ler {f} como imagem… Da primeira vez descarrega o leitor (cerca de 10 MB) e demora um pouco.",
     "src_est": "sem dados: uso a tua estimativa de {v}",
     "src_none": "sem dados: conta 0 €. Escreve-o ou carrega o recibo",
     "src_manual": "escrito por ti",
     "src_slip": "do teu recibo",
     "slip_oneOff": "Pagamento único / extra",
     "oneOffMonth": "Pagamento único no recibo de {m} (se tiveste algum)",
-    "e_image": "{f}: este PDF é uma imagem (foto ou captura) sem texto, por isso não pode ser lido. Descarrega o PDF original no portal da Eurowings.",
+    "e_image": "{f}: não consegui ler esta imagem. Verifica se o recibo se vê inteiro e nítido, ou descarrega o PDF original no portal da Eurowings.",
     "importedMany": "Escala importada de <b>{a}</b> a <b>{b}</b>: {n} meses, {f} dias com voos. Cada mês já está no seu lugar.",
     "fdpNote": "FDP máximo de cada serviço segundo a tabela EASA ORO.FTL.205 para tripulação aclimatada (hora local de apresentação e setores). A discrição do comandante permite até 2 h a mais em circunstâncias imprevistas. É uma orientação: decidem o OM-A da Eurowings e o comandante.",
     "fdp_overDisc": "ultrapassa até a discrição do comandante",
@@ -3502,13 +3627,16 @@ var I18N = {
     "e_noPeriod": "Não encontro o período da escala. É o «Individual duty plan» do IDP em PDF?"
   },
   ro: {
+    "ocr_check": "{f}: fluturașul din <b>{m}</b> citit din imagine, dar un număr nu se potrivește cu totalurile. Verifică-l la Verifică fluturașul.",
+    "ocr_ok": "{f}: fluturașul din <b>{m}</b> citit din imagine. Pozițiile dau aceleași totaluri.",
+    "ocr_reading": "Citesc {f} ca imagine… Prima dată descarcă cititorul (circa 10 MB) și durează puțin.",
     "src_est": "fără date: folosesc estimarea ta de {v}",
     "src_none": "fără date: contează 0 €. Scrie-l sau încarcă fluturașul",
     "src_manual": "introdus de tine",
     "src_slip": "din fluturașul tău",
     "slip_oneOff": "Plată unică / extra",
     "oneOffMonth": "Plată unică în fluturașul din {m} (dacă ai avut)",
-    "e_image": "{f}: acest PDF este o imagine (poză sau captură) fără text, deci nu poate fi citit. Descarcă PDF-ul original din portalul Eurowings.",
+    "e_image": "{f}: nu am putut citi această imagine. Verifică dacă fluturașul se vede întreg și clar sau descarcă PDF-ul original din portalul Eurowings.",
     "importedMany": "Roster importat de la <b>{a}</b> la <b>{b}</b>: {n} luni, {f} zile cu zboruri. Fiecare lună e la locul ei.",
     "fdpNote": "FDP maxim al fiecărui serviciu conform tabelului EASA ORO.FTL.205 pentru echipaj aclimatizat (ora locală a prezentării și sectoarele). Decizia comandantului permite până la 2 h în plus în situații neprevăzute. Este orientativ: decid OM-A Eurowings și comandantul.",
     "fdp_overDisc": "depășește chiar și decizia comandantului",
@@ -6185,12 +6313,12 @@ function slipBuckets(lines){
   const dType = l => (/inter/.test(L(l)) ? 'intl' : 'nat') + (/con pern/.test(L(l)) ? 'Night' : 'Day');
   const counts = {intlNight:0,intlDay:0,natNight:0,natDay:0}, dAmt = {intlNight:0,intlDay:0,natNight:0,natDay:0};
   lines.filter(viaje).forEach(l => { const k = dType(l); dAmt[k] += +l.dev||0; counts[k] += Math.round((+l.dev||0) / PR.DIETA[k]); });
-  const known = l => l.code==='1000' || isOneOff(l) || /uniforme|formaci[oó]n de cabina|compra|comisi|asesoramiento|early|check/.test(L(l)) || isH(l) || viaje(l) || /^\//.test(l.code);
+  const known = l => l.code==='1000' || isOneOff(l) || /uniforme|formaci[oó]n de cabina|compra|comisi|asesoramiento|early|check|parada nocturna|gastos de viaje/.test(L(l)) || isH(l) || viaje(l) || /^\//.test(l.code);
   return {
     base: sum(l=>l.code==='1000'), uniform: sum(l=>/uniforme/.test(L(l))), trainer: sum(l=>/formaci[oó]n de cabina/.test(L(l))),
     buy: sum(l=>/compra/.test(L(l))), buyN: sum(l=>/compra/.test(L(l)),'units'),
     hF: sum(l=>isH(l)&&!isAdd(l),'units'), hA: sum(l=>isH(l)&&isAdd(l),'units'), hours: sum(isH),
-    early: sum(l=>/early|check/.test(L(l))), sales: sum(l=>/comisi/.test(L(l))),
+    early: sum(l=>/early|check|parada nocturna/.test(L(l))), sales: sum(l=>/comisi/.test(L(l))),
     fiscal: sum(l=>/asesoramiento/.test(L(l))), oneOff: sum(isOneOff), ingCta: sum(l=>/ingreso a cuenta/.test(L(l)),'ded'),
     ss: sum(l=>/^\/3[5-9]\d/.test(l.code),'ded'), irpf: sum(l=>l.code==='/401','ded'),
     dietas: Object.values(dAmt).reduce((a,b)=>a+b,0), dCounts: counts,
@@ -6518,7 +6646,7 @@ document.addEventListener('click', async e=>{
 <script>
 const SEED = null;
 const SEED_SETTINGS = null;
-const APP_VERSION = '2026.11.08-1925';
+const APP_VERSION = '2026.11.08-1935';
 const IS_PWA_BUILD = true;
 const LS = 'payroster.v1';
 const KC = { flight:'--k-flight', deadhead:'--k-dh', training:'--k-train', standby:'--k-sby', reserve:'--k-sby', ground:'--k-ground', off:'--k-off', empty:'--k-off', other:'--k-ground' };
@@ -7021,6 +7149,46 @@ document.addEventListener('change', e=>{
 // ---- PDF import ----
 const PDFJS = './lib/';
 function loadScript(src){ return new Promise((res,rej)=>{ const s=document.createElement('script'); s.src=src; s.onload=res; s.onerror=()=>rej(new Error(t('e_pdfLib'))); document.head.appendChild(s); }); }
+// ---- OCR for payslips that are a picture (screenshot / photo in a PDF, or a PNG/JPG) ----
+const TESS = 'https://cdn.jsdelivr.net/npm/tesseract.js@5.1.1/dist/';
+let ocrWorker = null;
+async function ocrCanvas(canvas){
+  if(!window.Tesseract) await loadScript(TESS+'tesseract.min.js');
+  if(!ocrWorker) ocrWorker = await Tesseract.createWorker('spa', 1, { workerPath: TESS+'worker.min.js' });
+  const r = await ocrWorker.recognize(canvas, {}, {blocks:true});
+  const words = [];
+  for(const b of r.data.blocks||[]) for(const p of b.paragraphs) for(const l of p.lines) for(const w of l.words)
+    words.push({t:w.text, x0:w.bbox.x0, y0:w.bbox.y0, x1:w.bbox.x1, y1:w.bbox.y1});
+  return words;
+}
+const OCR_W = 2250;   // the payslip screenshots read best at about twice their size
+async function pdfPageCanvas(file){
+  await loadPdfLib();
+  const doc = await pdfjsLib.getDocument({data:new Uint8Array(await file.arrayBuffer())}).promise;
+  const pg = await doc.getPage(1), vp0 = pg.getViewport({scale:1}), vp = pg.getViewport({scale: OCR_W/vp0.width});
+  const c = document.createElement('canvas'); c.width = Math.round(vp.width); c.height = Math.round(vp.height);
+  const ctx = c.getContext('2d'); ctx.fillStyle = '#fff'; ctx.fillRect(0,0,c.width,c.height);
+  await pg.render({canvasContext: ctx, viewport: vp}).promise;
+  return c;
+}
+async function imageCanvas(file){
+  const url = URL.createObjectURL(file);
+  try{
+    const img = await new Promise((res,rej)=>{ const i=new Image(); i.onload=()=>res(i); i.onerror=rej; i.src=url; });
+    const k = OCR_W / img.naturalWidth, c = document.createElement('canvas');
+    c.width = OCR_W; c.height = Math.round(img.naturalHeight*k);
+    const ctx = c.getContext('2d'); ctx.fillStyle = '#fff'; ctx.fillRect(0,0,c.width,c.height); ctx.drawImage(img, 0, 0, c.width, c.height);
+    return c;
+  } finally { URL.revokeObjectURL(url); }
+}
+async function ocrPayslip(file, isImage){
+  showMsg(t('ocr_reading',{f:esc(file.name)}));
+  const canvas = isImage ? await imageCanvas(file) : await pdfPageCanvas(file);
+  return PR.parsePayslipOcr(await ocrCanvas(canvas), canvas.width);
+}
+async function loadPdfLib(){
+  if(!window.pdfjsLib){ await loadScript(PDFJS+'pdf.min.js'); pdfjsLib.GlobalWorkerOptions.workerSrc = PDFJS+'pdf.worker.min.js'; }
+}
 async function readPdf(file){
   if(!window.pdfjsLib){ await loadScript(PDFJS+'pdf.min.js'); pdfjsLib.GlobalWorkerOptions.workerSrc = PDFJS+'pdf.worker.min.js'; }
   const doc = await pdfjsLib.getDocument({data:new Uint8Array(await file.arrayBuffer())}).promise;
@@ -7032,12 +7200,22 @@ async function readPdf(file){
   return pages;
 }
 function showMsg(html, err){ const m=$('importMsg'); m.hidden=false; m.className='msg'+(err?' err':''); m.innerHTML=html; }
+async function fromOcr(f, isImage){
+  let slip = null;
+  try{ slip = await ocrPayslip(f, isImage); }catch(e){ console.warn('ocr', e); return {html: t('e_image',{f:esc(f.name)}), err:true}; }
+  if(!slip || !slip.period || slip.net==null) return {html: t('e_image',{f:esc(f.name)}), err:true};
+  const r = applyPayslip(slip);
+  const mes = monthName(slip.period.year, slip.period.month, {month:'long',year:'numeric'});
+  return {slip:true, period: slip.period, err: r.err || !slip.ocrOk,
+    html: (slip.ocrOk ? t('ocr_ok',{f:esc(f.name),m:mes}) : t('ocr_check',{f:esc(f.name),m:mes})) + ' ' + r.html};
+}
 async function importPdf(f){
   try{
+    if(/^image\//.test(f.type) || /\.(png|jpe?g|heic|webp)$/i.test(f.name)) return await fromOcr(f, true);
     const pages = await readPdf(f);
     const slip = PR.parsePayslip(pages[0] ? pages[0].items : []);
     if(slip) return Object.assign({slip:true, period: slip.period}, applyPayslip(slip));
-    if(!pages.some(p=>p.items.length)) return {html: t('e_image',{f:esc(f.name)}), err:true};
+    if(!pages.some(p=>p.items.length)) return await fromOcr(f, false);
     const list = PR.parseRosterAll(pages);
     const raw = pages.map(p => p.items.map(i => [Math.round(i.x*10)/10, Math.round(i.y*10)/10, i.str]));
     state.raws = state.raws || {};
@@ -7062,6 +7240,7 @@ $('pdfIn').addEventListener('change', async e=>{
     showMsg(t('reading',{f:esc(files[i].name)}) + (files.length>1 ? ` (${i+1}/${files.length})` : ''));
     out.push(await importPdf(files[i]));
   }
+  if(ocrWorker){ try{ await ocrWorker.terminate(); }catch(e){} ocrWorker = null; }
   showMsg(out.map(r=>r.html).join('<br>'), out.some(r=>r.err));
 });
 
