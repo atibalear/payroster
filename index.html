@@ -300,7 +300,7 @@ input[type=date]::-webkit-date-and-time-value{text-align:left}
 // Payroster engine: roster parser + pay rules (Convenio TCP Eurowings Europe, bases España)
 // Pure functions; no DOM. Used by the page and by node tests.
 var PR = (function () {
-  const PARSER_V = 7; // bump when the roster reader changes, so saved months get re-read
+  const PARSER_V = 8; // bump when the roster reader changes, so saved months get re-read
   const MONTHS = { Jan: 1, Feb: 2, Mar: 3, Apr: 4, May: 5, Jun: 6, Jul: 7, Aug: 8, Sep: 9, Oct: 10, Nov: 11, Dec: 12 };
   const ES_AIRPORTS = new Set(('PMI IBZ MAH MAD BCN AGP ALC VLC SVQ BIO SCQ VGO OVD SDR LPA TFS TFN ACE FUE SPC GMZ VDE ' +
     'GRX XRY LEI REU GRO ZAZ VIT PNA LCG MJV RMU VLL SLM LEN BJZ EAS SDR HSK ODB RGS CDT MLN JCU').split(' '));
@@ -412,7 +412,12 @@ var PR = (function () {
 
   // ---------- parser ----------
   // pages: [{items:[{x,y,str}]}] in page orientation (y grows downward)
-  function parseRoster(pages) {
+  // An IDP export can cover one month or several (e.g. 01Jan26 - 30Nov26): parseRosterAll returns one roster per month.
+  function parseRoster(pages, ym) {
+    const all = parseRosterAll(pages);
+    return (ym && all.find(r => r.year + '-' + String(r.month).padStart(2, '0') === ym)) || all[0];
+  }
+  function parseRosterAll(pages) {
     const raw = pages.flatMap((p, i) => p.items.map(it => ({ ...it, page: i })));
     // The duty detail ends where the summary block ("Flight time", "Crew Information…") starts
     const stop = raw.filter(i => /^(Flight time|Crew Information|Hotels)/.test(i.str.trim()))
@@ -425,7 +430,11 @@ var PR = (function () {
     const per = /Period:\s*(\d{2})([A-Z][a-z]{2})(\d{2})\s*-\s*(\d{2})([A-Z][a-z]{2})(\d{2})/.exec(text);
     if (!per) throw new Error('No encuentro el periodo del roster. ¿Es el "Individual duty plan" de IDP en PDF?');
     const year = 2000 + (+per[3]), month = MONTHS[per[2]];
-    const endDay = +per[4];
+    const startDay = +per[1], endDay = +per[4], endYear = 2000 + (+per[6]), endMonth = MONTHS[per[5]];
+    const nMonths = Math.max(1, (endYear * 12 + endMonth) - (year * 12 + month) + 1);
+    // day key = month offset * 100 + day; dates only carry the day, so a smaller day means the next month
+    const offOf = (mo, yr) => (yr * 12 + mo) - (year * 12 + month);
+    const findOff = makeOffFinder(year, month, nMonths);
     const nameM = /Individual duty plan\s+for\s+(.+?)\s*\((\d+)\)/.exec(text);
     const contract = (/contract:\s*(\S+)/.exec(text) || [])[1] || '';
 
@@ -460,6 +469,7 @@ var PR = (function () {
       const key = it.page + ':' + c;
       (byPageCol[key] = byPageCol[key] || []).push({ ...it, rx: it.x - colsByPage[it.page][c], s: it.str.trim() });
     }
+    let mOff = 0, lastD = 0;
     const pageKeys = Object.keys(byPageCol).sort((a, b) => { const [pa, ca] = a.split(':').map(Number), [pb, cb] = b.split(':').map(Number); return pa - pb || ca - cb; });
     for (const key of pageKeys) {
       const items = byPageCol[key].filter(i => i.s).sort((a, b) => a.y - b.y || a.x - b.x);
@@ -477,8 +487,11 @@ var PR = (function () {
         const main = ln.items.filter(i => i.rx < 205);
         const br = ln.items.filter(i => i.rx >= 205);
         if (main.length && dateRe.test(main[0].s) && main[0].rx < 8) {
-          const d = +dateRe.exec(main[0].s)[2];
-          cur = days[d] = days[d] || { day: d, events: [], dt: null, fdp: null, bt: null, hotel: null, notes: [] };
+          const dm0 = dateRe.exec(main[0].s), d = +dm0[2];
+          mOff = findOff(dm0[1], d, mOff, lastD);
+          lastD = d;
+          const dk = mOff * 100 + d;
+          cur = days[dk] = days[dk] || { day: d, events: [], dt: null, fdp: null, bt: null, hotel: null, notes: [] };
           main.shift();
         }
         if (!cur) continue;
@@ -492,7 +505,7 @@ var PR = (function () {
         const words = toks.map(t => t.s);
         const first = words.join(' ');
         if (/^To\b|^Ref:|^c\/m/.test(first)) continue;
-        if (/^H\d$/.test(words[0]) && toks[0].rx < 30) { cur.hotel = words.find(isStation) || null; continue; }
+        if (/^H\d{1,2}$/.test(words[0]) && toks[0].rx < 30) { cur.hotel = words.find(isStation) || null; continue; }
         // bucket by relative x
         const at = (lo, hi) => toks.filter(t => t.rx >= lo && t.rx < hi).map(t => t.s);
         const label = at(25, 95).join(' ');
@@ -526,7 +539,7 @@ var PR = (function () {
     const p3 = pages.map(p => p.items.slice().sort((a, b) => a.y - b.y || a.x - b.x).map(i => i.str).join(' ')).join(' ');
     if (/Limit Calc/.test(p3)) {
       const after = p3.slice(p3.indexOf('Limit Calc'));
-      let m; while ((m = re.exec(after))) { if (MONTHS[m[2]] === month) dtl[+m[1]] = hm(m[4]); }
+      let m; while ((m = re.exec(after))) { const o = offOf(MONTHS[m[2]], 2000 + (+m[3])); if (o >= 0 && o < nMonths) dtl[o * 100 + (+m[1])] = hm(m[4]); }
     }
     const summary = {
       flightTime: hm((/Flight time\s+(\d+:\d{2})/.exec(text) || [])[1]),
@@ -534,18 +547,27 @@ var PR = (function () {
     };
 
     // crew lists ("Crew Information on Leg" / "on Ground Activity")
-    const crew = parseCrew(raw);
+    const crew = parseCrew(raw, findOff);
 
-    const out = [];
-    for (let d = 1; d <= endDay; d++) {
-      const x = days[d] || { day: d, events: [], dt: null, fdp: null, hotel: null, notes: [] };
-      x.dtLimit = dtl[d] != null ? dtl[d] : null;
-      x.date = `${year}-${String(month).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
-      x.crew = crew.legs[d] || [];
-      x.gcrew = crew.events[d] || [];
-      out.push(x);
+    const res = [];
+    for (let o = 0; o < nMonths; o++) {
+      const yy = year + Math.floor((month - 1 + o) / 12), mm = (month - 1 + o) % 12 + 1;
+      const first = o === 0 && nMonths > 1 ? startDay : 1;
+      const last = o === nMonths - 1 ? endDay : new Date(Date.UTC(yy, mm, 0)).getUTCDate();
+      const out = [];
+      for (let d = first; d <= last; d++) {
+        const k = o * 100 + d;
+        const x = days[k] || { day: d, events: [], dt: null, fdp: null, hotel: null, notes: [] };
+        x.dtLimit = dtl[k] != null ? dtl[k] : null;
+        x.date = `${yy}-${String(mm).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+        x.crew = crew.legs[k] || [];
+        x.gcrew = crew.events[k] || [];
+        out.push(x);
+      }
+      res.push({ parser: PARSER_V, year: yy, month: mm, crew: nameM ? nameM[1] : '', crewId: nameM ? nameM[2] : '', contract, rank, rankNorm: normRank(rank), base, days: out,
+        summary: nMonths === 1 ? summary : { flightTime: null, fdp: null }, multi: nMonths > 1 ? nMonths : undefined });
     }
-    return { parser: PARSER_V, year, month, crew: nameM ? nameM[1] : '', crewId: nameM ? nameM[2] : '', contract, rank, rankNorm: normRank(rank), base, days: out, summary };
+    return res;
   }
 
   // ---------- crew lists ----------
@@ -553,7 +575,20 @@ var PR = (function () {
   // "Mon09 EW 9840 DUS 0525 0655 LIN", followed by "cockpit: CP Name", "FO Name", "cabin: PU Name",
   // "ST Name"…; a ground activity is "Tue03 DT_TRNG BER 0700 1700" followed by "crew on event:Name"
   // and one name per line.
-  function parseCrew(raw) {
+  // Dates only say "Tue17": the month is the first one, from the current one on, where the 17th is a Tuesday
+  // (going forward only when the day goes back or the weekday doesn't fit).
+  const WD = { Sun: 0, Mon: 1, Tue: 2, Wed: 3, Thu: 4, Fri: 5, Sat: 6 };
+  function makeOffFinder(year, month, nMonths) {
+    return (wd, d, off, lastD) => {
+      if (nMonths <= 1) return 0;
+      const fits = o => { const dt = new Date(Date.UTC(year, month - 1 + o, d)); return dt.getUTCDate() === d && dt.getUTCDay() === WD[wd]; };
+      const from = d < lastD ? off + 1 : off;
+      for (let o = from; o < nMonths; o++) if (fits(o)) return o;
+      return Math.min(from, nMonths - 1);
+    };
+  }
+  function parseCrew(raw, findOff) {
+    findOff = findOff || (() => 0);
     const legs = {}, events = {};
     const col = x => x < 290 ? 0 : x < 565 ? 1 : 2;
     const items = raw.filter(i => i.y > 115 && i.str.trim()).map(i => ({ ...i, c: col(i.x), s: i.str.trim() }))
@@ -566,16 +601,19 @@ var PR = (function () {
     }
     const ROLE = /^(CP|cp|FO|SO|SFO|PU|ST|SC|FA|CA|CC|PR|TR|JU|IN|OB)$/;
     const date = /^(Mon|Tue|Wed|Thu|Fri|Sat|Sun)(\d{2})$/;
-    let mode = null, cur = null;
+    let mode = null, cur = null, off = 0, lastD = 0;
     for (const l of lines) {
       const text = l.parts.join(' ').replace(/\s+/g, ' ').trim();
-      if (/Crew Information on/.test(text)) { mode = /Ground/.test(text) ? 'event' : /Leg/.test(text) ? 'leg' : mode; cur = null; continue; }
+      if (/Crew Information on/.test(text)) { const nm = /Ground/.test(text) ? 'event' : /Leg/.test(text) ? 'leg' : mode; if (nm !== mode) { off = 0; lastD = 0; } mode = nm; cur = null; continue; }
       if (!mode) continue;
       if (/Legend|expiry date|^code description|^date flight|^Hotels|Flight time/.test(text)) { cur = null; continue; }
       const tok = text.split(' ');
       const dm = date.exec(tok[0]);
       if (dm) {
-        const day = +dm[2];
+        const d0 = +dm[2];
+        off = findOff(dm[1], d0, off, lastD);
+        lastD = d0;
+        const day = off * 100 + d0;
         const fl = /^(DH\/)?[A-Z0-9]{2}$/.test(tok[1]) && /^\d{1,4}[A-Z]?$/.test(tok[2]);
         if (fl) { cur = { type: 'leg', flight: tok[1] + ' ' + tok[2], dep: tok[3], t1: tok[4], arr: tok[tok.length - 1], members: [] }; (legs[day] = legs[day] || []).push(cur); }
         else { cur = { type: 'event', code: tok[1], st: /^[A-Z]{3}$/.test(tok[2]) ? tok[2] : '', names: [] }; (events[day] = events[day] || []).push(cur); }
@@ -900,7 +938,7 @@ var PR = (function () {
       taxable, ss, irpf, dietas: v.dietasPaid, net: r2(taxable - ss - irpf + v.dietasPaid + fiscalAid - ingresoCta) };
   }
 
-  return { maxFdp, tzOf, PARSER_V, localHour, payslip, parsePayslip, parseRoster, compute, rates, defaultSettings, levelFor, normRank, classify, DIETA, BASE, hm, r2, ES_AIRPORTS };
+  return { maxFdp, tzOf, PARSER_V, localHour, payslip, parsePayslip, parseRoster, parseRosterAll, compute, rates, defaultSettings, levelFor, normRank, classify, DIETA, BASE, hm, r2, ES_AIRPORTS };
 })();
 if (typeof module !== 'undefined') module.exports = PR;
 
@@ -911,6 +949,8 @@ var I18N = {
   names: { es: 'Español', ca: 'Català', en: 'English', de: 'Deutsch', fr: 'Français', it: 'Italiano', pt: 'Português', ro: 'Română', hu: 'Magyar', sk: 'Slovenčina', cs: 'Čeština' },
   locales: { es: 'es-ES', ca: 'ca-ES', en: 'en-GB', de: 'de-DE', fr: 'fr-FR', it: 'it-IT', pt: 'pt-PT', ro: 'ro-RO', hu: 'hu-HU', sk: 'sk-SK', cs: 'cs-CZ' },
   es: {
+    e_image: '{f}: este PDF es una imagen (foto o captura) y no tiene texto, así que no se puede leer. Descarga el PDF original del portal de Eurowings.',
+    importedMany: 'Importado el roster de <b>{a}</b> a <b>{b}</b>: {n} meses, {f} días con vuelos. Cada mes está ya en su sitio.',
     fdpNote: 'FDP máximo de cada servicio según la tabla EASA ORO.FTL.205 para tripulación aclimatada (hora local de firma y sectores). La discreción del comandante permite hasta 2 h más en circunstancias imprevistas. Es una guía: mandan el OM-A de Eurowings y el comandante.',
     fdp_overDisc: 'supera incluso la discreción del comandante',
     fdp_needDisc: 'ya necesita discreción del comandante',
@@ -1136,6 +1176,8 @@ var I18N = {
     e_noPeriod: 'No encuentro el periodo del roster. ¿Es el «Individual duty plan» de IDP en PDF?'
   },
   ca: {
+    e_image: '{f}: aquest PDF és una imatge (foto o captura) i no té text, per això no es pot llegir. Descarrega el PDF original del portal d’Eurowings.',
+    importedMany: 'Importat el roster de <b>{a}</b> a <b>{b}</b>: {n} mesos, {f} dies amb vol. Cada mes ja és al seu lloc.',
     fdpNote: 'FDP màxim de cada servei segons la taula EASA ORO.FTL.205 per a tripulació aclimatada (hora local de signatura i sectors). La discreció del comandant permet fins a 2 h més en circumstàncies imprevistes. És una guia: manen l’OM-A d’Eurowings i el comandant.',
     fdp_overDisc: 'supera fins i tot la discreció del comandant',
     fdp_needDisc: 'ja necessita discreció del comandant',
@@ -1361,6 +1403,8 @@ var I18N = {
     e_noPeriod: 'No trobo el període del roster. És l’«Individual duty plan» d’IDP en PDF?'
   },
   en: {
+    e_image: '{f}: this PDF is an image (photo or screenshot) with no text, so it can’t be read. Download the original PDF from the Eurowings portal.',
+    importedMany: 'Imported the roster from <b>{a}</b> to <b>{b}</b>: {n} months, {f} days with flights. Each month is now in its place.',
     fdpNote: 'Max FDP of each duty from the EASA ORO.FTL.205 table for acclimatised crew (local check-in time and sectors). Commander’s discretion allows up to 2 h more in unforeseen circumstances. A guide only: the Eurowings OM-A and the commander decide.',
     fdp_overDisc: 'exceeds even commander’s discretion',
     fdp_needDisc: 'already needs commander’s discretion',
@@ -1586,6 +1630,8 @@ var I18N = {
     e_noPeriod: 'I can’t find the roster period. Is this the IDP “Individual duty plan” PDF?'
   },
   de: {
+    e_image: '{f}: Dieses PDF ist ein Bild (Foto oder Screenshot) ohne Text und kann nicht gelesen werden. Lade das Original-PDF im Eurowings-Portal herunter.',
+    importedMany: 'Dienstplan von <b>{a}</b> bis <b>{b}</b> importiert: {n} Monate, {f} Tage mit Flügen. Jeder Monat ist jetzt an seinem Platz.',
     fdpNote: 'Max. FDP jedes Dienstes nach der EASA-Tabelle ORO.FTL.205 für akklimatisierte Crew (Ortszeit des Check-ins und Sektoren). Der Kommandantenentscheid erlaubt bei unvorhergesehenen Umständen bis zu 2 h mehr. Nur eine Orientierung: maßgeblich sind das Eurowings OM-A und der Kommandant.',
     fdp_overDisc: 'überschreitet sogar den Kommandantenentscheid',
     fdp_needDisc: 'braucht bereits den Kommandantenentscheid',
@@ -1811,6 +1857,8 @@ var I18N = {
     e_noPeriod: 'Ich finde den Zeitraum des Dienstplans nicht. Ist das der „Individual duty plan“ aus IDP als PDF?'
   },
   fr: {
+    e_image: '{f} : ce PDF est une image (photo ou capture) sans texte, il ne peut pas être lu. Télécharge le PDF original sur le portail Eurowings.',
+    importedMany: 'Planning importé de <b>{a}</b> à <b>{b}</b> : {n} mois, {f} jours avec vols. Chaque mois est à sa place.',
     fdpNote: 'FDP max de chaque service selon le tableau EASA ORO.FTL.205 pour équipage acclimaté (heure locale du check-in et étapes). La discrétion du commandant permet jusqu’à 2 h de plus en cas d’imprévu. Indicatif : l’OM-A d’Eurowings et le commandant décident.',
     fdp_overDisc: 'dépasse même la discrétion du commandant',
     fdp_needDisc: 'nécessite déjà la discrétion du commandant',
@@ -2036,6 +2084,8 @@ var I18N = {
     e_noPeriod: 'Je ne trouve pas la période du planning. Est-ce bien l’« Individual duty plan » d’IDP en PDF ?'
   },
   hu: {
+    e_image: '{f}: ez a PDF egy kép (fotó vagy képernyőkép), nincs benne szöveg, ezért nem olvasható. Töltsd le az eredeti PDF-et az Eurowings portálról.',
+    importedMany: 'Beosztás importálva <b>{a}</b> – <b>{b}</b>: {n} hónap, {f} nap repüléssel. Minden hónap a helyén van.',
     fdpNote: 'Az egyes szolgálatok max. FDP-je az EASA ORO.FTL.205 táblázata szerint akklimatizált személyzetre (helyi jelentkezési idő és szektorok). A parancsnoki döntés előre nem látható esetben legfeljebb 2 órát enged pluszban. Csak tájékoztató: a Eurowings OM-A és a parancsnok dönt.',
     fdp_overDisc: 'még a parancsnoki döntéssel is túllépi',
     fdp_needDisc: 'már parancsnoki döntés kell hozzá',
@@ -2261,6 +2311,8 @@ var I18N = {
     e_noPeriod: 'Nem találom a beosztás időszakát. Ez az IDP „Individual duty plan” PDF-je?'
   },
   sk: {
+    e_image: '{f}: toto PDF je obrázok (fotka alebo snímka obrazovky) bez textu, preto sa nedá prečítať. Stiahni pôvodné PDF z portálu Eurowings.',
+    importedMany: 'Rozpis importovaný od <b>{a}</b> do <b>{b}</b>: {n} mesiacov, {f} dní s letmi. Každý mesiac je na svojom mieste.',
     fdpNote: 'Max. FDP každej služby podľa tabuľky EASA ORO.FTL.205 pre aklimatizovanú posádku (miestny čas nástupu a sektory). Rozhodnutie kapitána umožňuje pri nepredvídaných okolnostiach najviac o 2 h viac. Len orientačne: rozhoduje OM-A Eurowings a kapitán.',
     fdp_overDisc: 'prekračuje aj rozhodnutie kapitána',
     fdp_needDisc: 'už potrebuje rozhodnutie kapitána',
@@ -2486,6 +2538,8 @@ var I18N = {
     e_noPeriod: 'Nenachádzam obdobie rozpisu. Je to „Individual duty plan“ z IDP v PDF?'
   },
   cs: {
+    e_image: '{f}: toto PDF je obrázek (fotka nebo snímek obrazovky) bez textu, proto ho nelze přečíst. Stáhni původní PDF z portálu Eurowings.',
+    importedMany: 'Rozpis importován od <b>{a}</b> do <b>{b}</b>: {n} měsíců, {f} dní s lety. Každý měsíc je na svém místě.',
     fdpNote: 'Max. FDP každé služby podle tabulky EASA ORO.FTL.205 pro aklimatizovanou posádku (místní čas nástupu a sektory). Rozhodnutí kapitána umožňuje při nepředvídaných okolnostech nejvýše o 2 h více. Jen orientačně: rozhoduje OM-A Eurowings a kapitán.',
     fdp_overDisc: 'překračuje i rozhodnutí kapitána',
     fdp_needDisc: 'už potřebuje rozhodnutí kapitána',
@@ -2711,6 +2765,8 @@ var I18N = {
     e_noPeriod: 'Nenacházím období rozpisu. Je to „Individual duty plan“ z IDP v PDF?'
   },
   it: {
+    "e_image": "{f}: questo PDF è un’immagine (foto o screenshot) senza testo, quindi non si può leggere. Scarica il PDF originale dal portale Eurowings.",
+    "importedMany": "Roster importato da <b>{a}</b> a <b>{b}</b>: {n} mesi, {f} giorni con voli. Ogni mese è al suo posto.",
     "fdpNote": "FDP massimo di ogni servizio secondo la tabella EASA ORO.FTL.205 per equipaggio acclimatato (ora locale di presentazione e settori). La discrezionalità del comandante consente fino a 2 h in più in circostanze impreviste. È una guida: decidono l’OM-A di Eurowings e il comandante.",
     "fdp_overDisc": "supera anche la discrezionalità del comandante",
     "fdp_needDisc": "richiede già la discrezionalità del comandante",
@@ -3042,6 +3098,8 @@ var I18N = {
     "e_noPeriod": "Non trovo il periodo del turno. È l’«Individual duty plan» di IDP in PDF?"
   },
   pt: {
+    "e_image": "{f}: este PDF é uma imagem (foto ou captura) sem texto, por isso não pode ser lido. Descarrega o PDF original no portal da Eurowings.",
+    "importedMany": "Escala importada de <b>{a}</b> a <b>{b}</b>: {n} meses, {f} dias com voos. Cada mês já está no seu lugar.",
     "fdpNote": "FDP máximo de cada serviço segundo a tabela EASA ORO.FTL.205 para tripulação aclimatada (hora local de apresentação e setores). A discrição do comandante permite até 2 h a mais em circunstâncias imprevistas. É uma orientação: decidem o OM-A da Eurowings e o comandante.",
     "fdp_overDisc": "ultrapassa até a discrição do comandante",
     "fdp_needDisc": "já precisa da discrição do comandante",
@@ -3373,6 +3431,8 @@ var I18N = {
     "e_noPeriod": "Não encontro o período da escala. É o «Individual duty plan» do IDP em PDF?"
   },
   ro: {
+    "e_image": "{f}: acest PDF este o imagine (poză sau captură) fără text, deci nu poate fi citit. Descarcă PDF-ul original din portalul Eurowings.",
+    "importedMany": "Roster importat de la <b>{a}</b> la <b>{b}</b>: {n} luni, {f} zile cu zboruri. Fiecare lună e la locul ei.",
     "fdpNote": "FDP maxim al fiecărui serviciu conform tabelului EASA ORO.FTL.205 pentru echipaj aclimatizat (ora locală a prezentării și sectoarele). Decizia comandantului permite până la 2 h în plus în situații neprevăzute. Este orientativ: decid OM-A Eurowings și comandantul.",
     "fdp_overDisc": "depășește chiar și decizia comandantului",
     "fdp_needDisc": "necesită deja decizia comandantului",
@@ -6380,7 +6440,7 @@ document.addEventListener('click', async e=>{
 <script>
 const SEED = null;
 const SEED_SETTINGS = null;
-const APP_VERSION = '2026.11.08-1850';
+const APP_VERSION = '2026.11.08-1913';
 const IS_PWA_BUILD = true;
 const LS = 'payroster.v1';
 const KC = { flight:'--k-flight', deadhead:'--k-dh', training:'--k-train', standby:'--k-sby', reserve:'--k-sby', ground:'--k-ground', off:'--k-off', empty:'--k-off', other:'--k-ground' };
@@ -6413,6 +6473,7 @@ const $ = id => document.getElementById(id);
 const esc = s => String(s==null?'':s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 
 let state = load();
+save();   // keep months re-read by a newer parser
 setLang(state.lang || detectLang());
 function load(){
   let s=null; try{ s = JSON.parse(localStorage.getItem(LS)||'null'); }catch(e){}
@@ -6429,14 +6490,39 @@ function load(){
   s.slips = s.slips || {};
   if(!Object.keys(s.months).length && SEED){ s.months[key(SEED)] = SEED; s.current = key(SEED); }
   s.stale = [];
+  s.raws = s.raws || {};
   for(const k of Object.keys(s.months)){
     const m = s.months[k];
     if(m.parser === PR.PARSER_V) continue;
-    if(m.raw){ try{ const r = PR.parseRoster(m.raw.map(p=>({items:p.map(([x,y,str])=>({x,y,str}))}))); r.raw = m.raw; s.months[k] = r; }catch(e){} }
+    const raw = m.raw || (m.rawId && s.raws[m.rawId]);
+    if(raw){ try{ storeRosters(s, PR.parseRosterAll(rawPages(raw)), raw, k); }catch(e){ console.warn("reparse", k, e); } }
     else if(!(SEED && k===key(SEED))) s.stale.push(k);
   }
+  pruneRaws(s);
   if(!s.current || !s.months[s.current]) s.current = Object.keys(s.months).sort().pop();
   return s;
+}
+function rawPages(raw){ return raw.map(p=>({items:p.map(([x,y,str])=>({x,y,str}))})); }
+// Save the months read from one roster PDF. A multi-month PDF keeps its text once (state.raws) and
+// each month points to it; `only` re-reads just that month (other months may come from newer PDFs).
+function storeRosters(s, list, raw, only){
+  let id = null;
+  if(list.length > 1){ id = 'r' + list[0].year + String(list[0].month).padStart(2,'0') + '-' + list.length + '-' + Date.now().toString(36); s.raws[id] = raw; }
+  for(const ro of list){
+    const k = key(ro);
+    if(only){
+      // a month-long PDF read before v8 may hold a whole period: also fill the months it covers that are missing
+      if(k !== only && s.months[k]) continue;
+    }
+    if(id) ro.rawId = id; else ro.raw = raw;
+    s.months[k] = ro;
+    if(s.stale) s.stale = s.stale.filter(x=>x!==k);
+  }
+  return list.map(key);
+}
+function pruneRaws(s){
+  const used = new Set(Object.values(s.months).map(m=>m.rawId).filter(Boolean));
+  for(const id of Object.keys(s.raws||{})) if(!used.has(id)) delete s.raws[id];
 }
 function prevKey(y,m){ return m===1 ? (y-1)+'-12' : y+'-'+String(m-1).padStart(2,'0'); }
 function save(){ try{ const {stale, ...keep} = state; localStorage.setItem(LS, JSON.stringify(keep)); }catch(e){} }
@@ -6826,10 +6912,18 @@ async function importPdf(f){
     const pages = await readPdf(f);
     const slip = PR.parsePayslip(pages[0] ? pages[0].items : []);
     if(slip) return Object.assign({slip:true, period: slip.period}, applyPayslip(slip));
-    const ro = PR.parseRoster(pages);
-    ro.raw = pages.map(p => p.items.map(i => [Math.round(i.x*10)/10, Math.round(i.y*10)/10, i.str]));
-    const k = key(ro);
-    state.months[k] = ro; state.current = k; if(state.stale) state.stale = state.stale.filter(x=>x!==k); save(); render();
+    if(!pages.some(p=>p.items.length)) return {html: t('e_image',{f:esc(f.name)}), err:true};
+    const list = PR.parseRosterAll(pages);
+    const raw = pages.map(p => p.items.map(i => [Math.round(i.x*10)/10, Math.round(i.y*10)/10, i.str]));
+    state.raws = state.raws || {};
+    const keys = storeRosters(state, list, raw);
+    pruneRaws(state);
+    state.current = keys[keys.length-1]; save(); render();
+    const ro = list[list.length-1];
+    if(list.length > 1){
+      const flights = list.reduce((a,r)=>a+r.days.filter(d=>d.events.some(x=>x.type==='flt')).length, 0);
+      return {html: t('importedMany',{n:list.length, a:monthName(list[0].year,list[0].month,{month:'long',year:'numeric'}), b:monthName(ro.year,ro.month,{month:'long',year:'numeric'}), f:flights})};
+    }
     const flights = ro.days.filter(d=>d.events.some(x=>x.type==='flt')).length;
     return {html: t('imported',{m:monthName(ro.year,ro.month,{month:'long',year:'numeric'}),d:ro.days.length,f:flights})};
   }catch(err){ const m=String(err.message||err); return {html: esc(f.name)+': '+(/^No encuentro el periodo/.test(m)?t('e_noPeriod'):esc(m)), err:true}; }
