@@ -181,6 +181,21 @@ table.chk tr.meh td:last-child{color:var(--muted)}
 table.chk td:nth-child(2),table.chk td:nth-child(3),table.chk td:nth-child(4),table.chk td:nth-child(5),table.chk td:nth-child(6),table.chk td:nth-child(7){text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
 table.chk tr.bad td{background:var(--warn-soft)}
 table.chk tr.bad:not(.hint) td:last-child{color:var(--warn);font-weight:700}
+.mlist{display:grid;gap:0;border:1px solid var(--line);border-radius:10px;overflow:hidden;margin-top:12px}
+.mrow{display:grid;gap:6px;padding:10px 12px;border-top:1px solid var(--line)}
+.mrow:first-child{border-top:0}
+.mrow.tot{background:var(--sunk)}
+.mrow .mh{display:flex;justify-content:space-between;align-items:baseline;gap:10px;font-weight:600;text-transform:capitalize}
+.mrow .mh b{font-family:var(--f-display);font-stretch:85%;font-size:17px;color:var(--pay);text-transform:none}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chip{background:var(--sunk);border-radius:999px;padding:3px 10px;font-size:13px;white-space:nowrap}
+.mrow.tot .chip{background:var(--surface)}
+.chip.c-vac{background:var(--accent-soft)}
+.chip.c-bez{background:var(--pay-soft)}
+.chip.c-sick{background:var(--warn-soft)}
+.fdpl{font-size:13px;display:grid;gap:3px;background:var(--sunk);border-radius:8px;padding:8px 10px}
+.fdpl b{font-family:var(--f-mono)}
+.fdpl .over{color:var(--warn);font-weight:700}
 .ftl{display:grid;gap:12px}
 .ftl .fl{display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;font-size:13.5px;margin-bottom:4px}
 .sumbox .netrow{border-top:2px solid var(--pay);padding-top:8px;color:var(--pay);font-weight:800;font-size:17px}
@@ -248,6 +263,7 @@ input[type=date]::-webkit-date-and-time-value{text-align:left}
     <div class="panel share" id="sharePanel" hidden></div>
     <p class="note" data-i18n="dayByDayNote"></p>
     <p class="note" data-i18n="rateNote"></p>
+    <p class="note" data-i18n="fdpNote"></p>
     <div class="days" id="days"></div>
   </section>
 
@@ -311,6 +327,34 @@ var PR = (function () {
       const p = new Intl.DateTimeFormat('en-GB', { timeZone: tzOf(st), hour: '2-digit', minute: '2-digit', hourCycle: 'h23' }).formatToParts(new Date(utc));
       return +p.find(x => x.type === 'hour').value + (+p.find(x => x.type === 'minute').value) / 60;
     } catch (e) { return Math.floor(+hhmm / 100) + 1; }
+  }
+
+  // ---------- EASA ORO.FTL.205 (b)(1): max daily FDP, acclimatised crew ----------
+  // rows: [from, to) local start time in minutes; values for 1–2, 3, 4 … 10 sectors (minutes)
+  const FDP_TABLE = (() => {
+    const h = x => { const [a, b] = x.split(':').map(Number); return a * 60 + b; };
+    const row = (from, to, list) => ({ from: h(from), to: h(to), v: list.split(' ').map(h) });
+    return [
+      row('06:00', '13:30', '13:00 12:30 12:00 11:30 11:00 10:30 10:00 9:30 9:00'),
+      row('13:30', '14:00', '12:45 12:15 11:45 11:15 10:45 10:15 9:45 9:15 9:00'),
+      row('14:00', '14:30', '12:30 12:00 11:30 11:00 10:30 10:00 9:30 9:00 9:00'),
+      row('14:30', '15:00', '12:15 11:45 11:15 10:45 10:15 9:45 9:15 9:00 9:00'),
+      row('15:00', '15:30', '12:00 11:30 11:00 10:30 10:00 9:30 9:00 9:00 9:00'),
+      row('15:30', '16:00', '11:45 11:15 10:45 10:15 9:45 9:15 9:00 9:00 9:00'),
+      row('16:00', '16:30', '11:30 11:00 10:30 10:00 9:30 9:00 9:00 9:00 9:00'),
+      row('16:30', '17:00', '11:15 10:45 10:15 9:45 9:15 9:00 9:00 9:00 9:00'),
+      row('05:00', '05:15', '12:00 11:30 11:00 10:30 10:00 9:30 9:00 9:00 9:00'),
+      row('05:15', '05:30', '12:15 11:45 11:15 10:45 10:15 9:45 9:15 9:00 9:00'),
+      row('05:30', '05:45', '12:30 12:00 11:30 11:00 10:30 10:00 9:30 9:00 9:00'),
+      row('05:45', '06:00', '12:45 12:15 11:45 11:15 10:45 10:15 9:45 9:15 9:00')
+    ];
+  })();
+  const FDP_NIGHT = '11:00 10:30 10:00 9:30 9:00 9:00 9:00 9:00 9:00'.split(' ').map(x => { const [a, b] = x.split(':').map(Number); return a * 60 + b; }); // 17:00–04:59
+  function maxFdp(startLocalH, sectors) {
+    const m = Math.round(((startLocalH % 24) + 24) % 24 * 60);
+    const r = FDP_TABLE.find(x => m >= x.from && m < x.to);
+    const col = Math.min(8, Math.max(0, (sectors || 1) - 2));
+    return (r ? r.v : FDP_NIGHT)[col] / 60;
   }
 
   // ---------- convenio tables ----------
@@ -856,7 +900,7 @@ var PR = (function () {
       taxable, ss, irpf, dietas: v.dietasPaid, net: r2(taxable - ss - irpf + v.dietasPaid + fiscalAid - ingresoCta) };
   }
 
-  return { PARSER_V, localHour, payslip, parsePayslip, parseRoster, compute, rates, defaultSettings, levelFor, normRank, classify, DIETA, BASE, hm, r2, ES_AIRPORTS };
+  return { maxFdp, tzOf, PARSER_V, localHour, payslip, parsePayslip, parseRoster, compute, rates, defaultSettings, levelFor, normRank, classify, DIETA, BASE, hm, r2, ES_AIRPORTS };
 })();
 if (typeof module !== 'undefined') module.exports = PR;
 
@@ -867,6 +911,12 @@ var I18N = {
   names: { es: 'Español', ca: 'Català', en: 'English', de: 'Deutsch', fr: 'Français', it: 'Italiano', pt: 'Português', ro: 'Română', hu: 'Magyar', sk: 'Slovenčina', cs: 'Čeština' },
   locales: { es: 'es-ES', ca: 'ca-ES', en: 'en-GB', de: 'de-DE', fr: 'fr-FR', it: 'it-IT', pt: 'pt-PT', ro: 'ro-RO', hu: 'hu-HU', sk: 'sk-SK', cs: 'cs-CZ' },
   es: {
+    fdpNote: 'FDP máximo de cada servicio según la tabla EASA ORO.FTL.205 para tripulación aclimatada (hora local de firma y sectores). La discreción del comandante permite hasta 2 h más en circunstancias imprevistas. Es una guía: mandan el OM-A de Eurowings y el comandante.',
+    fdp_overDisc: 'supera incluso la discreción del comandante',
+    fdp_needDisc: 'ya necesita discreción del comandante',
+    fdp_now: 'FDP programado de este servicio: <b>{f} h</b>',
+    fdp_disc: 'Con discreción del comandante (+2 h): <b>{m} h</b> → calzos como muy tarde a las {e} local ({u} UTC)',
+    fdp_lim: 'FDP máximo (EASA): <b>{m} h</b> · firma {t} local en {st} · {s} sector(es)',
     chk_colDiff: 'Dif.',
     chk_colReal: 'Nómina',
     yr_partNote: '{n} mes(es) en gris sin el roster del mes anterior: solo llevan el sueldo fijo y no se suman al total.',
@@ -1086,6 +1136,12 @@ var I18N = {
     e_noPeriod: 'No encuentro el periodo del roster. ¿Es el «Individual duty plan» de IDP en PDF?'
   },
   ca: {
+    fdpNote: 'FDP màxim de cada servei segons la taula EASA ORO.FTL.205 per a tripulació aclimatada (hora local de signatura i sectors). La discreció del comandant permet fins a 2 h més en circumstàncies imprevistes. És una guia: manen l’OM-A d’Eurowings i el comandant.',
+    fdp_overDisc: 'supera fins i tot la discreció del comandant',
+    fdp_needDisc: 'ja necessita discreció del comandant',
+    fdp_now: 'FDP programat d’aquest servei: <b>{f} h</b>',
+    fdp_disc: 'Amb discreció del comandant (+2 h): <b>{m} h</b> → calços com a molt tard a les {e} local ({u} UTC)',
+    fdp_lim: 'FDP màxim (EASA): <b>{m} h</b> · signatura {t} local a {st} · {s} sector(s)',
     bk_done: 'Còpia preparada. Tria on desar-la (Fitxers, iCloud Drive…).',
     bk_bad: 'Aquest fitxer no és una còpia de Payroster.',
     bk_replace: 'Substituir les meves dades',
@@ -1305,6 +1361,12 @@ var I18N = {
     e_noPeriod: 'No trobo el període del roster. És l’«Individual duty plan» d’IDP en PDF?'
   },
   en: {
+    fdpNote: 'Max FDP of each duty from the EASA ORO.FTL.205 table for acclimatised crew (local check-in time and sectors). Commander’s discretion allows up to 2 h more in unforeseen circumstances. A guide only: the Eurowings OM-A and the commander decide.',
+    fdp_overDisc: 'exceeds even commander’s discretion',
+    fdp_needDisc: 'already needs commander’s discretion',
+    fdp_now: 'Scheduled FDP of this duty: <b>{f} h</b>',
+    fdp_disc: 'With commander’s discretion (+2 h): <b>{m} h</b> → on-blocks at the latest {e} local ({u} UTC)',
+    fdp_lim: 'Max FDP (EASA): <b>{m} h</b> · check-in {t} local in {st} · {s} sector(s)',
     chk_colDiff: 'Diff.',
     chk_colReal: 'Payslip',
     yr_partNote: '{n} month(s) in grey lack the previous month’s roster: they only show fixed pay and are left out of the totals.',
@@ -1524,6 +1586,12 @@ var I18N = {
     e_noPeriod: 'I can’t find the roster period. Is this the IDP “Individual duty plan” PDF?'
   },
   de: {
+    fdpNote: 'Max. FDP jedes Dienstes nach der EASA-Tabelle ORO.FTL.205 für akklimatisierte Crew (Ortszeit des Check-ins und Sektoren). Der Kommandantenentscheid erlaubt bei unvorhergesehenen Umständen bis zu 2 h mehr. Nur eine Orientierung: maßgeblich sind das Eurowings OM-A und der Kommandant.',
+    fdp_overDisc: 'überschreitet sogar den Kommandantenentscheid',
+    fdp_needDisc: 'braucht bereits den Kommandantenentscheid',
+    fdp_now: 'Geplante FDP dieses Dienstes: <b>{f} h</b>',
+    fdp_disc: 'Mit Kommandantenentscheid (+2 h): <b>{m} h</b> → On-Block spätestens {e} Ortszeit ({u} UTC)',
+    fdp_lim: 'Max. FDP (EASA): <b>{m} h</b> · Check-in {t} Ortszeit in {st} · {s} Sektor(en)',
     bk_done: 'Kopie bereit. Wähle, wo sie gespeichert wird (Dateien, iCloud Drive…).',
     bk_bad: 'Diese Datei ist keine Payroster-Sicherung.',
     bk_replace: 'Meine Daten ersetzen',
@@ -1743,6 +1811,12 @@ var I18N = {
     e_noPeriod: 'Ich finde den Zeitraum des Dienstplans nicht. Ist das der „Individual duty plan“ aus IDP als PDF?'
   },
   fr: {
+    fdpNote: 'FDP max de chaque service selon le tableau EASA ORO.FTL.205 pour équipage acclimaté (heure locale du check-in et étapes). La discrétion du commandant permet jusqu’à 2 h de plus en cas d’imprévu. Indicatif : l’OM-A d’Eurowings et le commandant décident.',
+    fdp_overDisc: 'dépasse même la discrétion du commandant',
+    fdp_needDisc: 'nécessite déjà la discrétion du commandant',
+    fdp_now: 'FDP programmée de ce service : <b>{f} h</b>',
+    fdp_disc: 'Avec la discrétion du commandant (+2 h) : <b>{m} h</b> → calage au plus tard à {e} heure locale ({u} UTC)',
+    fdp_lim: 'FDP max (EASA) : <b>{m} h</b> · check-in {t} heure locale à {st} · {s} étape(s)',
     bk_done: 'Copie prête. Choisis où l’enregistrer (Fichiers, iCloud Drive…).',
     bk_bad: 'Ce fichier n’est pas une sauvegarde Payroster.',
     bk_replace: 'Remplacer mes données',
@@ -1962,6 +2036,12 @@ var I18N = {
     e_noPeriod: 'Je ne trouve pas la période du planning. Est-ce bien l’« Individual duty plan » d’IDP en PDF ?'
   },
   hu: {
+    fdpNote: 'Az egyes szolgálatok max. FDP-je az EASA ORO.FTL.205 táblázata szerint akklimatizált személyzetre (helyi jelentkezési idő és szektorok). A parancsnoki döntés előre nem látható esetben legfeljebb 2 órát enged pluszban. Csak tájékoztató: a Eurowings OM-A és a parancsnok dönt.',
+    fdp_overDisc: 'még a parancsnoki döntéssel is túllépi',
+    fdp_needDisc: 'már parancsnoki döntés kell hozzá',
+    fdp_now: 'A szolgálat tervezett FDP-je: <b>{f} óra</b>',
+    fdp_disc: 'Parancsnoki döntéssel (+2 óra): <b>{m} óra</b> → beállás legkésőbb {e} helyi idő ({u} UTC)',
+    fdp_lim: 'Max. FDP (EASA): <b>{m} óra</b> · jelentkezés {t} helyi idő, {st} · {s} szektor',
     bk_done: 'A másolat kész. Válaszd ki, hová mented (Fájlok, iCloud Drive…).',
     bk_bad: 'Ez a fájl nem Payroster-mentés.',
     bk_replace: 'Adataim cseréje',
@@ -2181,6 +2261,12 @@ var I18N = {
     e_noPeriod: 'Nem találom a beosztás időszakát. Ez az IDP „Individual duty plan” PDF-je?'
   },
   sk: {
+    fdpNote: 'Max. FDP každej služby podľa tabuľky EASA ORO.FTL.205 pre aklimatizovanú posádku (miestny čas nástupu a sektory). Rozhodnutie kapitána umožňuje pri nepredvídaných okolnostiach najviac o 2 h viac. Len orientačne: rozhoduje OM-A Eurowings a kapitán.',
+    fdp_overDisc: 'prekračuje aj rozhodnutie kapitána',
+    fdp_needDisc: 'už potrebuje rozhodnutie kapitána',
+    fdp_now: 'Plánovaný FDP tejto služby: <b>{f} h</b>',
+    fdp_disc: 'S rozhodnutím kapitána (+2 h): <b>{m} h</b> → zastavenie najneskôr o {e} miestneho času ({u} UTC)',
+    fdp_lim: 'Max. FDP (EASA): <b>{m} h</b> · nástup {t} miestneho času v {st} · {s} sektor(y)',
     bk_done: 'Kópia je pripravená. Vyber, kam ju uložiť (Súbory, iCloud Drive…).',
     bk_bad: 'Tento súbor nie je záloha Payroster.',
     bk_replace: 'Nahradiť moje údaje',
@@ -2400,6 +2486,12 @@ var I18N = {
     e_noPeriod: 'Nenachádzam obdobie rozpisu. Je to „Individual duty plan“ z IDP v PDF?'
   },
   cs: {
+    fdpNote: 'Max. FDP každé služby podle tabulky EASA ORO.FTL.205 pro aklimatizovanou posádku (místní čas nástupu a sektory). Rozhodnutí kapitána umožňuje při nepředvídaných okolnostech nejvýše o 2 h více. Jen orientačně: rozhoduje OM-A Eurowings a kapitán.',
+    fdp_overDisc: 'překračuje i rozhodnutí kapitána',
+    fdp_needDisc: 'už potřebuje rozhodnutí kapitána',
+    fdp_now: 'Plánovaný FDP této služby: <b>{f} h</b>',
+    fdp_disc: 'S rozhodnutím kapitána (+2 h): <b>{m} h</b> → zastavení nejpozději v {e} místního času ({u} UTC)',
+    fdp_lim: 'Max. FDP (EASA): <b>{m} h</b> · nástup {t} místního času v {st} · {s} sektor(y)',
     bk_done: 'Kopie je připravená. Vyber, kam ji uložit (Soubory, iCloud Drive…).',
     bk_bad: 'Tento soubor není záloha Payroster.',
     bk_replace: 'Nahradit moje data',
@@ -2619,6 +2711,12 @@ var I18N = {
     e_noPeriod: 'Nenacházím období rozpisu. Je to „Individual duty plan“ z IDP v PDF?'
   },
   it: {
+    "fdpNote": "FDP massimo di ogni servizio secondo la tabella EASA ORO.FTL.205 per equipaggio acclimatato (ora locale di presentazione e settori). La discrezionalità del comandante consente fino a 2 h in più in circostanze impreviste. È una guida: decidono l’OM-A di Eurowings e il comandante.",
+    "fdp_overDisc": "supera anche la discrezionalità del comandante",
+    "fdp_needDisc": "richiede già la discrezionalità del comandante",
+    "fdp_now": "FDP programmato di questo servizio: <b>{f} h</b>",
+    "fdp_disc": "Con discrezionalità del comandante (+2 h): <b>{m} h</b> → on-block al più tardi alle {e} locali ({u} UTC)",
+    "fdp_lim": "FDP massimo (EASA): <b>{m} h</b> · presentazione {t} locale a {st} · {s} settore/i",
     "bk_done": "Copia pronta. Scegli dove salvarla (File, iCloud Drive…).",
     "bk_bad": "Questo file non è un backup di Payroster.",
     "bk_replace": "Sostituisci i miei dati",
@@ -2944,6 +3042,12 @@ var I18N = {
     "e_noPeriod": "Non trovo il periodo del turno. È l’«Individual duty plan» di IDP in PDF?"
   },
   pt: {
+    "fdpNote": "FDP máximo de cada serviço segundo a tabela EASA ORO.FTL.205 para tripulação aclimatada (hora local de apresentação e setores). A discrição do comandante permite até 2 h a mais em circunstâncias imprevistas. É uma orientação: decidem o OM-A da Eurowings e o comandante.",
+    "fdp_overDisc": "ultrapassa até a discrição do comandante",
+    "fdp_needDisc": "já precisa da discrição do comandante",
+    "fdp_now": "FDP programado deste serviço: <b>{f} h</b>",
+    "fdp_disc": "Com discrição do comandante (+2 h): <b>{m} h</b> → calços no máximo às {e} local ({u} UTC)",
+    "fdp_lim": "FDP máximo (EASA): <b>{m} h</b> · apresentação {t} local em {st} · {s} setor(es)",
     "bk_done": "Cópia pronta. Escolhe onde a guardar (Ficheiros, iCloud Drive…).",
     "bk_bad": "Este ficheiro não é uma cópia do Payroster.",
     "bk_replace": "Substituir os meus dados",
@@ -3269,6 +3373,12 @@ var I18N = {
     "e_noPeriod": "Não encontro o período da escala. É o «Individual duty plan» do IDP em PDF?"
   },
   ro: {
+    "fdpNote": "FDP maxim al fiecărui serviciu conform tabelului EASA ORO.FTL.205 pentru echipaj aclimatizat (ora locală a prezentării și sectoarele). Decizia comandantului permite până la 2 h în plus în situații neprevăzute. Este orientativ: decid OM-A Eurowings și comandantul.",
+    "fdp_overDisc": "depășește chiar și decizia comandantului",
+    "fdp_needDisc": "necesită deja decizia comandantului",
+    "fdp_now": "FDP programat al acestui serviciu: <b>{f} h</b>",
+    "fdp_disc": "Cu decizia comandantului (+2 h): <b>{m} h</b> → la calaje cel târziu la {e} ora locală ({u} UTC)",
+    "fdp_lim": "FDP maxim (EASA): <b>{m} h</b> · prezentare {t} ora locală în {st} · {s} sector(e)",
     "bk_done": "Copie pregătită. Alege unde s-o salvezi (Fișiere, iCloud Drive…).",
     "bk_bad": "Acest fișier nu este o copie Payroster.",
     "bk_replace": "Înlocuiește datele mele",
@@ -6181,9 +6291,8 @@ function renderVac(){
   const ent = vacEntitlement(year);
   pnl(hdr('vac', t('vac_intro',{y:year})) +
     `<p class="msg">${t('vac_sum',{u:tot.vac,e:ent.days,l:Math.max(0,ent.days-tot.vac)})}${ent.known?'':' '+t('vac_noJoined')}</p>
-    <div class="tablewrap"><table class="slip chk"><tr class="sec"><td>${t('vac_month')}</td>${cats.map(k=>`<td>${t('vac_'+k)}</td>`).join('')}</tr>
-    ${rows.map(r=>`<tr><td style="text-transform:capitalize">${nm(year,r.m,{month:'long'})}</td>${cats.map(k=>`<td>${r.cnt[k]||''}</td>`).join('')}</tr>`).join('')}
-    <tr class="sum"><td>${t('vac_total')}</td>${cats.map(k=>`<td>${tot[k]}</td>`).join('')}</tr></table></div>
+    <div class="mlist">${rows.map(r=>`<div class="mrow"><div class="mh">${nm(year,r.m,{month:'long'})}</div><div class="chips">${cats.filter(k=>r.cnt[k]).map(k=>`<span class="chip c-${k}">${t('vac_'+k)} <b>${r.cnt[k]}</b></span>`).join('') || '<span class="note">—</span>'}</div></div>`).join('')}
+      <div class="mrow tot"><div class="mh">${t('vac_total')}</div><div class="chips">${cats.filter(k=>tot[k]).map(k=>`<span class="chip c-${k}">${t('vac_'+k)} <b>${tot[k]}</b></span>`).join('')}</div></div></div>
     <p class="note">${t('vac_note')}</p>`);
 }
 
@@ -6222,9 +6331,10 @@ function renderYear(){
   pnl(hdr('year', t('yr_intro')) + `<label class="note">${t('yr_year')} <select id="yr-y">${years.map(y=>`<option${y===year?' selected':''}>${y}</option>`).join('')}</select></label>
     <div class="tablewrap" style="margin-top:10px"><svg viewBox="0 0 ${W} ${H}" width="100%" style="max-width:${W}px;display:block" role="img" aria-label="${t('yr_chart')}">${bars}${labels}</svg></div>
     <div class="legend"><span><i style="background:var(--pay)"></i>${t('yr_real')}</span><span><i style="background:var(--accent)"></i>${t('yr_est')}</span></div>
-    <div class="tablewrap"><table class="slip chk"><tr class="sec"><td>${t('vac_month')}</td><td>${t('grossTotal')}</td><td>${t('yr_diet')}</td><td>${t('slip_ss')}</td><td>IRPF</td><td>${t('slip_net')}</td></tr>
-    ${rows.map(r=>`<tr${r.partial?' style="opacity:.55"':''}><td style="text-transform:capitalize">${nm(year,r.m,{month:'short'})} <span class="note">${r.real?t('yr_realS'):r.partial?t('yr_partial'):t('yr_estS')}</span></td><td>${r.gross!=null?eur.format(r.gross):'—'}</td><td>${eur.format(r.dietas)}</td><td>${eur.format(r.ss)}</td><td>${eur.format(r.irpf)}</td><td>${eur.format(r.net)}</td></tr>`).join('')}
-    <tr class="sum"><td>${t('vac_total')}</td><td>${eur.format(sum('gross'))}</td><td>${eur.format(sum('dietas'))}</td><td>${eur.format(sum('ss'))}</td><td>${eur.format(sum('irpf'))}</td><td>${eur.format(sum('net'))}</td></tr></table></div>
+    <div class="mlist">${rows.map(r=>`<div class="mrow"${r.partial?' style="opacity:.55"':''}><div class="mh"><span>${nm(year,r.m,{month:'long'})} <span class="note">${r.real?t('yr_realS'):r.partial?t('yr_partial'):t('yr_estS')}</span></span><b class="num">${eur.format(r.net)}</b></div>
+      <div class="note num">${t('grossTotal')} ${r.gross!=null?eur.format(r.gross):'—'} · ${t('yr_diet')} ${eur.format(r.dietas)} · ${t('slip_ss')} ${eur.format(r.ss)} · IRPF ${eur.format(r.irpf)}</div></div>`).join('')}
+      <div class="mrow tot"><div class="mh"><span>${t('vac_total')}</span><b class="num">${eur.format(sum('net'))}</b></div>
+      <div class="note num">${t('grossTotal')} ${eur.format(sum('gross'))} · ${t('yr_diet')} ${eur.format(sum('dietas'))} · ${t('slip_ss')} ${eur.format(sum('ss'))} · IRPF ${eur.format(sum('irpf'))}</div></div></div>
     ${nPart?`<p class="note">${t('yr_partNote',{n:nPart})}</p>`:''}<p class="note">${t('yr_note',{g:eur.format(sum('gross')-sum('dietas')),i:eur.format(sum('irpf')),s:eur.format(sum('ss')),d:eur.format(sum('dietas'))})}</p>`);
 }
 
@@ -6270,7 +6380,7 @@ document.addEventListener('click', async e=>{
 <script>
 const SEED = null;
 const SEED_SETTINGS = null;
-const APP_VERSION = '2026.11.08-1441';
+const APP_VERSION = '2026.11.08-1514';
 const IS_PWA_BUILD = true;
 const LS = 'payroster.v1';
 const KC = { flight:'--k-flight', deadhead:'--k-dh', training:'--k-train', standby:'--k-sby', reserve:'--k-sby', ground:'--k-ground', off:'--k-off', empty:'--k-off', other:'--k-ground' };
@@ -6451,7 +6561,7 @@ function renderStrip(c, ro, stripId, legendId){
 function renderDays(c, ro){
   const today = todayISO();
   const open = new Set([...document.querySelectorAll('.day[open]')].map(e=>e.dataset.date));
-  $('days').innerHTML = c.days.map(d=>{
+  $('days').innerHTML = c.days.map((d,di)=>{
     const k = kind(d.kind);
     const wd = new Date(d.date+'T12:00').toLocaleDateString(LOC,{weekday:'short'}).replace('.','');
     const main = d.route ? d.route : (d.label || k.n);
@@ -6469,6 +6579,7 @@ function renderDays(c, ro){
       </summary>
       <div class="detail">
         ${legs}
+        ${fdpHtml(d, c.days[di+1])}
         ${crewHtml(d, state.months[state.current] && state.months[state.current].crew)}
         <dl class="brk">
           ${d.H?`<dt>${t('payHours',{f:hhmm(d.F),a:hhmm(d.A)})}${d.absence?t('absenceCredit'):''} · ${tier} · ${n2.format(d.hourRate)} €/h</dt><dd>${eur.format(d.hourPay)}</dd>`:''}
@@ -6720,6 +6831,39 @@ $('pdfIn').addEventListener('change', async e=>{
   e.target.value='';
 });
 
+
+// ---- max FDP (EASA ORO.FTL.205) and commander's discretion ----
+const hm2s = h => { const m = Math.round(((h%24)+24)%24*60); return String(Math.floor(m/60)).padStart(2,'0')+':'+String(m%60).padStart(2,'0'); };
+function fdpHtml(d, next){
+  const ev = d.events||[], ciI = ev.map(e=>e.type).lastIndexOf('ci'), ci = ev[ciI];
+  if(!ci || !ci.t1) return '';
+  const after = ev.slice(ciI+1);                       // only this duty: legs after its check-in
+  let legs = after.filter(e=>e.type==='flt'||e.type==='dh');
+  // a duty that lands after midnight continues on the next day without a new check-in
+  const closed = after.some(e=>e.type==='co');
+  if(next && !closed){
+    const nl = []; for(const e of (next.events||[])){ if(e.type==='ci' || e.type==='co') break; if(e.type==='flt'||e.type==='dh') nl.push(e); }
+    legs = legs.concat(nl.map(e=>Object.assign({}, e, {_next:true})));
+  }
+  const sectors = legs.filter(e=>e.type==='flt').length;
+  if(!sectors) return '';
+  const toMin = x => Math.floor(+x/100)*60 + (+x%100);
+  const st = ci.st || (legs[0] && legs[0].dep) || '';
+  const startL = PR.localHour(d.date, ci.t1, st);
+  const max = PR.maxFdp(startL, sectors), disc = max + 2;
+  // scheduled FDP: check-in to the last on-block
+  const last = legs[legs.length-1];
+  let fdpMin = toMin(last.t2) - toMin(ci.t1) + (last._next ? 1440 : 0);
+  if(!last._next && toMin(last.t2) < toMin(ci.t1)) fdpMin += 1440;
+  const fdp = fdpMin/60;
+  const cls = fdp > disc ? 'over' : fdp > max ? 'over' : '';
+  const utcEnd = (toMin(ci.t1) + Math.round(disc*60)) % 1440;
+  return `<div class="fdpl">
+    <div>${t('fdp_lim',{m:hhmm(max),s:sectors,t:hm2s(startL),st:esc(st)})}</div>
+    <div>${t('fdp_disc',{m:hhmm(disc),e:hm2s(startL+disc),u:hm2s(utcEnd/60)})}</div>
+    <div class="${cls}">${t('fdp_now',{f:hhmm(fdp)})}${fdp>max?' · '+(fdp>disc?t('fdp_overDisc'):t('fdp_needDisc')):''}</div>
+  </div>`;
+}
 
 // ---- crew lists ----
 function crewHtml(d, me){
