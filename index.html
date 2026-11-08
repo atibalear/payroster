@@ -168,6 +168,21 @@ input[type=number],input[type=text],select{background:var(--surface);border:1px 
 body.viewer .wrap > *:not(.bar):not(#viewer){display:none!important}
 body.viewer .monthnav, body.viewer label[for=pdfIn]{display:none}
 #viewer .vday>summary{grid-template-columns:54px 1fr}
+.toolbar{display:flex;flex-wrap:wrap;gap:8px}
+.toolbar .btn{font-size:13.5px;padding:8px 12px}
+.toolbar .btn.on{background:var(--accent);color:var(--surface);border-color:var(--accent)}
+table.chk{font-size:12.5px}
+table.chk td{vertical-align:top;padding:6px 3px}
+table.chk td:first-child{min-width:0;word-break:break-word}
+table.chk td:nth-child(2){font-family:inherit;font-size:inherit;color:var(--muted)}
+table.chk tr.hint td{font-size:12px;color:var(--muted);padding-top:0;border-top:0;text-align:left!important;white-space:normal!important}
+table.chk tr.meh td{background:var(--sunk)}
+table.chk tr.meh td:last-child{color:var(--muted)}
+table.chk td:nth-child(2),table.chk td:nth-child(3),table.chk td:nth-child(4),table.chk td:nth-child(5),table.chk td:nth-child(6),table.chk td:nth-child(7){text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
+table.chk tr.bad td{background:var(--warn-soft)}
+table.chk tr.bad:not(.hint) td:last-child{color:var(--warn);font-weight:700}
+.ftl{display:grid;gap:12px}
+.ftl .fl{display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;font-size:13.5px;margin-bottom:4px}
 .sumbox .netrow{border-top:2px solid var(--pay);padding-top:8px;color:var(--pay);font-weight:800;font-size:17px}
 .slip tr.ded td:nth-child(3){color:var(--warn)}
 .slip tr.ex td:nth-child(3){color:var(--pay)}
@@ -234,6 +249,12 @@ input[type=date]::-webkit-date-and-time-value{text-align:left}
     <p class="note" data-i18n="dayByDayNote"></p>
     <p class="note" data-i18n="rateNote"></p>
     <div class="days" id="days"></div>
+  </section>
+
+  <section>
+    <h2 data-i18n="toolsT"></h2>
+    <div class="toolbar" id="toolbar"></div>
+    <div class="panel" id="toolPanel" hidden style="margin-top:10px"></div>
   </section>
 
   <section class="panel">
@@ -642,13 +663,19 @@ var PR = (function () {
         autoBuy = ((startH != null && startH >= 16) || (endH != null && endH < 8)) ? 'half' : 'full';
         buyWhy = { start: startH, end: endH };
       }
-      const buy = ex.buy === 'none' ? null : (ex.buy || autoBuy);
+      let buy = ex.buy === 'none' ? null : (ex.buy || autoBuy);
+      if (ex.sim) {
+        F = +ex.sim.F || 0; A = +ex.sim.A || 0;
+        dietaType = ex.sim.dieta || null; dieta = dietaType ? DIETA[dietaType] : 0;
+        early = ex.sim.early ? s.earlyCheckin : 0;
+        buy = ex.sim.buy || null;
+      }
       const extraFix = (buy === 'full' ? 9 * pct : buy === 'half' ? 4.5 * pct : 0) + (ex.omDefer ? 4.5 * pct : 0);
       const sales = +ex.sales || 0;
       // trainer / competence team days: the monthly allowance covers the first day;
       // each further day adds what the works agreement table adds. Both on one day → the trainer day only.
-      const isTrain = !!s.isTrainer && codes.some(c => [...trainSet].some(k => c.includes(k)));  // DT_TRNG, CATR_K2T1, CAB_K2_T1…
-      const isCTday = !isTrain && !!(s.isCT || s.isTrainer) && codes.some(c => [...ctSet].some(k => c.includes(k)));  // any code containing COMP
+      const isTrain = !!s.isTrainer && !(ex.sim && !ex.sim.train) && (ex.sim && ex.sim.train ? true : codes.some(c => [...trainSet].some(k => c.includes(k))));  // DT_TRNG, CATR_K2T1, CAB_K2_T1…
+      const isCTday = !isTrain && !ex.sim && !!(s.isCT || s.isTrainer) && codes.some(c => [...ctSet].some(k => c.includes(k)));  // any code containing COMP
       let trainPay = 0, trainNo = 0, ctNo = 0;
       if (isTrain) { trainSeen++; trainNo = trainSeen;
         trainPay = trainSeen === 1 ? 0 : trainSeen === 2 ? (+s.tTwo - +s.tBase) : +s.tExtra; }
@@ -765,6 +792,12 @@ var PR = (function () {
       const numbers = rest.filter(i => /^-?[\d.]+,\d{2}$/.test(i.str.trim())).map(i => ({ x: i.x, v: num(i.str) }));
       concepts.push({ code, label, retro, numbers });
     }
+    const col = (c, lo, hi) => { const n = c.numbers.find(n => n.x >= lo && n.x < hi); return n ? n.v : null; };
+    const slipLines = concepts.map(c => ({ code: c.code, label: c.label, retro: c.retro,
+      price: col(c, 190, 290), units: col(c, 290, 380), dev: col(c, 380, 480), ded: col(c, 480, 620) }));
+    const numU = v => v && /[\d.]+,\d{2}/.test(v) ? num(v) : null;
+    const slipTotals = { devengos: numU(under('Tot. Devengos')), deducciones: numU(under('Tot. Deducciones')),
+      baseCC: numU(under('Base C.C.')), baseIRPF: numU(under('Base IMP')) };
     const amt = c => { const n = c.numbers.filter(n => n.x > 380); return n.length ? n[n.length - 1].v : null; };
     const pctOf = c => { const n = c.numbers.find(n => n.x > 320 && n.x < 380); return n ? n.v : null; };
     const get = code => concepts.filter(c => c.code === code && !c.retro);
@@ -774,6 +807,7 @@ var PR = (function () {
     const inc = under('Incremento Salarial');
     const incM = inc && /(\d{2})\/(\d{2})\/(\d{4})/.exec(inc);
     const out = {
+      lines: slipLines, totals: slipTotals,
       period: per ? { month: +per[2], year: +per[3] } : null,
       rank: cm ? (cm[1] === 'C' ? 'PU' : 'CA') : null,
       level: cm ? +cm[2] : null,
@@ -833,6 +867,102 @@ var I18N = {
   names: { es: 'Español', ca: 'Català', en: 'English', de: 'Deutsch', fr: 'Français', it: 'Italiano', pt: 'Português', ro: 'Română', hu: 'Magyar', sk: 'Slovenčina', cs: 'Čeština' },
   locales: { es: 'es-ES', ca: 'ca-ES', en: 'en-GB', de: 'de-DE', fr: 'fr-FR', it: 'it-IT', pt: 'pt-PT', ro: 'ro-RO', hu: 'hu-HU', sk: 'sk-SK', cs: 'cs-CZ' },
   es: {
+    chk_colDiff: 'Dif.',
+    chk_colReal: 'Nómina',
+    yr_partNote: '{n} mes(es) en gris sin el roster del mes anterior: solo llevan el sueldo fijo y no se suman al total.',
+    bk_done: 'Copia guardada. Elige dónde guardarla (Archivos, iCloud Drive…).',
+    bk_bad: 'Este archivo no es una copia de Payroster.',
+    bk_replace: 'Sustituir mis datos',
+    bk_confirm: 'Esta copia ({d}) tiene {m} meses. Va a sustituir todos los datos de este dispositivo.',
+    bk_import: 'Recuperar copia',
+    bk_export: 'Guardar copia',
+    bk_have: 'Ahora tienes {m} meses de roster y {s} nóminas guardadas.',
+    bk_intro: 'Tus datos solo están en este dispositivo. Guarda una copia en Archivos o iCloud Drive y recupérala en un móvil nuevo.',
+    yr_note: 'Para la Renta: rendimientos sujetos ≈ {g}, retenciones de IRPF ≈ {i}, Seguridad Social ≈ {s}, dietas exentas ≈ {d}. Es orientativo: usa el certificado de retenciones de Eurowings.',
+    yr_partial: 'falta roster',
+    yr_estS: 'estimada',
+    yr_realS: 'real',
+    yr_diet: 'Dietas (exentas)',
+    yr_est: 'Estimada',
+    yr_real: 'Nómina real',
+    yr_chart: 'Neto de cada mes',
+    yr_year: 'Año',
+    yr_intro: 'Lo que cobras cada mes del año: con la nómina real si la has subido, si no, la estimación de la app.',
+    vac_note: 'Vacaciones = U. Libres = O_S, O_FLEX, O_TZ, FREI… Comprados = OFF_BEZ. Derecho según el convenio (art. 12.1): 30 días, 35 desde 5 años de servicio y 42 desde 25.',
+    vac_total: 'Total',
+    vac_sick: 'Baja',
+    vac_bez: 'Comprados',
+    vac_off: 'Libres',
+    vac_om: 'O_M',
+    vac_su: 'SU',
+    vac_vac: 'Vacaciones',
+    vac_month: 'Mes',
+    vac_noJoined: 'Pon tu antigüedad en Mis datos de contrato: con 5 años son 35 días y con 25 años, 42.',
+    vac_sum: 'Vacaciones: {u} días usados de {e}. Quedan {l}.',
+    vac_intro: 'Días de {y} según tus rosters guardados.',
+    ftl_pt: 'Límites ajustados a tu jornada del {c} % (convenio 30.7.11).',
+    ftl_note: 'Máximo de cada ventana dentro del mes. Servicio = «Value for DT Limit Calc» del roster. Block = vuelos activos (sin posicionamientos).',
+    ftl_missing: 'Faltan meses anteriores: sube sus rosters para que las ventanas de 7, 14, 28 días y 12 meses sean completas.',
+    ftl_until: 'hasta el día {d}',
+    ftl_dyear: 'Servicio en {y}',
+    ftl_byear: 'Block en {y}',
+    ftl_b12m: 'Block en 12 meses',
+    ftl_b28: 'Block en 28 días',
+    ftl_d28: 'Servicio en 28 días',
+    ftl_d14: 'Servicio en 14 días',
+    ftl_d7: 'Servicio en 7 días',
+    ftl_intro: 'Horas acumuladas en {m} según tus rosters guardados (límites EASA y del convenio).',
+    cal_done: '{n} servicios exportados. En el iPhone, abre el archivo y pulsa «Añadir todo».',
+    cal_make: 'Exportar al calendario',
+    cal_off: 'Incluir días libres y vacaciones',
+    cal_crew: 'Incluir tripulación',
+    cal_alarm: 'Aviso antes de la firma',
+    cal_all: 'Todos los meses guardados',
+    cal_cur: 'Este mes',
+    cal_range: 'Meses',
+    cal_intro: 'Exporta tus servicios al Calendario del iPhone, Google o Outlook, con aviso antes de la firma, rutas, hotel y tripulación.',
+    sim_tier: 'Pasas del tramo {a} al tramo {b}.',
+    sim_result: 'Con este cambio el variable cambia {v} y tu nómina neta {n}.',
+    sim_net: 'Nómina de {m} (neto)',
+    sim_calc: 'Calcular',
+    sim_train: 'Día de trainer',
+    sim_duty: 'Servicio nuevo o cambiado',
+    sim_off: 'Quitar el servicio (día libre)',
+    sim_action: 'Cambio',
+    sim_now: 'Ahora',
+    sim_day: 'Día',
+    sim_intro: 'Mira cuánto ganas o pierdes con un cambio antes de aceptarlo. No se guarda nada.',
+    chk_other: 'Otros conceptos de la nómina',
+    chk_ok: 'Todo cuadra. Diferencia en el líquido: {d}.',
+    chk_bad: '{n} concepto(s) no cuadran:',
+    chk_hTax: 'Se calcula sobre el bruto: si lo demás cuadra, esto también.',
+    chk_hSales: 'Apunta la comisión de ventas de {p} en el cuadro de la nómina.',
+    chk_hBuy: 'Días libres comprados (OFF_BEZ) según el roster: {d}.',
+    chk_hEarly: 'Early check-in según el roster los días {d}.',
+    chk_hDietaMore: 'La nómina paga más dietas de este tipo que la app.',
+    chk_hDietaLess: 'La nómina paga menos dietas de este tipo que la app. Días según el roster: {d}.',
+    chk_hHoursPay: 'Sigue a las horas: si las horas cuadran, esto también.',
+    chk_hoursPay: 'Pago por horas',
+    chk_hAdd: 'Revisa imaginarias, cursos, posicionamientos y días de vacaciones (1:12 h cada uno).',
+    chk_hoursA: 'Horas de servicio adicional',
+    chk_hFdp: 'Una diferencia de 1–2 h es normal: Eurowings paga el FDP programado al firmar, y el roster muestra el real.',
+    chk_hoursF: 'Horas FDP',
+    chk_hTrainer: 'Días de trainer / Competence Team según el roster: {d}.',
+    chk_hBase: 'Si no cuadra, revisa el nivel y la jornada en Mis datos de contrato.',
+    chk_concept: 'Concepto',
+    chk_needPrev: 'Para revisar la nómina de {m} sube el roster de {p}: es el mes cuyas horas y dietas se pagan en ella.',
+    chk_month: 'Nómina',
+    chk_needSlip: 'Sube una nómina en PDF (la del mes que quieras revisar) con ＋ PDF.',
+    chk_intro: 'Compara tu nómina real, concepto por concepto, con lo que calcula la app con tu roster. Lo que no cuadra sale en naranja con los días a revisar.',
+    tool_backup: 'Copia de seguridad',
+    tool_year: 'Resumen anual',
+    tool_vac: 'Vacaciones y libres',
+    tool_ftl: 'Límites FTL',
+    tool_cal: 'Calendario',
+    tool_sim: 'Simulador',
+    tool_check: 'Revisar nómina',
+    sim_btn: 'Simular cambio',
+    toolsT: 'Herramientas',
     share_crewShort: 'Nombres cortos (Apellido + inicial)',
     share_crewFull: 'Nombres completos',
     share_crewNone: 'Sin tripulación',
@@ -956,6 +1086,102 @@ var I18N = {
     e_noPeriod: 'No encuentro el periodo del roster. ¿Es el «Individual duty plan» de IDP en PDF?'
   },
   ca: {
+    bk_done: 'Còpia preparada. Tria on desar-la (Fitxers, iCloud Drive…).',
+    bk_bad: 'Aquest fitxer no és una còpia de Payroster.',
+    bk_replace: 'Substituir les meves dades',
+    bk_confirm: 'Aquesta còpia ({d}) té {m} mesos. Substituirà totes les dades d’aquest dispositiu.',
+    bk_import: 'Recuperar còpia',
+    bk_export: 'Desar còpia',
+    bk_have: 'Ara tens {m} mesos de roster i {s} nòmines desades.',
+    bk_intro: 'Les teves dades només són en aquest dispositiu. Desa’n una còpia a Fitxers o iCloud Drive i recupera-la en un mòbil nou.',
+    yr_note: 'Per a la Renda: rendiments subjectes ≈ {g}, retencions d’IRPF ≈ {i}, Seguretat Social ≈ {s}, dietes exemptes ≈ {d}. És orientatiu: fes servir el certificat de retencions d’Eurowings.',
+    yr_partNote: '{n} mes(os) en gris sense el roster del mes anterior: només porten el sou fix i no se sumen al total.',
+    yr_partial: 'falta roster',
+    yr_estS: 'estimada',
+    yr_realS: 'real',
+    yr_diet: 'Dietes (exemptes)',
+    yr_est: 'Estimada',
+    yr_real: 'Nòmina real',
+    yr_chart: 'Net de cada mes',
+    yr_year: 'Any',
+    yr_intro: 'El que cobres cada mes de l’any: amb la nòmina real si l’has pujada; si no, l’estimació de l’app.',
+    vac_note: 'Vacances = U. Lliures = O_S, O_FLEX, O_TZ, FREI… Comprats = OFF_BEZ. Dret segons el conveni (art. 12.1): 30 dies, 35 des de 5 anys de servei i 42 des de 25.',
+    vac_total: 'Total',
+    vac_sick: 'Baixa',
+    vac_bez: 'Comprats',
+    vac_off: 'Lliures',
+    vac_om: 'O_M',
+    vac_su: 'SU',
+    vac_vac: 'Vacances',
+    vac_month: 'Mes',
+    vac_noJoined: 'Posa la teva antiguitat a Les meves dades de contracte: amb 5 anys són 35 dies i amb 25 anys, 42.',
+    vac_sum: 'Vacances: {u} dies fets de {e}. En queden {l}.',
+    vac_intro: 'Dies del {y} segons els rosters desats.',
+    ftl_pt: 'Límits ajustats a la teva jornada del {c} % (conveni 30.7.11).',
+    ftl_note: 'Màxim de cada finestra dins del mes. Servei = «Value for DT Limit Calc» del roster. Block = vols actius (sense posicionaments).',
+    ftl_missing: 'Falten mesos anteriors: puja’n els rosters perquè les finestres de 7, 14, 28 dies i 12 mesos siguin completes.',
+    ftl_until: 'fins al dia {d}',
+    ftl_dyear: 'Servei el {y}',
+    ftl_byear: 'Block el {y}',
+    ftl_b12m: 'Block en 12 mesos',
+    ftl_b28: 'Block en 28 dies',
+    ftl_d28: 'Servei en 28 dies',
+    ftl_d14: 'Servei en 14 dies',
+    ftl_d7: 'Servei en 7 dies',
+    ftl_intro: 'Hores acumulades a {m} segons els rosters desats (límits EASA i del conveni).',
+    cal_done: '{n} serveis exportats. A l’iPhone, obre el fitxer i prem «Afegir-ho tot».',
+    cal_make: 'Exportar al calendari',
+    cal_off: 'Incloure dies lliures i vacances',
+    cal_crew: 'Incloure tripulació',
+    cal_alarm: 'Avís abans de la signatura',
+    cal_all: 'Tots els mesos desats',
+    cal_cur: 'Aquest mes',
+    cal_range: 'Mesos',
+    cal_intro: 'Exporta els teus serveis al Calendari de l’iPhone, Google o Outlook, amb avís abans de la signatura, rutes, hotel i tripulació.',
+    sim_tier: 'Passes del tram {a} al tram {b}.',
+    sim_result: 'Amb aquest canvi el variable canvia {v} i la teva nòmina neta {n}.',
+    sim_net: 'Nòmina de {m} (net)',
+    sim_calc: 'Calcular',
+    sim_train: 'Dia de trainer',
+    sim_duty: 'Servei nou o canviat',
+    sim_off: 'Treure el servei (dia lliure)',
+    sim_action: 'Canvi',
+    sim_now: 'Ara',
+    sim_day: 'Dia',
+    sim_intro: 'Mira quant guanyes o perds amb un canvi abans d’acceptar-lo. No es desa res.',
+    chk_other: 'Altres conceptes de la nòmina',
+    chk_ok: 'Tot quadra. Diferència en el líquid: {d}.',
+    chk_bad: '{n} concepte(s) no quadren:',
+    chk_hTax: 'Es calcula sobre el brut: si la resta quadra, això també.',
+    chk_hSales: 'Apunta la comissió de vendes de {p} al quadre de la nòmina.',
+    chk_hBuy: 'Dies lliures comprats (OFF_BEZ) segons el roster: {d}.',
+    chk_hEarly: 'Early check-in segons el roster els dies {d}.',
+    chk_hDietaMore: 'La nòmina paga més dietes d’aquest tipus que l’app.',
+    chk_hDietaLess: 'La nòmina paga menys dietes d’aquest tipus que l’app. Dies segons el roster: {d}.',
+    chk_hHoursPay: 'Segueix les hores: si les hores quadren, això també.',
+    chk_hoursPay: 'Pagament per hores',
+    chk_hAdd: 'Revisa imaginàries, cursos, posicionaments i dies de vacances (1:12 h cadascun).',
+    chk_hoursA: 'Hores de servei addicional',
+    chk_hFdp: 'Una diferència d’1–2 h és normal: Eurowings paga l’FDP programat en signar, i el roster mostra el real.',
+    chk_hoursF: 'Hores FDP',
+    chk_hTrainer: 'Dies de trainer / Competence Team segons el roster: {d}.',
+    chk_hBase: 'Si no quadra, revisa el nivell i la jornada a Les meves dades de contracte.',
+    chk_colDiff: 'Dif.',
+    chk_colReal: 'Nòmina',
+    chk_concept: 'Concepte',
+    chk_needPrev: 'Per revisar la nòmina de {m} puja el roster de {p}: és el mes les hores i dietes del qual s’hi paguen.',
+    chk_month: 'Nòmina',
+    chk_needSlip: 'Puja una nòmina en PDF (la del mes que vulguis revisar) amb ＋ PDF.',
+    chk_intro: 'Compara la teva nòmina real, concepte per concepte, amb el que calcula l’app amb el teu roster. El que no quadra surt en taronja amb els dies a revisar.',
+    tool_backup: 'Còpia de seguretat',
+    tool_year: 'Resum anual',
+    tool_vac: 'Vacances i lliures',
+    tool_ftl: 'Límits FTL',
+    tool_cal: 'Calendari',
+    tool_sim: 'Simulador',
+    tool_check: 'Revisar nòmina',
+    sim_btn: 'Simular canvi',
+    toolsT: 'Eines',
     share_crewShort: 'Noms curts (cognom + inicial)',
     share_crewFull: 'Noms complets',
     share_crewNone: 'Sense tripulació',
@@ -1079,6 +1305,102 @@ var I18N = {
     e_noPeriod: 'No trobo el període del roster. És l’«Individual duty plan» d’IDP en PDF?'
   },
   en: {
+    chk_colDiff: 'Diff.',
+    chk_colReal: 'Payslip',
+    yr_partNote: '{n} month(s) in grey lack the previous month’s roster: they only show fixed pay and are left out of the totals.',
+    bk_done: 'Copy ready. Choose where to save it (Files, iCloud Drive…).',
+    bk_bad: 'This file is not a Payroster backup.',
+    bk_replace: 'Replace my data',
+    bk_confirm: 'This copy ({d}) has {m} months. It will replace all the data on this device.',
+    bk_import: 'Restore copy',
+    bk_export: 'Save copy',
+    bk_have: 'You have {m} roster months and {s} payslips saved.',
+    bk_intro: 'Your data only lives on this device. Save a copy to Files or iCloud Drive and restore it on a new phone.',
+    yr_note: 'For your tax return: taxable income ≈ {g}, IRPF withheld ≈ {i}, social security ≈ {s}, tax-free per diems ≈ {d}. Only a guide: use Eurowings’ withholding certificate.',
+    yr_partial: 'roster missing',
+    yr_estS: 'estimated',
+    yr_realS: 'actual',
+    yr_diet: 'Per diems (tax-free)',
+    yr_est: 'Estimated',
+    yr_real: 'Actual payslip',
+    yr_chart: 'Net per month',
+    yr_year: 'Year',
+    yr_intro: 'What you are paid each month: the actual payslip if you uploaded it, otherwise the app’s estimate.',
+    vac_note: 'Leave = U. Days off = O_S, O_FLEX, O_TZ, FREI… Bought = OFF_BEZ. Entitlement under the CLA (art. 12.1): 30 days, 35 after 5 years of service and 42 after 25.',
+    vac_total: 'Total',
+    vac_sick: 'Sick',
+    vac_bez: 'Bought',
+    vac_off: 'Days off',
+    vac_om: 'O_M',
+    vac_su: 'SU',
+    vac_vac: 'Leave',
+    vac_month: 'Month',
+    vac_noJoined: 'Enter your seniority date in My contract details: 35 days after 5 years, 42 after 25.',
+    vac_sum: 'Leave: {u} of {e} days used. {l} left.',
+    vac_intro: 'Days in {y} from your saved rosters.',
+    ftl_pt: 'Limits adjusted to your {c} % contract (CLA 30.7.11).',
+    ftl_note: 'Peak of each window within the month. Duty = the roster’s “Value for DT Limit Calc”. Block = active flights (no positioning).',
+    ftl_missing: 'Earlier months are missing: upload their rosters so the 7, 14, 28-day and 12-month windows are complete.',
+    ftl_until: 'up to day {d}',
+    ftl_dyear: 'Duty in {y}',
+    ftl_byear: 'Block in {y}',
+    ftl_b12m: 'Block in 12 months',
+    ftl_b28: 'Block in 28 days',
+    ftl_d28: 'Duty in 28 days',
+    ftl_d14: 'Duty in 14 days',
+    ftl_d7: 'Duty in 7 days',
+    ftl_intro: 'Accumulated hours in {m} from your saved rosters (EASA and CLA limits).',
+    cal_done: '{n} duties exported. On iPhone, open the file and tap “Add All”.',
+    cal_make: 'Export to calendar',
+    cal_off: 'Include days off and leave',
+    cal_crew: 'Include crew',
+    cal_alarm: 'Alert before check-in',
+    cal_all: 'All saved months',
+    cal_cur: 'This month',
+    cal_range: 'Months',
+    cal_intro: 'Export your duties to iPhone, Google or Outlook calendar, with an alert before check-in, routes, hotel and crew.',
+    sim_tier: 'You move from tier {a} to tier {b}.',
+    sim_result: 'With this change the variable pay changes {v} and your net payslip {n}.',
+    sim_net: '{m} payslip (net)',
+    sim_calc: 'Calculate',
+    sim_train: 'Trainer day',
+    sim_duty: 'New or changed duty',
+    sim_off: 'Remove the duty (day off)',
+    sim_action: 'Change',
+    sim_now: 'Now',
+    sim_day: 'Day',
+    sim_intro: 'See what you gain or lose with a change before accepting it. Nothing is saved.',
+    chk_other: 'Other payslip items',
+    chk_ok: 'Everything matches. Net difference: {d}.',
+    chk_bad: '{n} item(s) don’t match:',
+    chk_hTax: 'Calculated on the gross: if the rest matches, so does this.',
+    chk_hSales: 'Enter the {p} sales commission in the payslip box.',
+    chk_hBuy: 'Days off bought (OFF_BEZ) in the roster: {d}.',
+    chk_hEarly: 'Early check-in in the roster on days {d}.',
+    chk_hDietaMore: 'The payslip pays more per diems of this type than the app.',
+    chk_hDietaLess: 'The payslip pays fewer per diems of this type than the app. Days in the roster: {d}.',
+    chk_hHoursPay: 'Follows the hours: if the hours match, this does too.',
+    chk_hoursPay: 'Hour pay',
+    chk_hAdd: 'Check standbys, courses, positioning and leave days (1:12 h each).',
+    chk_hoursA: 'Additional duty hours',
+    chk_hFdp: 'A 1–2 h difference is normal: Eurowings pays the FDP scheduled at check-in, the roster shows the actual one.',
+    chk_hoursF: 'FDP hours',
+    chk_hTrainer: 'Trainer / Competence Team days in the roster: {d}.',
+    chk_hBase: 'If it doesn’t match, check your level and contract in My contract details.',
+    chk_concept: 'Item',
+    chk_needPrev: 'To check the {m} payslip, upload the {p} roster: its hours and per diems are paid in it.',
+    chk_month: 'Payslip',
+    chk_needSlip: 'Upload a payslip PDF (the month you want to check) with ＋ PDF.',
+    chk_intro: 'Compares your actual payslip, item by item, with what the app calculates from your roster. Anything that doesn’t match turns orange, with the days to check.',
+    tool_backup: 'Backup',
+    tool_year: 'Year summary',
+    tool_vac: 'Leave & days off',
+    tool_ftl: 'FTL limits',
+    tool_cal: 'Calendar',
+    tool_sim: 'What-if',
+    tool_check: 'Check payslip',
+    sim_btn: 'Simulate change',
+    toolsT: 'Tools',
     share_crewShort: 'Short names (surname + initial)',
     share_crewFull: 'Full names',
     share_crewNone: 'No crew',
@@ -1202,6 +1524,102 @@ var I18N = {
     e_noPeriod: 'I can’t find the roster period. Is this the IDP “Individual duty plan” PDF?'
   },
   de: {
+    bk_done: 'Kopie bereit. Wähle, wo sie gespeichert wird (Dateien, iCloud Drive…).',
+    bk_bad: 'Diese Datei ist keine Payroster-Sicherung.',
+    bk_replace: 'Meine Daten ersetzen',
+    bk_confirm: 'Diese Kopie ({d}) enthält {m} Monate. Sie ersetzt alle Daten auf diesem Gerät.',
+    bk_import: 'Kopie wiederherstellen',
+    bk_export: 'Kopie speichern',
+    bk_have: 'Gespeichert: {m} Dienstplan-Monate und {s} Abrechnungen.',
+    bk_intro: 'Deine Daten sind nur auf diesem Gerät. Speichere eine Kopie in Dateien oder iCloud Drive und stelle sie auf einem neuen Handy wieder her.',
+    yr_note: 'Für die Steuererklärung: steuerpflichtige Einkünfte ≈ {g}, einbehaltene IRPF ≈ {i}, Sozialversicherung ≈ {s}, steuerfreie Spesen ≈ {d}. Nur zur Orientierung: maßgeblich ist die Bescheinigung von Eurowings.',
+    yr_partNote: '{n} Monat(e) in Grau ohne Dienstplan des Vormonats: nur Fixgehalt, nicht in der Summe.',
+    yr_partial: 'Dienstplan fehlt',
+    yr_estS: 'geschätzt',
+    yr_realS: 'echt',
+    yr_diet: 'Spesen (steuerfrei)',
+    yr_est: 'Geschätzt',
+    yr_real: 'Echte Abrechnung',
+    yr_chart: 'Netto pro Monat',
+    yr_year: 'Jahr',
+    yr_intro: 'Was du jeden Monat bekommst: die echte Abrechnung, wenn hochgeladen, sonst die Schätzung der App.',
+    vac_note: 'Urlaub = U. Frei = O_S, O_FLEX, O_TZ, FREI… Abgekauft = OFF_BEZ. Anspruch laut Tarifvertrag (Art. 12.1): 30 Tage, 35 ab 5 Dienstjahren und 42 ab 25.',
+    vac_total: 'Summe',
+    vac_sick: 'Krank',
+    vac_bez: 'Abgekauft',
+    vac_off: 'Frei',
+    vac_om: 'O_M',
+    vac_su: 'SU',
+    vac_vac: 'Urlaub',
+    vac_month: 'Monat',
+    vac_noJoined: 'Trag deine Betriebszugehörigkeit in Meine Vertragsdaten ein: ab 5 Jahren 35 Tage, ab 25 Jahren 42.',
+    vac_sum: 'Urlaub: {u} von {e} Tagen genommen. Noch {l}.',
+    vac_intro: 'Tage {y} aus deinen gespeicherten Dienstplänen.',
+    ftl_pt: 'Grenzen angepasst an deine Arbeitszeit von {c} % (Tarifvertrag 30.7.11).',
+    ftl_note: 'Höchstwert jedes Fensters im Monat. Dienst = „Value for DT Limit Calc“ des Dienstplans. Block = aktive Flüge (ohne Positionierung).',
+    ftl_missing: 'Frühere Monate fehlen: lade ihre Dienstpläne hoch, damit die Fenster von 7, 14, 28 Tagen und 12 Monaten vollständig sind.',
+    ftl_until: 'bis Tag {d}',
+    ftl_dyear: 'Dienst {y}',
+    ftl_byear: 'Block {y}',
+    ftl_b12m: 'Block in 12 Monaten',
+    ftl_b28: 'Block in 28 Tagen',
+    ftl_d28: 'Dienst in 28 Tagen',
+    ftl_d14: 'Dienst in 14 Tagen',
+    ftl_d7: 'Dienst in 7 Tagen',
+    ftl_intro: 'Aufgelaufene Stunden im {m} aus deinen gespeicherten Dienstplänen (EASA- und Tarifgrenzen).',
+    cal_done: '{n} Dienste exportiert. Auf dem iPhone die Datei öffnen und „Alle hinzufügen“ tippen.',
+    cal_make: 'In den Kalender exportieren',
+    cal_off: 'Freie Tage und Urlaub einschließen',
+    cal_crew: 'Crew einschließen',
+    cal_alarm: 'Erinnerung vor dem Check-in',
+    cal_all: 'Alle gespeicherten Monate',
+    cal_cur: 'Dieser Monat',
+    cal_range: 'Monate',
+    cal_intro: 'Exportiere deine Dienste in den iPhone-, Google- oder Outlook-Kalender, mit Erinnerung vor dem Check-in, Strecken, Hotel und Crew.',
+    sim_tier: 'Du wechselst von Stufe {a} zu Stufe {b}.',
+    sim_result: 'Mit dieser Änderung ändert sich die variable Vergütung um {v} und dein Netto um {n}.',
+    sim_net: 'Abrechnung {m} (netto)',
+    sim_calc: 'Berechnen',
+    sim_train: 'Trainertag',
+    sim_duty: 'Neuer oder geänderter Dienst',
+    sim_off: 'Dienst entfernen (frei)',
+    sim_action: 'Änderung',
+    sim_now: 'Jetzt',
+    sim_day: 'Tag',
+    sim_intro: 'Sieh vor dem Annehmen, was du mit einer Änderung gewinnst oder verlierst. Es wird nichts gespeichert.',
+    chk_other: 'Weitere Posten der Abrechnung',
+    chk_ok: 'Alles passt. Unterschied im Netto: {d}.',
+    chk_bad: '{n} Posten passen nicht:',
+    chk_hTax: 'Wird vom Brutto berechnet: passt der Rest, passt auch das.',
+    chk_hSales: 'Trag die Verkaufsprovision {p} im Abrechnungsfeld ein.',
+    chk_hBuy: 'Abgekaufte freie Tage (OFF_BEZ) laut Dienstplan: {d}.',
+    chk_hEarly: 'Early Check-in laut Dienstplan an den Tagen {d}.',
+    chk_hDietaMore: 'Die Abrechnung zahlt mehr Spesen dieser Art als die App.',
+    chk_hDietaLess: 'Die Abrechnung zahlt weniger Spesen dieser Art als die App. Tage laut Dienstplan: {d}.',
+    chk_hHoursPay: 'Folgt den Stunden: passen die Stunden, passt auch das.',
+    chk_hoursPay: 'Stundenvergütung',
+    chk_hAdd: 'Prüfe Standbys, Kurse, Positionierungen und Urlaubstage (je 1:12 h).',
+    chk_hoursA: 'Zusätzliche Dienststunden',
+    chk_hFdp: '1–2 h Unterschied sind normal: Eurowings zahlt die beim Check-in geplante FDP, der Dienstplan zeigt die tatsächliche.',
+    chk_hoursF: 'FDP-Stunden',
+    chk_hTrainer: 'Trainer-/Competence-Team-Tage laut Dienstplan: {d}.',
+    chk_hBase: 'Wenn es nicht passt, prüfe Stufe und Arbeitszeit in Meine Vertragsdaten.',
+    chk_colDiff: 'Diff.',
+    chk_colReal: 'Abrechn.',
+    chk_concept: 'Posten',
+    chk_needPrev: 'Um die Abrechnung {m} zu prüfen, lade den Dienstplan {p} hoch: dessen Stunden und Spesen werden darin bezahlt.',
+    chk_month: 'Abrechnung',
+    chk_needSlip: 'Lade eine Abrechnung als PDF hoch (den Monat, den du prüfen willst) mit ＋ PDF.',
+    chk_intro: 'Vergleicht deine echte Abrechnung Posten für Posten mit der Berechnung aus deinem Dienstplan. Was nicht passt, wird orange markiert, mit den zu prüfenden Tagen.',
+    tool_backup: 'Sicherung',
+    tool_year: 'Jahresübersicht',
+    tool_vac: 'Urlaub & Freie Tage',
+    tool_ftl: 'FTL-Grenzen',
+    tool_cal: 'Kalender',
+    tool_sim: 'Simulator',
+    tool_check: 'Abrechnung prüfen',
+    sim_btn: 'Änderung simulieren',
+    toolsT: 'Werkzeuge',
     share_crewShort: 'Kurznamen (Nachname + Initiale)',
     share_crewFull: 'Vollständige Namen',
     share_crewNone: 'Ohne Crew',
@@ -1325,6 +1743,102 @@ var I18N = {
     e_noPeriod: 'Ich finde den Zeitraum des Dienstplans nicht. Ist das der „Individual duty plan“ aus IDP als PDF?'
   },
   fr: {
+    bk_done: 'Copie prête. Choisis où l’enregistrer (Fichiers, iCloud Drive…).',
+    bk_bad: 'Ce fichier n’est pas une sauvegarde Payroster.',
+    bk_replace: 'Remplacer mes données',
+    bk_confirm: 'Cette copie ({d}) contient {m} mois. Elle remplacera toutes les données de cet appareil.',
+    bk_import: 'Restaurer une copie',
+    bk_export: 'Enregistrer une copie',
+    bk_have: 'Tu as {m} mois de planning et {s} fiches enregistrés.',
+    bk_intro: 'Tes données ne sont que sur cet appareil. Enregistre une copie dans Fichiers ou iCloud Drive et restaure-la sur un nouveau téléphone.',
+    yr_note: 'Pour la déclaration : revenus imposables ≈ {g}, IRPF retenu ≈ {i}, sécurité sociale ≈ {s}, indemnités exonérées ≈ {d}. Indicatif : utilise le certificat de retenues d’Eurowings.',
+    yr_partNote: '{n} mois en gris sans le planning du mois précédent : seulement le fixe, non comptés dans le total.',
+    yr_partial: 'planning manquant',
+    yr_estS: 'estimée',
+    yr_realS: 'réelle',
+    yr_diet: 'Indemnités (exonérées)',
+    yr_est: 'Estimée',
+    yr_real: 'Fiche réelle',
+    yr_chart: 'Net par mois',
+    yr_year: 'Année',
+    yr_intro: 'Ce que tu touches chaque mois : la fiche réelle si tu l’as importée, sinon l’estimation de l’app.',
+    vac_note: 'Congés = U. Repos = O_S, O_FLEX, O_TZ, FREI… Rachetés = OFF_BEZ. Droit selon la convention (art. 12.1) : 30 jours, 35 après 5 ans de service et 42 après 25.',
+    vac_total: 'Total',
+    vac_sick: 'Maladie',
+    vac_bez: 'Rachetés',
+    vac_off: 'Repos',
+    vac_om: 'O_M',
+    vac_su: 'SU',
+    vac_vac: 'Congés',
+    vac_month: 'Mois',
+    vac_noJoined: 'Indique ton ancienneté dans Mes données de contrat : 35 jours après 5 ans, 42 après 25.',
+    vac_sum: 'Congés : {u} jours pris sur {e}. Il en reste {l}.',
+    vac_intro: 'Jours de {y} d’après tes plannings enregistrés.',
+    ftl_pt: 'Limites adaptées à ton temps de travail de {c} % (convention 30.7.11).',
+    ftl_note: 'Maximum de chaque fenêtre dans le mois. Service = « Value for DT Limit Calc » du planning. Block = vols actifs (sans mises en place).',
+    ftl_missing: 'Il manque des mois précédents : importe leurs plannings pour compléter les fenêtres de 7, 14, 28 jours et 12 mois.',
+    ftl_until: 'jusqu’au {d}',
+    ftl_dyear: 'Service en {y}',
+    ftl_byear: 'Block en {y}',
+    ftl_b12m: 'Block sur 12 mois',
+    ftl_b28: 'Block sur 28 jours',
+    ftl_d28: 'Service sur 28 jours',
+    ftl_d14: 'Service sur 14 jours',
+    ftl_d7: 'Service sur 7 jours',
+    ftl_intro: 'Heures cumulées en {m} d’après tes plannings enregistrés (limites EASA et de la convention).',
+    cal_done: '{n} services exportés. Sur iPhone, ouvre le fichier et touche « Tout ajouter ».',
+    cal_make: 'Exporter vers le calendrier',
+    cal_off: 'Inclure repos et congés',
+    cal_crew: 'Inclure l’équipage',
+    cal_alarm: 'Rappel avant le check-in',
+    cal_all: 'Tous les mois enregistrés',
+    cal_cur: 'Ce mois',
+    cal_range: 'Mois',
+    cal_intro: 'Exporte tes services vers le calendrier de l’iPhone, Google ou Outlook, avec rappel avant le check-in, trajets, hôtel et équipage.',
+    sim_tier: 'Tu passes du palier {a} au palier {b}.',
+    sim_result: 'Avec ce changement, le variable change de {v} et ta paie nette de {n}.',
+    sim_net: 'Fiche de {m} (net)',
+    sim_calc: 'Calculer',
+    sim_train: 'Jour de formateur',
+    sim_duty: 'Service nouveau ou modifié',
+    sim_off: 'Supprimer le service (repos)',
+    sim_action: 'Changement',
+    sim_now: 'Actuel',
+    sim_day: 'Jour',
+    sim_intro: 'Vois ce que tu gagnes ou perds avec un changement avant de l’accepter. Rien n’est enregistré.',
+    chk_other: 'Autres lignes de la fiche',
+    chk_ok: 'Tout correspond. Écart sur le net : {d}.',
+    chk_bad: '{n} ligne(s) ne correspondent pas :',
+    chk_hTax: 'Calculé sur le brut : si le reste correspond, cela aussi.',
+    chk_hSales: 'Indique la commission de ventes de {p} dans le cadre de la fiche.',
+    chk_hBuy: 'Jours de repos rachetés (OFF_BEZ) selon le planning : {d}.',
+    chk_hEarly: 'Early check-in selon le planning les jours {d}.',
+    chk_hDietaMore: 'La fiche paie plus d’indemnités de ce type que l’app.',
+    chk_hDietaLess: 'La fiche paie moins d’indemnités de ce type que l’app. Jours selon le planning : {d}.',
+    chk_hHoursPay: 'Suit les heures : si les heures correspondent, cela aussi.',
+    chk_hoursPay: 'Paie des heures',
+    chk_hAdd: 'Vérifie réserves, cours, mises en place et jours de congé (1:12 h chacun).',
+    chk_hoursA: 'Heures de service additionnel',
+    chk_hFdp: 'Un écart de 1–2 h est normal : Eurowings paie le FDP programmé au check-in, le planning montre le réel.',
+    chk_hoursF: 'Heures FDP',
+    chk_hTrainer: 'Jours de formateur / Competence Team selon le planning : {d}.',
+    chk_hBase: 'Si ça ne correspond pas, vérifie le niveau et le temps de travail dans Mes données de contrat.',
+    chk_colDiff: 'Écart',
+    chk_colReal: 'Fiche',
+    chk_concept: 'Ligne',
+    chk_needPrev: 'Pour vérifier la fiche de {m}, importe le planning de {p} : ses heures et indemnités y sont payées.',
+    chk_month: 'Fiche',
+    chk_needSlip: 'Importe une fiche de paie en PDF (le mois à vérifier) avec ＋ PDF.',
+    chk_intro: 'Compare ta fiche de paie réelle, ligne par ligne, avec le calcul de l’app à partir de ton planning. Ce qui ne correspond pas passe en orange, avec les jours à vérifier.',
+    tool_backup: 'Sauvegarde',
+    tool_year: 'Bilan annuel',
+    tool_vac: 'Congés et repos',
+    tool_ftl: 'Limites FTL',
+    tool_cal: 'Calendrier',
+    tool_sim: 'Simulateur',
+    tool_check: 'Vérifier la fiche',
+    sim_btn: 'Simuler un changement',
+    toolsT: 'Outils',
     share_crewShort: 'Noms courts (nom + initiale)',
     share_crewFull: 'Noms complets',
     share_crewNone: 'Sans équipage',
@@ -1448,6 +1962,102 @@ var I18N = {
     e_noPeriod: 'Je ne trouve pas la période du planning. Est-ce bien l’« Individual duty plan » d’IDP en PDF ?'
   },
   hu: {
+    bk_done: 'A másolat kész. Válaszd ki, hová mented (Fájlok, iCloud Drive…).',
+    bk_bad: 'Ez a fájl nem Payroster-mentés.',
+    bk_replace: 'Adataim cseréje',
+    bk_confirm: 'Ez a másolat ({d}) {m} hónapot tartalmaz. Lecseréli az eszköz összes adatát.',
+    bk_import: 'Másolat visszaállítása',
+    bk_export: 'Másolat mentése',
+    bk_have: '{m} hónapnyi beosztás és {s} bérjegyzék van mentve.',
+    bk_intro: 'Az adataid csak ezen az eszközön vannak. Ments egy másolatot a Fájlokba vagy az iCloud Drive-ra, és állítsd vissza új telefonon.',
+    yr_note: 'Az adóbevalláshoz: adóköteles jövedelem ≈ {g}, levont IRPF ≈ {i}, TB-járulék ≈ {s}, adómentes napidíj ≈ {d}. Csak tájékoztató: a Eurowings igazolását használd.',
+    yr_partNote: '{n} szürke hónapnál hiányzik az előző havi beosztás: csak a fix bért mutatja, és nem számít bele az összegbe.',
+    yr_partial: 'hiányzó beosztás',
+    yr_estS: 'becsült',
+    yr_realS: 'valódi',
+    yr_diet: 'Napidíjak (adómentes)',
+    yr_est: 'Becsült',
+    yr_real: 'Valódi bérjegyzék',
+    yr_chart: 'Nettó havonta',
+    yr_year: 'Év',
+    yr_intro: 'Amit havonta kapsz: a valódi bérjegyzék, ha feltöltötted, egyébként az app becslése.',
+    vac_note: 'Szabadság = U. Szabadnap = O_S, O_FLEX, O_TZ, FREI… Megváltott = OFF_BEZ. Jogosultság a szerződés szerint (12.1): 30 nap, 5 év szolgálat után 35, 25 után 42.',
+    vac_total: 'Összesen',
+    vac_sick: 'Betegség',
+    vac_bez: 'Megváltott',
+    vac_off: 'Szabadnap',
+    vac_om: 'O_M',
+    vac_su: 'SU',
+    vac_vac: 'Szabadság',
+    vac_month: 'Hónap',
+    vac_noJoined: 'Add meg a szolgálati idő kezdetét a Szerződéses adataimban: 5 év után 35 nap, 25 év után 42.',
+    vac_sum: 'Szabadság: {u} nap felhasználva a(z) {e} napból. Maradt {l}.',
+    vac_intro: '{y} napjai a mentett beosztások alapján.',
+    ftl_pt: 'A korlátok a(z) {c} %-os munkaidődhöz igazítva (szerződés 30.7.11).',
+    ftl_note: 'Az egyes ablakok maximuma a hónapon belül. Szolgálat = a beosztás „Value for DT Limit Calc” értéke. Block = aktív járatok (pozicionálás nélkül).',
+    ftl_missing: 'Hiányoznak korábbi hónapok: töltsd fel a beosztásaikat, hogy a 7, 14, 28 napos és 12 hónapos ablak teljes legyen.',
+    ftl_until: 'a(z) {d}. napig',
+    ftl_dyear: 'Szolgálat {y}-ban',
+    ftl_byear: 'Block {y}-ban',
+    ftl_b12m: 'Block 12 hónap alatt',
+    ftl_b28: 'Block 28 nap alatt',
+    ftl_d28: 'Szolgálat 28 nap alatt',
+    ftl_d14: 'Szolgálat 14 nap alatt',
+    ftl_d7: 'Szolgálat 7 nap alatt',
+    ftl_intro: 'Halmozott órák {m} hónapban a mentett beosztások alapján (EASA- és szerződéses korlátok).',
+    cal_done: '{n} szolgálat exportálva. iPhone-on nyisd meg a fájlt, és koppints az „Összes hozzáadása” gombra.',
+    cal_make: 'Exportálás a naptárba',
+    cal_off: 'Szabadnapokkal és szabadsággal',
+    cal_crew: 'Személyzettel',
+    cal_alarm: 'Emlékeztető jelentkezés előtt',
+    cal_all: 'Minden mentett hónap',
+    cal_cur: 'Ez a hónap',
+    cal_range: 'Hónapok',
+    cal_intro: 'Exportáld a szolgálataidat az iPhone, Google vagy Outlook naptárba, jelentkezés előtti emlékeztetővel, útvonalakkal, szállodával és személyzettel.',
+    sim_tier: 'A(z) {a}. sávból a(z) {b}. sávba kerülsz.',
+    sim_result: 'Ezzel a változással a változó rész {v}, a nettó {n} összeggel változik.',
+    sim_net: '{m} havi bérjegyzék (nettó)',
+    sim_calc: 'Számolás',
+    sim_train: 'Trénernap',
+    sim_duty: 'Új vagy módosított szolgálat',
+    sim_off: 'Szolgálat törlése (szabadnap)',
+    sim_action: 'Változás',
+    sim_now: 'Most',
+    sim_day: 'Nap',
+    sim_intro: 'Nézd meg, mennyit nyersz vagy veszítesz egy változással, mielőtt elfogadod. Semmi nem mentődik.',
+    chk_other: 'A bérjegyzék egyéb tételei',
+    chk_ok: 'Minden egyezik. Eltérés a nettóban: {d}.',
+    chk_bad: '{n} tétel nem egyezik:',
+    chk_hTax: 'A bruttóból számolódik: ha a többi egyezik, ez is.',
+    chk_hSales: 'Írd be a(z) {p} értékesítési jutalékot a bérjegyzék dobozába.',
+    chk_hBuy: 'Megváltott szabadnapok (OFF_BEZ) a beosztás szerint: {d}.',
+    chk_hEarly: 'Early check-in a beosztás szerint ezeken a napokon: {d}.',
+    chk_hDietaMore: 'A bérjegyzék több ilyen napidíjat fizet, mint az app.',
+    chk_hDietaLess: 'A bérjegyzék kevesebb ilyen napidíjat fizet, mint az app. Napok a beosztás szerint: {d}.',
+    chk_hHoursPay: 'Az órákat követi: ha az órák egyeznek, ez is.',
+    chk_hoursPay: 'Óradíj',
+    chk_hAdd: 'Nézd meg a készenléteket, tanfolyamokat, pozicionálásokat és a szabadságnapokat (egyenként 1:12 óra).',
+    chk_hoursA: 'Kiegészítő szolgálati órák',
+    chk_hFdp: '1–2 óra eltérés normális: a Eurowings a jelentkezéskor tervezett FDP-t fizeti, a beosztás a ténylegeset mutatja.',
+    chk_hoursF: 'FDP-órák',
+    chk_hTrainer: 'Tréner / Competence Team napok a beosztás szerint: {d}.',
+    chk_hBase: 'Ha nem egyezik, nézd meg a szintet és a munkaidőt a Szerződéses adataimban.',
+    chk_colDiff: 'Elt.',
+    chk_colReal: 'Bérjegyz.',
+    chk_concept: 'Tétel',
+    chk_needPrev: 'A(z) {m} havi bérjegyzék ellenőrzéséhez töltsd fel a(z) {p} beosztást: annak órái és napidíjai szerepelnek benne.',
+    chk_month: 'Bérjegyzék',
+    chk_needSlip: 'Tölts fel egy bérjegyzéket PDF-ben (az ellenőrizendő hónapot) a ＋ PDF gombbal.',
+    chk_intro: 'Tételenként összeveti a valódi bérjegyzéket azzal, amit az app a beosztásodból számol. Ami nem egyezik, narancssárga lesz, az ellenőrizendő napokkal.',
+    tool_backup: 'Biztonsági mentés',
+    tool_year: 'Éves összesítő',
+    tool_vac: 'Szabadság és szabadnapok',
+    tool_ftl: 'FTL-korlátok',
+    tool_cal: 'Naptár',
+    tool_sim: 'Szimulátor',
+    tool_check: 'Bérjegyzék ellenőrzése',
+    sim_btn: 'Változás szimulálása',
+    toolsT: 'Eszközök',
     share_crewShort: 'Rövid nevek (vezetéknév + kezdőbetű)',
     share_crewFull: 'Teljes nevek',
     share_crewNone: 'Személyzet nélkül',
@@ -1571,6 +2181,102 @@ var I18N = {
     e_noPeriod: 'Nem találom a beosztás időszakát. Ez az IDP „Individual duty plan” PDF-je?'
   },
   sk: {
+    bk_done: 'Kópia je pripravená. Vyber, kam ju uložiť (Súbory, iCloud Drive…).',
+    bk_bad: 'Tento súbor nie je záloha Payroster.',
+    bk_replace: 'Nahradiť moje údaje',
+    bk_confirm: 'Táto kópia ({d}) má {m} mesiacov. Nahradí všetky údaje v tomto zariadení.',
+    bk_import: 'Obnoviť kópiu',
+    bk_export: 'Uložiť kópiu',
+    bk_have: 'Máš uložených {m} mesiacov rozpisov a {s} pások.',
+    bk_intro: 'Tvoje údaje sú len v tomto zariadení. Ulož kópiu do Súborov alebo iCloud Drive a obnov ju na novom telefóne.',
+    yr_note: 'Na daňové priznanie: zdaniteľné príjmy ≈ {g}, zrazená IRPF ≈ {i}, sociálne poistenie ≈ {s}, oslobodené diéty ≈ {d}. Len orientačne: použi potvrdenie od Eurowings.',
+    yr_partNote: '{n} sivý/é mesiac(e) bez rozpisu predchádzajúceho mesiaca: len pevná mzda, do súčtu sa nerátajú.',
+    yr_partial: 'chýba rozpis',
+    yr_estS: 'odhad',
+    yr_realS: 'skutočná',
+    yr_diet: 'Diéty (oslobodené)',
+    yr_est: 'Odhad',
+    yr_real: 'Skutočná páska',
+    yr_chart: 'Čistá mzda po mesiacoch',
+    yr_year: 'Rok',
+    yr_intro: 'Čo dostaneš každý mesiac: skutočnú pásku, ak si ju nahral, inak odhad aplikácie.',
+    vac_note: 'Dovolenka = U. Voľno = O_S, O_FLEX, O_TZ, FREI… Odkúpené = OFF_BEZ. Nárok podľa zmluvy (čl. 12.1): 30 dní, 35 po 5 rokoch služby a 42 po 25.',
+    vac_total: 'Spolu',
+    vac_sick: 'PN',
+    vac_bez: 'Odkúpené',
+    vac_off: 'Voľno',
+    vac_om: 'O_M',
+    vac_su: 'SU',
+    vac_vac: 'Dovolenka',
+    vac_month: 'Mesiac',
+    vac_noJoined: 'Zadaj odpracované od v časti Moje zmluvné údaje: po 5 rokoch 35 dní, po 25 rokoch 42.',
+    vac_sum: 'Dovolenka: {u} z {e} dní vyčerpaných. Zostáva {l}.',
+    vac_intro: 'Dni v roku {y} podľa uložených rozpisov.',
+    ftl_pt: 'Limity upravené na tvoj úväzok {c} % (zmluva 30.7.11).',
+    ftl_note: 'Maximum každého okna v mesiaci. Služba = „Value for DT Limit Calc“ z rozpisu. Block = aktívne lety (bez presunov).',
+    ftl_missing: 'Chýbajú predchádzajúce mesiace: nahraj ich rozpisy, aby boli okná 7, 14, 28 dní a 12 mesiacov úplné.',
+    ftl_until: 'do dňa {d}',
+    ftl_dyear: 'Služba v {y}',
+    ftl_byear: 'Block v {y}',
+    ftl_b12m: 'Block za 12 mesiacov',
+    ftl_b28: 'Block za 28 dní',
+    ftl_d28: 'Služba za 28 dní',
+    ftl_d14: 'Služba za 14 dní',
+    ftl_d7: 'Služba za 7 dní',
+    ftl_intro: 'Nahromadené hodiny za {m} podľa uložených rozpisov (limity EASA a zmluvy).',
+    cal_done: 'Exportovaných služieb: {n}. Na iPhone otvor súbor a ťukni na „Pridať všetko“.',
+    cal_make: 'Exportovať do kalendára',
+    cal_off: 'Zahrnúť voľno a dovolenku',
+    cal_crew: 'Zahrnúť posádku',
+    cal_alarm: 'Pripomienka pred nástupom',
+    cal_all: 'Všetky uložené mesiace',
+    cal_cur: 'Tento mesiac',
+    cal_range: 'Mesiace',
+    cal_intro: 'Exportuj svoje služby do kalendára iPhone, Google alebo Outlook s pripomienkou pred nástupom, trasami, hotelom a posádkou.',
+    sim_tier: 'Prejdeš z pásma {a} do pásma {b}.',
+    sim_result: 'S touto zmenou sa pohyblivá zložka zmení o {v} a čistá mzda o {n}.',
+    sim_net: 'Páska za {m} (čistá)',
+    sim_calc: 'Vypočítať',
+    sim_train: 'Trénerský deň',
+    sim_duty: 'Nová alebo zmenená služba',
+    sim_off: 'Zrušiť službu (voľno)',
+    sim_action: 'Zmena',
+    sim_now: 'Teraz',
+    sim_day: 'Deň',
+    sim_intro: 'Pozri, koľko zmenou získaš alebo stratíš, skôr než ju prijmeš. Nič sa neukladá.',
+    chk_other: 'Ďalšie položky pásky',
+    chk_ok: 'Všetko sedí. Rozdiel v čistej mzde: {d}.',
+    chk_bad: '{n} položka/y nesedí:',
+    chk_hTax: 'Počíta sa z hrubej mzdy: ak sedí zvyšok, sedí aj toto.',
+    chk_hSales: 'Zadaj províziu z predaja za {p} do poľa pásky.',
+    chk_hBuy: 'Odkúpené voľné dni (OFF_BEZ) podľa rozpisu: {d}.',
+    chk_hEarly: 'Early check-in podľa rozpisu v dňoch {d}.',
+    chk_hDietaMore: 'Páska platí viac diét tohto typu ako aplikácia.',
+    chk_hDietaLess: 'Páska platí menej diét tohto typu ako aplikácia. Dni podľa rozpisu: {d}.',
+    chk_hHoursPay: 'Riadi sa hodinami: ak sedia hodiny, sedí aj toto.',
+    chk_hoursPay: 'Platba za hodiny',
+    chk_hAdd: 'Skontroluj pohotovosti, kurzy, presuny a dni dovolenky (každý 1:12 h).',
+    chk_hoursA: 'Hodiny doplnkovej služby',
+    chk_hFdp: 'Rozdiel 1–2 h je normálny: Eurowings platí FDP naplánovaný pri nástupe, rozpis ukazuje skutočný.',
+    chk_hoursF: 'Hodiny FDP',
+    chk_hTrainer: 'Trénerské dni / Competence Team podľa rozpisu: {d}.',
+    chk_hBase: 'Ak nesedí, skontroluj stupeň a úväzok v časti Moje zmluvné údaje.',
+    chk_colDiff: 'Rozd.',
+    chk_colReal: 'Páska',
+    chk_concept: 'Položka',
+    chk_needPrev: 'Na kontrolu pásky za {m} nahraj rozpis za {p}: jeho hodiny a diéty sa vyplácajú v nej.',
+    chk_month: 'Páska',
+    chk_needSlip: 'Nahraj výplatnú pásku v PDF (mesiac, ktorý chceš skontrolovať) cez ＋ PDF.',
+    chk_intro: 'Porovná skutočnú výplatnú pásku položku po položke s výpočtom aplikácie z tvojho rozpisu. Čo nesedí, je oranžové aj s dňami na kontrolu.',
+    tool_backup: 'Záloha',
+    tool_year: 'Ročný prehľad',
+    tool_vac: 'Dovolenka a voľno',
+    tool_ftl: 'Limity FTL',
+    tool_cal: 'Kalendár',
+    tool_sim: 'Simulátor',
+    tool_check: 'Skontrolovať pásku',
+    sim_btn: 'Simulovať zmenu',
+    toolsT: 'Nástroje',
     share_crewShort: 'Krátke mená (priezvisko + iniciála)',
     share_crewFull: 'Celé mená',
     share_crewNone: 'Bez posádky',
@@ -1694,6 +2400,102 @@ var I18N = {
     e_noPeriod: 'Nenachádzam obdobie rozpisu. Je to „Individual duty plan“ z IDP v PDF?'
   },
   cs: {
+    bk_done: 'Kopie je připravená. Vyber, kam ji uložit (Soubory, iCloud Drive…).',
+    bk_bad: 'Tento soubor není záloha Payroster.',
+    bk_replace: 'Nahradit moje data',
+    bk_confirm: 'Tato kopie ({d}) má {m} měsíců. Nahradí všechna data v tomto zařízení.',
+    bk_import: 'Obnovit kopii',
+    bk_export: 'Uložit kopii',
+    bk_have: 'Máš uloženo {m} měsíců rozpisů a {s} pásek.',
+    bk_intro: 'Tvoje údaje jsou jen v tomto zařízení. Ulož kopii do Souborů nebo iCloud Drive a obnov ji na novém telefonu.',
+    yr_note: 'Pro daňové přiznání: zdanitelné příjmy ≈ {g}, sražená IRPF ≈ {i}, sociální pojištění ≈ {s}, osvobozené diety ≈ {d}. Jen orientačně: použij potvrzení od Eurowings.',
+    yr_partNote: '{n} šedý/é měsíc(e) bez rozpisu předchozího měsíce: jen pevná mzda, do součtu se nepočítají.',
+    yr_partial: 'chybí rozpis',
+    yr_estS: 'odhad',
+    yr_realS: 'skutečná',
+    yr_diet: 'Diety (osvobozené)',
+    yr_est: 'Odhad',
+    yr_real: 'Skutečná páska',
+    yr_chart: 'Čistá mzda po měsících',
+    yr_year: 'Rok',
+    yr_intro: 'Co dostaneš každý měsíc: skutečnou pásku, pokud jsi ji nahrál, jinak odhad aplikace.',
+    vac_note: 'Dovolená = U. Volno = O_S, O_FLEX, O_TZ, FREI… Odkoupené = OFF_BEZ. Nárok podle smlouvy (čl. 12.1): 30 dní, 35 po 5 letech služby a 42 po 25.',
+    vac_total: 'Celkem',
+    vac_sick: 'Nemoc',
+    vac_bez: 'Odkoupené',
+    vac_off: 'Volno',
+    vac_om: 'O_M',
+    vac_su: 'SU',
+    vac_vac: 'Dovolená',
+    vac_month: 'Měsíc',
+    vac_noJoined: 'Zadej odpracováno od v části Moje smluvní údaje: po 5 letech 35 dní, po 25 letech 42.',
+    vac_sum: 'Dovolená: {u} z {e} dní vyčerpáno. Zbývá {l}.',
+    vac_intro: 'Dny v roce {y} podle uložených rozpisů.',
+    ftl_pt: 'Limity upravené na tvůj úvazek {c} % (smlouva 30.7.11).',
+    ftl_note: 'Maximum každého okna v měsíci. Služba = „Value for DT Limit Calc“ z rozpisu. Block = aktivní lety (bez přesunů).',
+    ftl_missing: 'Chybí předchozí měsíce: nahraj jejich rozpisy, aby byla okna 7, 14, 28 dní a 12 měsíců úplná.',
+    ftl_until: 'do dne {d}',
+    ftl_dyear: 'Služba v {y}',
+    ftl_byear: 'Block v {y}',
+    ftl_b12m: 'Block za 12 měsíců',
+    ftl_b28: 'Block za 28 dní',
+    ftl_d28: 'Služba za 28 dní',
+    ftl_d14: 'Služba za 14 dní',
+    ftl_d7: 'Služba za 7 dní',
+    ftl_intro: 'Nasčítané hodiny za {m} podle uložených rozpisů (limity EASA a smlouvy).',
+    cal_done: 'Exportovaných služeb: {n}. Na iPhonu otevři soubor a klepni na „Přidat vše“.',
+    cal_make: 'Exportovat do kalendáře',
+    cal_off: 'Zahrnout volno a dovolenou',
+    cal_crew: 'Zahrnout posádku',
+    cal_alarm: 'Připomínka před nástupem',
+    cal_all: 'Všechny uložené měsíce',
+    cal_cur: 'Tento měsíc',
+    cal_range: 'Měsíce',
+    cal_intro: 'Exportuj své služby do kalendáře iPhone, Google nebo Outlook s připomínkou před nástupem, trasami, hotelem a posádkou.',
+    sim_tier: 'Přejdeš z pásma {a} do pásma {b}.',
+    sim_result: 'S touto změnou se pohyblivá složka změní o {v} a čistá mzda o {n}.',
+    sim_net: 'Páska za {m} (čistá)',
+    sim_calc: 'Spočítat',
+    sim_train: 'Trenérský den',
+    sim_duty: 'Nová nebo změněná služba',
+    sim_off: 'Zrušit službu (volno)',
+    sim_action: 'Změna',
+    sim_now: 'Teď',
+    sim_day: 'Den',
+    sim_intro: 'Podívej se, kolik změnou získáš nebo ztratíš, než ji přijmeš. Nic se neukládá.',
+    chk_other: 'Další položky pásky',
+    chk_ok: 'Vše sedí. Rozdíl v čisté mzdě: {d}.',
+    chk_bad: '{n} položka/y nesedí:',
+    chk_hTax: 'Počítá se z hrubé mzdy: pokud sedí zbytek, sedí i tohle.',
+    chk_hSales: 'Zadej provizi z prodeje za {p} do pole pásky.',
+    chk_hBuy: 'Odkoupené volné dny (OFF_BEZ) podle rozpisu: {d}.',
+    chk_hEarly: 'Early check-in podle rozpisu ve dnech {d}.',
+    chk_hDietaMore: 'Páska platí více diet tohoto typu než aplikace.',
+    chk_hDietaLess: 'Páska platí méně diet tohoto typu než aplikace. Dny podle rozpisu: {d}.',
+    chk_hHoursPay: 'Řídí se hodinami: pokud sedí hodiny, sedí i tohle.',
+    chk_hoursPay: 'Platba za hodiny',
+    chk_hAdd: 'Zkontroluj pohotovosti, kurzy, přesuny a dny dovolené (každý 1:12 h).',
+    chk_hoursA: 'Hodiny doplňkové služby',
+    chk_hFdp: 'Rozdíl 1–2 h je normální: Eurowings platí FDP naplánovaný při nástupu, rozpis ukazuje skutečný.',
+    chk_hoursF: 'Hodiny FDP',
+    chk_hTrainer: 'Trenérské dny / Competence Team podle rozpisu: {d}.',
+    chk_hBase: 'Pokud nesedí, zkontroluj stupeň a úvazek v části Moje smluvní údaje.',
+    chk_colDiff: 'Rozd.',
+    chk_colReal: 'Páska',
+    chk_concept: 'Položka',
+    chk_needPrev: 'Pro kontrolu pásky za {m} nahraj rozpis za {p}: jeho hodiny a diety se vyplácejí v ní.',
+    chk_month: 'Páska',
+    chk_needSlip: 'Nahraj výplatní pásku v PDF (měsíc, který chceš zkontrolovat) přes ＋ PDF.',
+    chk_intro: 'Porovná skutečnou výplatní pásku položku po položce s výpočtem aplikace z tvého rozpisu. Co nesedí, je oranžové i se dny ke kontrole.',
+    tool_backup: 'Záloha',
+    tool_year: 'Roční přehled',
+    tool_vac: 'Dovolená a volno',
+    tool_ftl: 'Limity FTL',
+    tool_cal: 'Kalendář',
+    tool_sim: 'Simulátor',
+    tool_check: 'Zkontrolovat pásku',
+    sim_btn: 'Simulovat změnu',
+    toolsT: 'Nástroje',
     share_crewShort: 'Krátká jména (příjmení + iniciála)',
     share_crewFull: 'Celá jména',
     share_crewNone: 'Bez posádky',
@@ -1817,6 +2619,102 @@ var I18N = {
     e_noPeriod: 'Nenacházím období rozpisu. Je to „Individual duty plan“ z IDP v PDF?'
   },
   it: {
+    "bk_done": "Copia pronta. Scegli dove salvarla (File, iCloud Drive…).",
+    "bk_bad": "Questo file non è un backup di Payroster.",
+    "bk_replace": "Sostituisci i miei dati",
+    "bk_confirm": "Questa copia ({d}) ha {m} mesi. Sostituirà tutti i dati di questo dispositivo.",
+    "bk_import": "Ripristina copia",
+    "bk_export": "Salva copia",
+    "bk_have": "Hai {m} mesi di turni e {s} buste paga salvati.",
+    "bk_intro": "I tuoi dati sono solo su questo dispositivo. Salva una copia in File o iCloud Drive e ripristinala su un telefono nuovo.",
+    "yr_note": "Per la dichiarazione: redditi imponibili ≈ {g}, IRPF trattenuta ≈ {i}, previdenza ≈ {s}, diarie esenti ≈ {d}. Solo indicativo: usa il certificato delle ritenute di Eurowings.",
+    "yr_partNote": "{n} mese/i in grigio senza il turno del mese precedente: solo il fisso, non sommati al totale.",
+    "yr_partial": "manca turno",
+    "yr_estS": "stimata",
+    "yr_realS": "reale",
+    "yr_diet": "Diarie (esenti)",
+    "yr_est": "Stimata",
+    "yr_real": "Busta paga reale",
+    "yr_chart": "Netto per mese",
+    "yr_year": "Anno",
+    "yr_intro": "Quanto ricevi ogni mese: la busta paga reale se l’hai caricata, altrimenti la stima dell’app.",
+    "vac_note": "Ferie = U. Liberi = O_S, O_FLEX, O_TZ, FREI… Acquistati = OFF_BEZ. Diritto secondo il contratto (art. 12.1): 30 giorni, 35 dopo 5 anni di servizio e 42 dopo 25.",
+    "vac_total": "Totale",
+    "vac_sick": "Malattia",
+    "vac_bez": "Acquistati",
+    "vac_off": "Liberi",
+    "vac_om": "O_M",
+    "vac_su": "SU",
+    "vac_vac": "Ferie",
+    "vac_month": "Mese",
+    "vac_noJoined": "Inserisci l’anzianità in I miei dati contrattuali: dopo 5 anni sono 35 giorni, dopo 25 anni 42.",
+    "vac_sum": "Ferie: {u} giorni usati su {e}. Ne restano {l}.",
+    "vac_intro": "Giorni del {y} secondo i turni salvati.",
+    "ftl_pt": "Limiti adattati al tuo orario del {c} % (contratto 30.7.11).",
+    "ftl_note": "Massimo di ogni finestra nel mese. Servizio = «Value for DT Limit Calc» del turno. Block = voli attivi (senza posizionamenti).",
+    "ftl_missing": "Mancano mesi precedenti: carica i loro turni per completare le finestre di 7, 14, 28 giorni e 12 mesi.",
+    "ftl_until": "fino al giorno {d}",
+    "ftl_dyear": "Servizio nel {y}",
+    "ftl_byear": "Block nel {y}",
+    "ftl_b12m": "Block in 12 mesi",
+    "ftl_b28": "Block in 28 giorni",
+    "ftl_d28": "Servizio in 28 giorni",
+    "ftl_d14": "Servizio in 14 giorni",
+    "ftl_d7": "Servizio in 7 giorni",
+    "ftl_intro": "Ore accumulate a {m} secondo i turni salvati (limiti EASA e del contratto).",
+    "cal_done": "{n} servizi esportati. Sull’iPhone apri il file e tocca «Aggiungi tutto».",
+    "cal_make": "Esporta nel calendario",
+    "cal_off": "Includi giorni liberi e ferie",
+    "cal_crew": "Includi equipaggio",
+    "cal_alarm": "Avviso prima della presentazione",
+    "cal_all": "Tutti i mesi salvati",
+    "cal_cur": "Questo mese",
+    "cal_range": "Mesi",
+    "cal_intro": "Esporta i tuoi servizi nel calendario dell’iPhone, Google o Outlook, con avviso prima della presentazione, rotte, hotel ed equipaggio.",
+    "sim_tier": "Passi dalla fascia {a} alla fascia {b}.",
+    "sim_result": "Con questa modifica il variabile cambia di {v} e il netto di {n}.",
+    "sim_net": "Busta paga di {m} (netto)",
+    "sim_calc": "Calcola",
+    "sim_train": "Giorno da istruttore",
+    "sim_duty": "Servizio nuovo o modificato",
+    "sim_off": "Togli il servizio (giorno libero)",
+    "sim_action": "Modifica",
+    "sim_now": "Adesso",
+    "sim_day": "Giorno",
+    "sim_intro": "Vedi quanto guadagni o perdi con una modifica prima di accettarla. Non viene salvato nulla.",
+    "chk_other": "Altre voci della busta paga",
+    "chk_ok": "Tutto torna. Differenza sul netto: {d}.",
+    "chk_bad": "{n} voce/i non tornano:",
+    "chk_hTax": "Calcolato sul lordo: se il resto torna, torna anche questo.",
+    "chk_hSales": "Inserisci la provvigione vendite di {p} nel riquadro della busta paga.",
+    "chk_hBuy": "Giorni liberi acquistati (OFF_BEZ) secondo il turno: {d}.",
+    "chk_hEarly": "Early check-in secondo il turno nei giorni {d}.",
+    "chk_hDietaMore": "La busta paga paga più diarie di questo tipo dell’app.",
+    "chk_hDietaLess": "La busta paga paga meno diarie di questo tipo dell’app. Giorni secondo il turno: {d}.",
+    "chk_hHoursPay": "Segue le ore: se le ore tornano, torna anche questo.",
+    "chk_hoursPay": "Paga oraria",
+    "chk_hAdd": "Controlla riserve, corsi, posizionamenti e giorni di ferie (1:12 h ciascuno).",
+    "chk_hoursA": "Ore di servizio aggiuntivo",
+    "chk_hFdp": "Una differenza di 1–2 h è normale: Eurowings paga l’FDP programmato alla presentazione, il turno mostra quello reale.",
+    "chk_hoursF": "Ore FDP",
+    "chk_hTrainer": "Giorni da istruttore / Competence Team secondo il turno: {d}.",
+    "chk_hBase": "Se non torna, controlla livello e orario in I miei dati contrattuali.",
+    "chk_colDiff": "Diff.",
+    "chk_colReal": "Busta",
+    "chk_concept": "Voce",
+    "chk_needPrev": "Per verificare la busta paga di {m} carica il turno di {p}: le sue ore e diarie si pagano lì.",
+    "chk_month": "Busta paga",
+    "chk_needSlip": "Carica una busta paga in PDF (il mese da verificare) con ＋ PDF.",
+    "chk_intro": "Confronta la busta paga reale, voce per voce, con il calcolo dell’app dal tuo turno. Quello che non torna diventa arancione, con i giorni da controllare.",
+    "tool_backup": "Backup",
+    "tool_year": "Riepilogo annuale",
+    "tool_vac": "Ferie e liberi",
+    "tool_ftl": "Limiti FTL",
+    "tool_cal": "Calendario",
+    "tool_sim": "Simulatore",
+    "tool_check": "Verifica busta paga",
+    "sim_btn": "Simula modifica",
+    "toolsT": "Strumenti",
     "share_crewShort": "Nomi brevi (cognome + iniziale)",
     "share_crewFull": "Nomi completi",
     "share_crewNone": "Senza equipaggio",
@@ -2046,6 +2944,102 @@ var I18N = {
     "e_noPeriod": "Non trovo il periodo del turno. È l’«Individual duty plan» di IDP in PDF?"
   },
   pt: {
+    "bk_done": "Cópia pronta. Escolhe onde a guardar (Ficheiros, iCloud Drive…).",
+    "bk_bad": "Este ficheiro não é uma cópia do Payroster.",
+    "bk_replace": "Substituir os meus dados",
+    "bk_confirm": "Esta cópia ({d}) tem {m} meses. Vai substituir todos os dados deste dispositivo.",
+    "bk_import": "Recuperar cópia",
+    "bk_export": "Guardar cópia",
+    "bk_have": "Tens {m} meses de escala e {s} recibos guardados.",
+    "bk_intro": "Os teus dados só estão neste dispositivo. Guarda uma cópia em Ficheiros ou iCloud Drive e recupera-a num telemóvel novo.",
+    "yr_note": "Para o IRS espanhol: rendimentos sujeitos ≈ {g}, retenções de IRPF ≈ {i}, Segurança Social ≈ {s}, ajudas de custo isentas ≈ {d}. É indicativo: usa o certificado de retenções da Eurowings.",
+    "yr_partNote": "{n} mês(es) a cinzento sem a escala do mês anterior: só têm o fixo e não entram no total.",
+    "yr_partial": "falta escala",
+    "yr_estS": "estimado",
+    "yr_realS": "real",
+    "yr_diet": "Ajudas de custo (isentas)",
+    "yr_est": "Estimado",
+    "yr_real": "Recibo real",
+    "yr_chart": "Líquido por mês",
+    "yr_year": "Ano",
+    "yr_intro": "O que recebes em cada mês do ano: o recibo real se o carregaste, senão a estimativa da app.",
+    "vac_note": "Férias = U. Folgas = O_S, O_FLEX, O_TZ, FREI… Compradas = OFF_BEZ. Direito segundo a convenção (art. 12.1): 30 dias, 35 a partir de 5 anos de serviço e 42 a partir de 25.",
+    "vac_total": "Total",
+    "vac_sick": "Baixa",
+    "vac_bez": "Compradas",
+    "vac_off": "Folgas",
+    "vac_om": "O_M",
+    "vac_su": "SU",
+    "vac_vac": "Férias",
+    "vac_month": "Mês",
+    "vac_noJoined": "Indica a tua antiguidade em Os meus dados de contrato: com 5 anos são 35 dias e com 25 anos, 42.",
+    "vac_sum": "Férias: {u} dias gozados de {e}. Restam {l}.",
+    "vac_intro": "Dias de {y} segundo as escalas guardadas.",
+    "ftl_pt": "Limites ajustados ao teu regime de {c} % (convenção 30.7.11).",
+    "ftl_note": "Máximo de cada janela dentro do mês. Serviço = «Value for DT Limit Calc» da escala. Block = voos ativos (sem posicionamentos).",
+    "ftl_missing": "Faltam meses anteriores: carrega as escalas para completar as janelas de 7, 14, 28 dias e 12 meses.",
+    "ftl_until": "até ao dia {d}",
+    "ftl_dyear": "Serviço em {y}",
+    "ftl_byear": "Block em {y}",
+    "ftl_b12m": "Block em 12 meses",
+    "ftl_b28": "Block em 28 dias",
+    "ftl_d28": "Serviço em 28 dias",
+    "ftl_d14": "Serviço em 14 dias",
+    "ftl_d7": "Serviço em 7 dias",
+    "ftl_intro": "Horas acumuladas em {m} segundo as escalas guardadas (limites EASA e da convenção).",
+    "cal_done": "{n} serviços exportados. No iPhone, abre o ficheiro e toca em «Adicionar tudo».",
+    "cal_make": "Exportar para o calendário",
+    "cal_off": "Incluir folgas e férias",
+    "cal_crew": "Incluir tripulação",
+    "cal_alarm": "Aviso antes da apresentação",
+    "cal_all": "Todos os meses guardados",
+    "cal_cur": "Este mês",
+    "cal_range": "Meses",
+    "cal_intro": "Exporta os teus serviços para o calendário do iPhone, Google ou Outlook, com aviso antes da apresentação, rotas, hotel e tripulação.",
+    "sim_tier": "Passas do escalão {a} para o escalão {b}.",
+    "sim_result": "Com esta alteração o variável muda {v} e o teu líquido {n}.",
+    "sim_net": "Recibo de {m} (líquido)",
+    "sim_calc": "Calcular",
+    "sim_train": "Dia de formador",
+    "sim_duty": "Serviço novo ou alterado",
+    "sim_off": "Retirar o serviço (folga)",
+    "sim_action": "Alteração",
+    "sim_now": "Agora",
+    "sim_day": "Dia",
+    "sim_intro": "Vê quanto ganhas ou perdes com uma alteração antes de a aceitar. Nada é guardado.",
+    "chk_other": "Outras linhas do recibo",
+    "chk_ok": "Tudo bate. Diferença no líquido: {d}.",
+    "chk_bad": "{n} linha(s) não batem:",
+    "chk_hTax": "Calcula-se sobre o bruto: se o resto bate, isto também.",
+    "chk_hSales": "Indica a comissão de vendas de {p} no quadro do recibo.",
+    "chk_hBuy": "Folgas compradas (OFF_BEZ) segundo a escala: {d}.",
+    "chk_hEarly": "Early check-in segundo a escala nos dias {d}.",
+    "chk_hDietaMore": "O recibo paga mais ajudas de custo deste tipo do que a app.",
+    "chk_hDietaLess": "O recibo paga menos ajudas de custo deste tipo do que a app. Dias segundo a escala: {d}.",
+    "chk_hHoursPay": "Segue as horas: se as horas batem, isto também.",
+    "chk_hoursPay": "Pagamento de horas",
+    "chk_hAdd": "Verifica prevenções, cursos, posicionamentos e dias de férias (1:12 h cada).",
+    "chk_hoursA": "Horas de serviço adicional",
+    "chk_hFdp": "Uma diferença de 1–2 h é normal: a Eurowings paga o FDP programado na apresentação, e a escala mostra o real.",
+    "chk_hoursF": "Horas FDP",
+    "chk_hTrainer": "Dias de formador / Competence Team segundo a escala: {d}.",
+    "chk_hBase": "Se não bate, verifica o nível e o regime em Os meus dados de contrato.",
+    "chk_colDiff": "Dif.",
+    "chk_colReal": "Recibo",
+    "chk_concept": "Linha",
+    "chk_needPrev": "Para verificar o recibo de {m}, carrega a escala de {p}: as horas e ajudas de custo desse mês são pagas nele.",
+    "chk_month": "Recibo",
+    "chk_needSlip": "Carrega um recibo em PDF (o mês que queres verificar) com ＋ PDF.",
+    "chk_intro": "Compara o teu recibo real, linha a linha, com o que a app calcula a partir da tua escala. O que não bate fica a laranja, com os dias a verificar.",
+    "tool_backup": "Cópia de segurança",
+    "tool_year": "Resumo anual",
+    "tool_vac": "Férias e folgas",
+    "tool_ftl": "Limites FTL",
+    "tool_cal": "Calendário",
+    "tool_sim": "Simulador",
+    "tool_check": "Verificar recibo",
+    "sim_btn": "Simular alteração",
+    "toolsT": "Ferramentas",
     "share_crewShort": "Nomes curtos (apelido + inicial)",
     "share_crewFull": "Nomes completos",
     "share_crewNone": "Sem tripulação",
@@ -2275,6 +3269,102 @@ var I18N = {
     "e_noPeriod": "Não encontro o período da escala. É o «Individual duty plan» do IDP em PDF?"
   },
   ro: {
+    "bk_done": "Copie pregătită. Alege unde s-o salvezi (Fișiere, iCloud Drive…).",
+    "bk_bad": "Acest fișier nu este o copie Payroster.",
+    "bk_replace": "Înlocuiește datele mele",
+    "bk_confirm": "Această copie ({d}) are {m} luni. Va înlocui toate datele de pe acest dispozitiv.",
+    "bk_import": "Recuperează copia",
+    "bk_export": "Salvează copia",
+    "bk_have": "Ai {m} luni de planificare și {s} fluturași salvați.",
+    "bk_intro": "Datele tale sunt doar pe acest dispozitiv. Salvează o copie în Fișiere sau iCloud Drive și recupereaz-o pe un telefon nou.",
+    "yr_note": "Pentru declarația fiscală: venituri impozabile ≈ {g}, IRPF reținut ≈ {i}, asigurări sociale ≈ {s}, diurne scutite ≈ {d}. Orientativ: folosește certificatul de rețineri de la Eurowings.",
+    "yr_partNote": "{n} lună/luni cu gri fără planificarea lunii anterioare: doar fixul, nu intră în total.",
+    "yr_partial": "lipsește planificarea",
+    "yr_estS": "estimat",
+    "yr_realS": "real",
+    "yr_diet": "Diurne (scutite)",
+    "yr_est": "Estimat",
+    "yr_real": "Fluturaș real",
+    "yr_chart": "Net pe lună",
+    "yr_year": "An",
+    "yr_intro": "Ce primești în fiecare lună: fluturașul real dacă l-ai încărcat, altfel estimarea aplicației.",
+    "vac_note": "Concediu = U. Libere = O_S, O_FLEX, O_TZ, FREI… Cumpărate = OFF_BEZ. Dreptul conform contractului (art. 12.1): 30 de zile, 35 după 5 ani de serviciu și 42 după 25.",
+    "vac_total": "Total",
+    "vac_sick": "Medical",
+    "vac_bez": "Cumpărate",
+    "vac_off": "Libere",
+    "vac_om": "O_M",
+    "vac_su": "SU",
+    "vac_vac": "Concediu",
+    "vac_month": "Lună",
+    "vac_noJoined": "Introdu vechimea în Datele mele de contract: după 5 ani sunt 35 de zile, după 25 de ani 42.",
+    "vac_sum": "Concediu: {u} zile folosite din {e}. Mai rămân {l}.",
+    "vac_intro": "Zile din {y} conform planificărilor salvate.",
+    "ftl_pt": "Limite ajustate la norma ta de {c} % (contract 30.7.11).",
+    "ftl_note": "Maximul fiecărei ferestre în lună. Serviciu = „Value for DT Limit Calc” din planificare. Block = zboruri active (fără poziționări).",
+    "ftl_missing": "Lipsesc lunile anterioare: încarcă planificările lor ca ferestrele de 7, 14, 28 de zile și 12 luni să fie complete.",
+    "ftl_until": "până în ziua {d}",
+    "ftl_dyear": "Serviciu în {y}",
+    "ftl_byear": "Block în {y}",
+    "ftl_b12m": "Block în 12 luni",
+    "ftl_b28": "Block în 28 de zile",
+    "ftl_d28": "Serviciu în 28 de zile",
+    "ftl_d14": "Serviciu în 14 zile",
+    "ftl_d7": "Serviciu în 7 zile",
+    "ftl_intro": "Ore acumulate în {m} conform planificărilor salvate (limite EASA și din contract).",
+    "cal_done": "{n} servicii exportate. Pe iPhone deschide fișierul și atinge „Adaugă tot”.",
+    "cal_make": "Exportă în calendar",
+    "cal_off": "Include zilele libere și concediul",
+    "cal_crew": "Include echipajul",
+    "cal_alarm": "Alertă înainte de prezentare",
+    "cal_all": "Toate lunile salvate",
+    "cal_cur": "Luna aceasta",
+    "cal_range": "Luni",
+    "cal_intro": "Exportă serviciile în calendarul iPhone, Google sau Outlook, cu alertă înainte de prezentare, rute, hotel și echipaj.",
+    "sim_tier": "Treci din tranșa {a} în tranșa {b}.",
+    "sim_result": "Cu această schimbare variabilul se modifică cu {v}, iar netul cu {n}.",
+    "sim_net": "Fluturaș {m} (net)",
+    "sim_calc": "Calculează",
+    "sim_train": "Zi de instructor",
+    "sim_duty": "Serviciu nou sau schimbat",
+    "sim_off": "Scoate serviciul (zi liberă)",
+    "sim_action": "Schimbare",
+    "sim_now": "Acum",
+    "sim_day": "Zi",
+    "sim_intro": "Vezi cât câștigi sau pierzi cu o schimbare înainte s-o accepți. Nu se salvează nimic.",
+    "chk_other": "Alte linii din fluturaș",
+    "chk_ok": "Totul se potrivește. Diferență la net: {d}.",
+    "chk_bad": "{n} linie/linii nu se potrivesc:",
+    "chk_hTax": "Se calculează din brut: dacă restul se potrivește, se potrivește și asta.",
+    "chk_hSales": "Introdu comisionul de vânzări din {p} în caseta fluturașului.",
+    "chk_hBuy": "Zile libere cumpărate (OFF_BEZ) conform planificării: {d}.",
+    "chk_hEarly": "Early check-in conform planificării în zilele {d}.",
+    "chk_hDietaMore": "Fluturașul plătește mai multe diurne de acest tip decât aplicația.",
+    "chk_hDietaLess": "Fluturașul plătește mai puține diurne de acest tip decât aplicația. Zile conform planificării: {d}.",
+    "chk_hHoursPay": "Urmează orele: dacă orele se potrivesc, se potrivește și asta.",
+    "chk_hoursPay": "Plata orelor",
+    "chk_hAdd": "Verifică rezervele, cursurile, pozițiile și zilele de concediu (1:12 h fiecare).",
+    "chk_hoursA": "Ore de serviciu suplimentar",
+    "chk_hFdp": "O diferență de 1–2 h este normală: Eurowings plătește FDP-ul programat la prezentare, planificarea arată cel real.",
+    "chk_hoursF": "Ore FDP",
+    "chk_hTrainer": "Zile de instructor / Competence Team conform planificării: {d}.",
+    "chk_hBase": "Dacă nu se potrivește, verifică nivelul și norma în Datele mele de contract.",
+    "chk_colDiff": "Dif.",
+    "chk_colReal": "Fluturaș",
+    "chk_concept": "Linie",
+    "chk_needPrev": "Pentru a verifica fluturașul din {m}, încarcă planificarea din {p}: orele și diurnele ei se plătesc acolo.",
+    "chk_month": "Fluturaș",
+    "chk_needSlip": "Încarcă un fluturaș în PDF (luna pe care vrei să o verifici) cu ＋ PDF.",
+    "chk_intro": "Compară fluturașul real, linie cu linie, cu ce calculează aplicația din planificare. Ce nu se potrivește apare cu portocaliu, cu zilele de verificat.",
+    "tool_backup": "Copie de siguranță",
+    "tool_year": "Rezumat anual",
+    "tool_vac": "Concediu și zile libere",
+    "tool_ftl": "Limite FTL",
+    "tool_cal": "Calendar",
+    "tool_sim": "Simulator",
+    "tool_check": "Verifică fluturașul",
+    "sim_btn": "Simulează schimbarea",
+    "toolsT": "Instrumente",
     "share_crewShort": "Nume scurte (nume + inițială)",
     "share_crewFull": "Nume complete",
     "share_crewNone": "Fără echipaj",
@@ -4810,9 +5900,377 @@ var qrcode = function() {
 !function(f){typeof module!='undefined'&&typeof exports=='object'?module.exports=f():typeof define!='undefined'&&define.amd?define(f):(typeof self!='undefined'?self:this).fflate=f()}(function(){var _e={};"use strict";var t=(typeof module!='undefined'&&typeof exports=='object'?function(_f){"use strict";var e,t=";var __w=require('worker_threads');__w.parentPort.on('message',function(m){onmessage({data:m})}),postMessage=function(m,t){__w.parentPort.postMessage(m,t)},close=process.exit;self=global";try{e=require("worker_threads").Worker}catch(e){}exports.default=e?function(r,n,o,a,s){var u=!1,i=new e(r+t,{eval:!0}).on("error",(function(e){return s(e,null)})).on("message",(function(e){return s(null,e)})).on("exit",(function(e){e&&!u&&s(Error("exited with code "+e),null)}));return i.postMessage(o,a),i.terminate=function(){return u=!0,e.prototype.terminate.call(i)},i}:function(e,t,r,n,o){setImmediate((function(){return o(Error("async operations unsupported - update to Node 12+ (or Node 10-11 with the --experimental-worker CLI flag)"),null)}));var a=function(){};return{terminate:a,postMessage:a}};return _f}:function(_f){"use strict";var e={};_f.default=function(r,t,s,a,n){var o=new Worker(e[t]||(e[t]=URL.createObjectURL(new Blob([r+';addEventListener("error",function(e){e=e.error;postMessage({$e$:[e.message,e.code,e.stack]})})'],{type:"text/javascript"}))));return o.onmessage=function(e){var r=e.data,t=r.$e$;if(t){var s=Error(t[0]);s.code=t[1],s.stack=t[2],n(s,null)}else n(null,r)},o.postMessage(s,a),o};return _f})({}),n=Uint8Array,r=Uint16Array,e=Int32Array,i=new n([0,0,0,0,0,0,0,0,1,1,1,1,2,2,2,2,3,3,3,3,4,4,4,4,5,5,5,5,0,0,0,0]),o=new n([0,0,0,0,1,1,2,2,3,3,4,4,5,5,6,6,7,7,8,8,9,9,10,10,11,11,12,12,13,13,0,0]),s=new n([16,17,18,0,8,7,9,6,10,5,11,4,12,3,13,2,14,1,15]),a=function(t,n){for(var i=new r(31),o=0;o<31;++o)i[o]=n+=1<<t[o-1];var s=new e(i[30]);for(o=1;o<30;++o)for(var a=i[o];a<i[o+1];++a)s[a]=a-i[o]<<5|o;return{b:i,r:s}},u=a(i,2),h=u.b,f=u.r;h[28]=258,f[258]=28;for(var l=a(o,0),c=l.b,p=l.r,v=new r(32768),d=0;d<32768;++d){var g=(43690&d)>>1|(21845&d)<<1;v[d]=((65280&(g=(61680&(g=(52428&g)>>2|(13107&g)<<2))>>4|(3855&g)<<4))>>8|(255&g)<<8)>>1}var y=function(t,n,e){for(var i=t.length,o=0,s=new r(n);o<i;++o)t[o]&&++s[t[o]-1];var a,u=new r(n);for(o=1;o<n;++o)u[o]=u[o-1]+s[o-1]<<1;if(e){a=new r(1<<n);var h=15-n;for(o=0;o<i;++o)if(t[o])for(var f=o<<4|t[o],l=n-t[o],c=u[t[o]-1]++<<l,p=c|(1<<l)-1;c<=p;++c)a[v[c]>>h]=f}else for(a=new r(i),o=0;o<i;++o)t[o]&&(a[o]=v[u[t[o]-1]++]>>15-t[o]);return a},m=new n(288);for(d=0;d<144;++d)m[d]=8;for(d=144;d<256;++d)m[d]=9;for(d=256;d<280;++d)m[d]=7;for(d=280;d<288;++d)m[d]=8;var b=new n(32);for(d=0;d<32;++d)b[d]=5;var w=y(m,9,0),x=y(m,9,1),z=y(b,5,0),k=y(b,5,1),M=function(t){for(var n=t[0],r=1;r<t.length;++r)t[r]>n&&(n=t[r]);return n},S=function(t,n,r){var e=n/8|0;return(t[e]|t[e+1]<<8)>>(7&n)&r},A=function(t,n){var r=n/8|0;return(t[r]|t[r+1]<<8|t[r+2]<<16)>>(7&n)},T=function(t){return(t+7)/8|0},D=function(t,r,e){return(null==r||r<0)&&(r=0),(null==e||e>t.length)&&(e=t.length),new n(t.subarray(r,e))};_e.FlateErrorCode={UnexpectedEOF:0,InvalidBlockType:1,InvalidLengthLiteral:2,InvalidDistance:3,StreamFinished:4,NoStreamHandler:5,InvalidHeader:6,NoCallback:7,InvalidUTF8:8,ExtraFieldTooLong:9,InvalidDate:10,FilenameTooLong:11,StreamFinishing:12,InvalidZipData:13,UnknownCompressionMethod:14};var C=["unexpected EOF","invalid block type","invalid length/literal","invalid distance","stream finished","no stream handler",,"no callback","invalid UTF-8 data","extra field too long","date not in range 1980-2099","filename too long","stream finishing","invalid zip data"],I=function(t,n,r){var e=Error(n||C[t]);if(e.code=t,Error.captureStackTrace&&Error.captureStackTrace(e,I),!r)throw e;return e},U=function(t,r,e,a){var u=t.length,f=a?a.length:0;if(!u||r.f&&!r.l)return e||new n(0);var l=!e,p=l||2!=r.i,v=r.i;l&&(e=new n(3*u));var d=function(t){var r=e.length;if(t>r){var i=new n(Math.max(2*r,t));i.set(e),e=i}},g=r.f||0,m=r.p||0,b=r.b||0,w=r.l,z=r.d,C=r.m,U=r.n,F=8*u;do{if(!w){g=S(t,m,1);var E=S(t,m+1,3);if(m+=3,!E){var Z=t[(J=T(m)+4)-4]|t[J-3]<<8,q=J+Z;if(q>u){v&&I(0);break}p&&d(b+Z),e.set(t.subarray(J,q),b),r.b=b+=Z,r.p=m=8*q,r.f=g;continue}if(1==E)w=x,z=k,C=9,U=5;else if(2==E){var O=S(t,m,31)+257,G=S(t,m+10,15)+4,L=O+S(t,m+5,31)+1;m+=14;for(var H=new n(L),j=new n(19),N=0;N<G;++N)j[s[N]]=S(t,m+3*N,7);m+=3*G;var P=M(j),B=(1<<P)-1,Y=y(j,P,1);for(N=0;N<L;){var J,K=Y[S(t,m,B)];if(m+=15&K,(J=K>>4)<16)H[N++]=J;else{var Q=0,R=0;for(16==J?(R=3+S(t,m,3),m+=2,Q=H[N-1]):17==J?(R=3+S(t,m,7),m+=3):18==J&&(R=11+S(t,m,127),m+=7);R--;)H[N++]=Q}}var V=H.subarray(0,O),W=H.subarray(O);C=M(V),U=M(W),w=y(V,C,1),z=y(W,U,1)}else I(1);if(m>F){v&&I(0);break}}p&&d(b+131072);for(var X=(1<<C)-1,$=(1<<U)-1,_=m;;_=m){var tt=(Q=w[A(t,m)&X])>>4;if((m+=15&Q)>F){v&&I(0);break}if(Q||I(2),tt<256)e[b++]=tt;else{if(256==tt){_=m,w=null;break}var nt=tt-254;tt>264&&(nt=S(t,m,(1<<(it=i[N=tt-257]))-1)+h[N],m+=it);var rt=z[A(t,m)&$],et=rt>>4;if(rt||I(3),m+=15&rt,W=c[et],et>3){var it=o[et];W+=A(t,m)&(1<<it)-1,m+=it}if(m>F){v&&I(0);break}p&&d(b+131072);var ot=b+nt;if(b<W){var st=f-W,at=Math.min(W,ot);for(st+b<0&&I(3);b<at;++b)e[b]=a[st+b]}for(;b<ot;++b)e[b]=e[b-W]}}r.l=w,r.p=_,r.b=b,r.f=g,w&&(g=1,r.m=C,r.d=z,r.n=U)}while(!g);return b!=e.length&&l?D(e,0,b):e.subarray(0,b)},F=function(t,n,r){var e=n/8|0;t[e]|=r<<=7&n,t[e+1]|=r>>8},E=function(t,n,r){var e=n/8|0;t[e]|=r<<=7&n,t[e+1]|=r>>8,t[e+2]|=r>>16},Z=function(t,e){for(var i=[],o=0;o<t.length;++o)t[o]&&i.push({s:o,f:t[o]});var s=i.length,a=i.slice();if(!s)return{t:N,l:0};if(1==s){var u=new n(i[0].s+1);return u[i[0].s]=1,{t:u,l:1}}i.sort((function(t,n){return t.f-n.f})),i.push({s:-1,f:25001});var h=i[0],f=i[1],l=0,c=1,p=2;for(i[0]={s:-1,f:h.f+f.f,l:h,r:f};c!=s-1;)h=i[i[l].f<i[p].f?l++:p++],f=i[l!=c&&i[l].f<i[p].f?l++:p++],i[c++]={s:-1,f:h.f+f.f,l:h,r:f};var v=a[0].s;for(o=1;o<s;++o)a[o].s>v&&(v=a[o].s);var d=new r(v+1),g=q(i[c-1],d,0);if(g>e){o=0;var y=0,m=g-e,b=1<<m;for(a.sort((function(t,n){return d[n.s]-d[t.s]||t.f-n.f}));o<s;++o){var w=a[o].s;if(!(d[w]>e))break;y+=b-(1<<g-d[w]),d[w]=e}for(y>>=m;y>0;){var x=a[o].s;d[x]<e?y-=1<<e-d[x]++-1:++o}for(;o>=0&&y;--o){var z=a[o].s;d[z]==e&&(--d[z],++y)}g=e}return{t:new n(d),l:g}},q=function(t,n,r){return-1==t.s?Math.max(q(t.l,n,r+1),q(t.r,n,r+1)):n[t.s]=r},O=function(t){for(var n=t.length;n&&!t[--n];);for(var e=new r(++n),i=0,o=t[0],s=1,a=function(t){e[i++]=t},u=1;u<=n;++u)if(t[u]==o&&u!=n)++s;else{if(!o&&s>2){for(;s>138;s-=138)a(32754);s>2&&(a(s>10?s-11<<5|28690:s-3<<5|12305),s=0)}else if(s>3){for(a(o),--s;s>6;s-=6)a(8304);s>2&&(a(s-3<<5|8208),s=0)}for(;s--;)a(o);s=1,o=t[u]}return{c:e.subarray(0,i),n:n}},G=function(t,n){for(var r=0,e=0;e<n.length;++e)r+=t[e]*n[e];return r},L=function(t,n,r){var e=r.length,i=T(n+2);t[i]=255&e,t[i+1]=e>>8,t[i+2]=255^t[i],t[i+3]=255^t[i+1];for(var o=0;o<e;++o)t[i+o+4]=r[o];return 8*(i+4+e)},H=function(t,n,e,a,u,h,f,l,c,p,v){F(n,v++,e),++u[256];for(var d=Z(u,15),g=d.t,x=d.l,k=Z(h,15),M=k.t,S=k.l,A=O(g),T=A.c,D=A.n,C=O(M),I=C.c,U=C.n,q=new r(19),H=0;H<T.length;++H)++q[31&T[H]];for(H=0;H<I.length;++H)++q[31&I[H]];for(var j=Z(q,7),N=j.t,P=j.l,B=19;B>4&&!N[s[B-1]];--B);var Y,J,K,Q,R=p+5<<3,V=G(u,m)+G(h,b)+f,W=G(u,g)+G(h,M)+f+14+3*B+G(q,N)+2*q[16]+3*q[17]+7*q[18];if(c>=0&&R<=V&&R<=W)return L(n,v,t.subarray(c,c+p));if(F(n,v,1+(W<V)),v+=2,W<V){Y=y(g,x,0),J=g,K=y(M,S,0),Q=M;var X=y(N,P,0);for(F(n,v,D-257),F(n,v+5,U-1),F(n,v+10,B-4),v+=14,H=0;H<B;++H)F(n,v+3*H,N[s[H]]);v+=3*B;for(var $=[T,I],_=0;_<2;++_){var tt=$[_];for(H=0;H<tt.length;++H)F(n,v,X[rt=31&tt[H]]),v+=N[rt],rt>15&&(F(n,v,tt[H]>>5&127),v+=tt[H]>>12)}}else Y=w,J=m,K=z,Q=b;for(H=0;H<l;++H){var nt=a[H];if(nt>255){var rt;E(n,v,Y[257+(rt=nt>>18&31)]),v+=J[rt+257],rt>7&&(F(n,v,nt>>23&31),v+=i[rt]);var et=31&nt;E(n,v,K[et]),v+=Q[et],et>3&&(E(n,v,nt>>5&8191),v+=o[et])}else E(n,v,Y[nt]),v+=J[nt]}return E(n,v,Y[256]),v+J[256]},j=new e([65540,131080,131088,131104,262176,1048704,1048832,2114560,2117632]),N=new n(0),P=function(t,s,a,u,h,l){var c=l.z||t.length,v=new n(u+c+5*(1+Math.ceil(c/7e3))+h),d=v.subarray(u,v.length-h),g=l.l,y=7&(l.r||0);if(s){y&&(d[0]=l.r>>3);for(var m=j[s-1],b=m>>13,w=8191&m,x=(1<<a)-1,z=l.p||new r(32768),k=l.h||new r(x+1),M=Math.ceil(a/3),S=2*M,A=function(n){return(t[n]^t[n+1]<<M^t[n+2]<<S)&x},C=new e(25e3),I=new r(288),U=new r(32),F=0,E=0,Z=l.i||0,q=0,O=l.w||0,G=0;Z+2<c;++Z){var N=A(Z),P=32767&Z,B=k[N];if(z[P]=B,k[N]=P,O<=Z){var Y=c-Z;if((F>7e3||q>24576)&&(Y>423||!g)){y=H(t,d,0,C,I,U,E,q,G,Z-G,y),q=F=E=0,G=Z;for(var J=0;J<286;++J)I[J]=0;for(J=0;J<30;++J)U[J]=0}var K=2,Q=0,R=w,V=P-B&32767;if(Y>2&&N==A(Z-V))for(var W=Math.min(b,Y)-1,X=Math.min(32767,Z),$=Math.min(258,Y);V<=X&&--R&&P!=B;){if(t[Z+K]==t[Z+K-V]){for(var _=0;_<$&&t[Z+_]==t[Z+_-V];++_);if(_>K){if(K=_,Q=V,_>W)break;var tt=Math.min(V,_-2),nt=0;for(J=0;J<tt;++J){var rt=Z-V+J&32767,et=rt-z[rt]&32767;et>nt&&(nt=et,B=rt)}}}V+=(P=B)-(B=z[P])&32767}if(Q){C[q++]=268435456|f[K]<<18|p[Q];var it=31&f[K],ot=31&p[Q];E+=i[it]+o[ot],++I[257+it],++U[ot],O=Z+K,++F}else C[q++]=t[Z],++I[t[Z]]}}for(Z=Math.max(Z,O);Z<c;++Z)C[q++]=t[Z],++I[t[Z]];y=H(t,d,g,C,I,U,E,q,G,Z-G,y),g||(l.r=7&y|d[y/8|0]<<3,y-=7,l.h=k,l.p=z,l.i=Z,l.w=O)}else{for(Z=l.w||0;Z<c+g;Z+=65535){var st=Z+65535;st>=c&&(d[y/8|0]=g,st=c),y=L(d,y+1,t.subarray(Z,st))}l.i=c}return D(v,0,u+T(y)+h)},B=function(){for(var t=new Int32Array(256),n=0;n<256;++n){for(var r=n,e=9;--e;)r=(1&r&&-306674912)^r>>>1;t[n]=r}return t}(),Y=function(){var t=-1;return{p:function(n){for(var r=t,e=0;e<n.length;++e)r=B[255&r^n[e]]^r>>>8;t=r},d:function(){return~t}}},J=function(){var t=1,n=0;return{p:function(r){for(var e=t,i=n,o=0|r.length,s=0;s!=o;){for(var a=Math.min(s+2655,o);s<a;++s)i+=e+=r[s];e=(65535&e)+15*(e>>16),i=(65535&i)+15*(i>>16)}t=e,n=i},d:function(){return(255&(t%=65521))<<24|(65280&t)<<8|(255&(n%=65521))<<8|n>>8}}},K=function(t,r,e,i,o){if(!o&&(o={l:1},r.dictionary)){var s=r.dictionary.subarray(-32768),a=new n(s.length+t.length);a.set(s),a.set(t,s.length),t=a,o.w=s.length}return P(t,null==r.level?6:r.level,null==r.mem?o.l?Math.ceil(1.5*Math.max(8,Math.min(13,Math.log(t.length)))):20:12+r.mem,e,i,o)},Q=function(t,n){var r={};for(var e in t)r[e]=t[e];for(var e in n)r[e]=n[e];return r},R=function(t,n,r){for(var e=t(),i=""+t,o=i.slice(i.indexOf("[")+1,i.lastIndexOf("]")).replace(/\s+/g,"").split(","),s=0;s<e.length;++s){var a=e[s],u=o[s];if("function"==typeof a){n+=";"+u+"=";var h=""+a;if(a.prototype)if(-1!=h.indexOf("[native code]")){var f=h.indexOf(" ",8)+1;n+=h.slice(f,h.indexOf("(",f))}else for(var l in n+=h,a.prototype)n+=";"+u+".prototype."+l+"="+a.prototype[l];else n+=h}else r[u]=a}return n},V=[],W=function(t){var n=[];for(var r in t)t[r].buffer&&n.push((t[r]=new t[r].constructor(t[r])).buffer);return n},X=function(n,r,e,i){if(!V[e]){for(var o="",s={},a=n.length-1,u=0;u<a;++u)o=R(n[u],o,s);V[e]={c:R(n[a],o,s),e:s}}var h=Q({},V[e].e);return(0,t.default)(V[e].c+";onmessage=function(e){for(var k in e.data)self[k]=e.data[k];onmessage="+r+"}",e,h,W(h),i)},$=function(){return[n,r,e,i,o,s,h,c,x,k,v,C,y,M,S,A,T,D,I,U,Tt,it,ot]},_=function(){return[n,r,e,i,o,s,f,p,w,m,z,b,v,j,N,y,F,E,Z,q,O,G,L,H,T,D,P,K,kt,it]},tt=function(){return[pt,gt,ct,Y,B]},nt=function(){return[vt,dt]},rt=function(){return[yt,ct,J]},et=function(){return[mt]},it=function(t){return postMessage(t,[t.buffer])},ot=function(t){return t&&{out:t.size&&new n(t.size),dictionary:t.dictionary}},st=function(t,n,r,e,i,o){var s=X(r,e,i,(function(t,n){s.terminate(),o(t,n)}));return s.postMessage([t,n],n.consume?[t.buffer]:[]),function(){s.terminate()}},at=function(t){return t.ondata=function(t,n){return postMessage([t,n],[t.buffer])},function(n){n.data.length?(t.push(n.data[0],n.data[1]),postMessage([n.data[0].length])):t.flush()}},ut=function(t,n,r,e,i,o,s){var a,u=X(t,e,i,(function(t,r){t?(u.terminate(),n.ondata.call(n,t)):Array.isArray(r)?1==r.length?(n.queuedSize-=r[0],n.ondrain&&n.ondrain(r[0])):(r[1]&&u.terminate(),n.ondata.call(n,t,r[0],r[1])):s(r)}));u.postMessage(r),n.queuedSize=0,n.push=function(t,r){n.ondata||I(5),a&&n.ondata(I(4,0,1),null,!!r),n.queuedSize+=t.length,u.postMessage([t,a=r],[t.buffer])},n.terminate=function(){u.terminate()},o&&(n.flush=function(){u.postMessage([])})},ht=function(t,n){return t[n]|t[n+1]<<8},ft=function(t,n){return(t[n]|t[n+1]<<8|t[n+2]<<16|t[n+3]<<24)>>>0},lt=function(t,n){return ft(t,n)+4294967296*ft(t,n+4)},ct=function(t,n,r){for(;r;++n)t[n]=r,r>>>=8},pt=function(t,n){var r=n.filename;if(t[0]=31,t[1]=139,t[2]=8,t[8]=n.level<2?4:9==n.level?2:0,t[9]=3,0!=n.mtime&&ct(t,4,Math.floor(new Date(n.mtime||Date.now())/1e3)),r){t[3]=8;for(var e=0;e<=r.length;++e)t[e+10]=r.charCodeAt(e)}},vt=function(t){31==t[0]&&139==t[1]&&8==t[2]||I(6,"invalid gzip data");var n=t[3],r=10;4&n&&(r+=2+(t[10]|t[11]<<8));for(var e=(n>>3&1)+(n>>4&1);e>0;e-=!t[r++]);return r+(2&n)},dt=function(t){var n=t.length;return(t[n-4]|t[n-3]<<8|t[n-2]<<16|t[n-1]<<24)>>>0},gt=function(t){return 10+(t.filename?t.filename.length+1:0)},yt=function(t,n){var r=n.level,e=0==r?0:r<6?1:9==r?3:2;if(t[0]=120,t[1]=e<<6|(n.dictionary&&32),t[1]|=31-(t[0]<<8|t[1])%31,n.dictionary){var i=J();i.p(n.dictionary),ct(t,2,i.d())}},mt=function(t,n){return(8!=(15&t[0])||t[0]>>4>7||(t[0]<<8|t[1])%31)&&I(6,"invalid zlib data"),(t[1]>>5&1)==+!n&&I(6,"invalid zlib data: "+(32&t[1]?"need":"unexpected")+" dictionary"),2+(t[1]>>3&4)};function bt(t,n){return"function"==typeof t&&(n=t,t={}),this.ondata=n,t}var wt=function(){function t(t,r){if("function"==typeof t&&(r=t,t={}),this.ondata=r,this.o=t||{},this.s={l:0,i:32768,w:32768,z:32768},this.b=new n(98304),this.o.dictionary){var e=this.o.dictionary.subarray(-32768);this.b.set(e,32768-e.length),this.s.i=32768-e.length}}return t.prototype.p=function(t,n){this.ondata(K(t,this.o,0,0,this.s),n)},t.prototype.push=function(t,r){this.ondata||I(5),this.s.l&&I(4);var e=t.length+this.s.z;if(e>this.b.length){if(e>2*this.b.length-32768){var i=new n(-32768&e);i.set(this.b.subarray(0,this.s.z)),this.b=i}var o=this.b.length-this.s.z;this.b.set(t.subarray(0,o),this.s.z),this.s.z=this.b.length,this.p(this.b,!1),this.b.set(this.b.subarray(-32768)),this.b.set(t.subarray(o),32768),this.s.z=t.length-o+32768,this.s.i=32766,this.s.w=32768}else this.b.set(t,this.s.z),this.s.z+=t.length;this.s.l=1&r,(this.s.z>this.s.w+8191||r)&&(this.p(this.b,r||!1),this.s.w=this.s.i,this.s.i-=2)},t.prototype.flush=function(){this.ondata||I(5),this.s.l&&I(4),this.p(this.b,!1),this.s.w=this.s.i,this.s.i-=2},t}();_e.Deflate=wt;var xt=function(){return function(t,n){ut([_,function(){return[at,wt]}],this,bt.call(this,t,n),(function(t){var n=new wt(t.data);onmessage=at(n)}),6,1)}}();function zt(t,n,r){return r||(r=n,n={}),"function"!=typeof r&&I(7),st(t,n,[_],(function(t){return it(kt(t.data[0],t.data[1]))}),0,r)}function kt(t,n){return K(t,n||{},0,0)}_e.AsyncDeflate=xt,_e.deflate=zt,_e.deflateSync=kt;var Mt=function(){function t(t,r){"function"==typeof t&&(r=t,t={}),this.ondata=r;var e=t&&t.dictionary&&t.dictionary.subarray(-32768);this.s={i:0,b:e?e.length:0},this.o=new n(32768),this.p=new n(0),e&&this.o.set(e)}return t.prototype.e=function(t){if(this.ondata||I(5),this.d&&I(4),this.p.length){if(t.length){var r=new n(this.p.length+t.length);r.set(this.p),r.set(t,this.p.length),this.p=r}}else this.p=t},t.prototype.c=function(t){this.s.i=+(this.d=t||!1);var n=this.s.b,r=U(this.p,this.s,this.o);this.ondata(D(r,n,this.s.b),this.d),this.o=D(r,this.s.b-32768),this.s.b=this.o.length,this.p=D(this.p,this.s.p/8|0),this.s.p&=7},t.prototype.push=function(t,n){this.e(t),this.c(n)},t}();_e.Inflate=Mt;var St=function(){return function(t,n){ut([$,function(){return[at,Mt]}],this,bt.call(this,t,n),(function(t){var n=new Mt(t.data);onmessage=at(n)}),7,0)}}();function At(t,n,r){return r||(r=n,n={}),"function"!=typeof r&&I(7),st(t,n,[$],(function(t){return it(Tt(t.data[0],ot(t.data[1])))}),1,r)}function Tt(t,n){return U(t,{i:2},n&&n.out,n&&n.dictionary)}_e.AsyncInflate=St,_e.inflate=At,_e.inflateSync=Tt;var Dt=function(){function t(t,n){this.c=Y(),this.l=0,this.v=1,wt.call(this,t,n)}return t.prototype.push=function(t,n){this.c.p(t),this.l+=t.length,wt.prototype.push.call(this,t,n)},t.prototype.p=function(t,n){var r=K(t,this.o,this.v&&gt(this.o),n&&8,this.s);this.v&&(pt(r,this.o),this.v=0),n&&(ct(r,r.length-8,this.c.d()),ct(r,r.length-4,this.l)),this.ondata(r,n)},t.prototype.flush=function(){wt.prototype.flush.call(this)},t}();_e.Gzip=Dt,_e.Compress=Dt;var Ct=function(){return function(t,n){ut([_,tt,function(){return[at,wt,Dt]}],this,bt.call(this,t,n),(function(t){var n=new Dt(t.data);onmessage=at(n)}),8,1)}}();function It(t,n,r){return r||(r=n,n={}),"function"!=typeof r&&I(7),st(t,n,[_,tt,function(){return[Ut]}],(function(t){return it(Ut(t.data[0],t.data[1]))}),2,r)}function Ut(t,n){n||(n={});var r=Y(),e=t.length;r.p(t);var i=K(t,n,gt(n),8),o=i.length;return pt(i,n),ct(i,o-8,r.d()),ct(i,o-4,e),i}_e.AsyncGzip=Ct,_e.AsyncCompress=Ct,_e.gzip=It,_e.compress=It,_e.gzipSync=Ut,_e.compressSync=Ut;var Ft=function(){function t(t,n){this.v=1,this.r=0,Mt.call(this,t,n)}return t.prototype.push=function(t,r){if(Mt.prototype.e.call(this,t),this.r+=t.length,this.v){var e=this.p.subarray(this.v-1),i=e.length>3?vt(e):4;if(i>e.length){if(!r)return}else this.v>1&&this.onmember&&this.onmember(this.r-e.length);this.p=e.subarray(i),this.v=0}Mt.prototype.c.call(this,r),!this.s.f||this.s.l||r||(this.v=T(this.s.p)+9,this.s={i:0},this.o=new n(0),this.push(new n(0),r))},t}();_e.Gunzip=Ft;var Et=function(){return function(t,n){var r=this;ut([$,nt,function(){return[at,Mt,Ft]}],this,bt.call(this,t,n),(function(t){var n=new Ft(t.data);n.onmember=function(t){return postMessage(t)},onmessage=at(n)}),9,0,(function(t){return r.onmember&&r.onmember(t)}))}}();function Zt(t,n,r){return r||(r=n,n={}),"function"!=typeof r&&I(7),st(t,n,[$,nt,function(){return[qt]}],(function(t){return it(qt(t.data[0],t.data[1]))}),3,r)}function qt(t,r){var e=vt(t);return e+8>t.length&&I(6,"invalid gzip data"),U(t.subarray(e,-8),{i:2},r&&r.out||new n(dt(t)),r&&r.dictionary)}_e.AsyncGunzip=Et,_e.gunzip=Zt,_e.gunzipSync=qt;var Ot=function(){function t(t,n){this.c=J(),this.v=1,wt.call(this,t,n)}return t.prototype.push=function(t,n){this.c.p(t),wt.prototype.push.call(this,t,n)},t.prototype.p=function(t,n){var r=K(t,this.o,this.v&&(this.o.dictionary?6:2),n&&4,this.s);this.v&&(yt(r,this.o),this.v=0),n&&ct(r,r.length-4,this.c.d()),this.ondata(r,n)},t.prototype.flush=function(){wt.prototype.flush.call(this)},t}();_e.Zlib=Ot;var Gt=function(){return function(t,n){ut([_,rt,function(){return[at,wt,Ot]}],this,bt.call(this,t,n),(function(t){var n=new Ot(t.data);onmessage=at(n)}),10,1)}}();function Lt(t,n,r){return r||(r=n,n={}),"function"!=typeof r&&I(7),st(t,n,[_,rt,function(){return[Ht]}],(function(t){return it(Ht(t.data[0],t.data[1]))}),4,r)}function Ht(t,n){n||(n={});var r=J();r.p(t);var e=K(t,n,n.dictionary?6:2,4);return yt(e,n),ct(e,e.length-4,r.d()),e}_e.AsyncZlib=Gt,_e.zlib=Lt,_e.zlibSync=Ht;var jt=function(){function t(t,n){Mt.call(this,t,n),this.v=t&&t.dictionary?2:1}return t.prototype.push=function(t,n){if(Mt.prototype.e.call(this,t),this.v){if(this.p.length<6&&!n)return;this.p=this.p.subarray(mt(this.p,this.v-1)),this.v=0}n&&(this.p.length<4&&I(6,"invalid zlib data"),this.p=this.p.subarray(0,-4)),Mt.prototype.c.call(this,n)},t}();_e.Unzlib=jt;var Nt=function(){return function(t,n){ut([$,et,function(){return[at,Mt,jt]}],this,bt.call(this,t,n),(function(t){var n=new jt(t.data);onmessage=at(n)}),11,0)}}();function Pt(t,n,r){return r||(r=n,n={}),"function"!=typeof r&&I(7),st(t,n,[$,et,function(){return[Bt]}],(function(t){return it(Bt(t.data[0],ot(t.data[1])))}),5,r)}function Bt(t,n){return U(t.subarray(mt(t,n&&n.dictionary),-4),{i:2},n&&n.out,n&&n.dictionary)}_e.AsyncUnzlib=Nt,_e.unzlib=Pt,_e.unzlibSync=Bt;var Yt=function(){function t(t,n){this.o=bt.call(this,t,n)||{},this.G=Ft,this.I=Mt,this.Z=jt}return t.prototype.i=function(){var t=this;this.s.ondata=function(n,r){t.ondata(n,r)}},t.prototype.push=function(t,r){if(this.ondata||I(5),this.s)this.s.push(t,r);else{if(this.p&&this.p.length){var e=new n(this.p.length+t.length);e.set(this.p),e.set(t,this.p.length)}else this.p=t;this.p.length>2&&(this.s=31==this.p[0]&&139==this.p[1]&&8==this.p[2]?new this.G(this.o):8!=(15&this.p[0])||this.p[0]>>4>7||(this.p[0]<<8|this.p[1])%31?new this.I(this.o):new this.Z(this.o),this.i(),this.s.push(this.p,r),this.p=null)}},t}();_e.Decompress=Yt;var Jt=function(){function t(t,n){Yt.call(this,t,n),this.queuedSize=0,this.G=Et,this.I=St,this.Z=Nt}return t.prototype.i=function(){var t=this;this.s.ondata=function(n,r,e){t.ondata(n,r,e)},this.s.ondrain=function(n){t.queuedSize-=n,t.ondrain&&t.ondrain(n)}},t.prototype.push=function(t,n){this.queuedSize+=t.length,Yt.prototype.push.call(this,t,n)},t}();function Kt(t,n,r){return r||(r=n,n={}),"function"!=typeof r&&I(7),31==t[0]&&139==t[1]&&8==t[2]?Zt(t,n,r):8!=(15&t[0])||t[0]>>4>7||(t[0]<<8|t[1])%31?At(t,n,r):Pt(t,n,r)}function Qt(t,n){return 31==t[0]&&139==t[1]&&8==t[2]?qt(t,n):8!=(15&t[0])||t[0]>>4>7||(t[0]<<8|t[1])%31?Tt(t,n):Bt(t,n)}_e.AsyncDecompress=Jt,_e.decompress=Kt,_e.decompressSync=Qt;var Rt=function(t,r,e,i){for(var o in t){var s=t[o],a=r+o,u=i;Array.isArray(s)&&(u=Q(i,s[1]),s=s[0]),s instanceof n?e[a]=[s,u]:(e[a+="/"]=[new n(0),u],Rt(s,a,e,i))}},Vt="undefined"!=typeof TextEncoder&&new TextEncoder,Wt="undefined"!=typeof TextDecoder&&new TextDecoder,Xt=0;try{Wt.decode(N,{stream:!0}),Xt=1}catch(t){}var $t=function(t){for(var n="",r=0;;){var e=t[r++],i=(e>127)+(e>223)+(e>239);if(r+i>t.length)return{s:n,r:D(t,r-1)};i?3==i?(e=((15&e)<<18|(63&t[r++])<<12|(63&t[r++])<<6|63&t[r++])-65536,n+=String.fromCharCode(55296|e>>10,56320|1023&e)):n+=String.fromCharCode(1&i?(31&e)<<6|63&t[r++]:(15&e)<<12|(63&t[r++])<<6|63&t[r++]):n+=String.fromCharCode(e)}},_t=function(){function t(t){this.ondata=t,Xt?this.t=new TextDecoder:this.p=N}return t.prototype.push=function(t,r){if(this.ondata||I(5),r=!!r,this.t)return this.ondata(this.t.decode(t,{stream:!0}),r),void(r&&(this.t.decode().length&&I(8),this.t=null));this.p||I(4);var e=new n(this.p.length+t.length);e.set(this.p),e.set(t,this.p.length);var i=$t(e),o=i.s,s=i.r;r?(s.length&&I(8),this.p=null):this.p=s,this.ondata(o,r)},t}();_e.DecodeUTF8=_t;var tn=function(){function t(t){this.ondata=t}return t.prototype.push=function(t,n){this.ondata||I(5),this.d&&I(4),this.ondata(nn(t),this.d=n||!1)},t}();function nn(t,r){if(r){for(var e=new n(t.length),i=0;i<t.length;++i)e[i]=t.charCodeAt(i);return e}if(Vt)return Vt.encode(t);var o=t.length,s=new n(t.length+(t.length>>1)),a=0,u=function(t){s[a++]=t};for(i=0;i<o;++i){if(a+5>s.length){var h=new n(a+8+(o-i<<1));h.set(s),s=h}var f=t.charCodeAt(i);f<128||r?u(f):f<2048?(u(192|f>>6),u(128|63&f)):f>55295&&f<57344?(u(240|(f=65536+(1047552&f)|1023&t.charCodeAt(++i))>>18),u(128|f>>12&63),u(128|f>>6&63),u(128|63&f)):(u(224|f>>12),u(128|f>>6&63),u(128|63&f))}return D(s,0,a)}function rn(t,n){if(n){for(var r="",e=0;e<t.length;e+=16384)r+=String.fromCharCode.apply(null,t.subarray(e,e+16384));return r}if(Wt)return Wt.decode(t);var i=$t(t),o=i.s;return(r=i.r).length&&I(8),o}_e.EncodeUTF8=tn,_e.strToU8=nn,_e.strFromU8=rn;var en=function(t){return 1==t?3:t<6?2:9==t?1:0},on=function(t,n){return n+30+ht(t,n+26)+ht(t,n+28)},sn=function(t,n,r){var e=ht(t,n+28),i=rn(t.subarray(n+46,n+46+e),!(2048&ht(t,n+8))),o=n+46+e,s=ft(t,n+20),a=r&&4294967295==s?an(t,o):[s,ft(t,n+24),ft(t,n+42)],u=a[0],h=a[1],f=a[2];return[ht(t,n+10),u,h,i,o+ht(t,n+30)+ht(t,n+32),f]},an=function(t,n){for(;1!=ht(t,n);n+=4+ht(t,n+2));return[lt(t,n+12),lt(t,n+4),lt(t,n+20)]},un=function(t){var n=0;if(t)for(var r in t){var e=t[r].length;e>65535&&I(9),n+=e+4}return n},hn=function(t,n,r,e,i,o,s,a){var u=e.length,h=r.extra,f=a&&a.length,l=un(h);ct(t,n,null!=s?33639248:67324752),n+=4,null!=s&&(t[n++]=20,t[n++]=r.os),t[n]=20,n+=2,t[n++]=r.flag<<1|(o<0&&8),t[n++]=i&&8,t[n++]=255&r.compression,t[n++]=r.compression>>8;var c=new Date(null==r.mtime?Date.now():r.mtime),p=c.getFullYear()-1980;if((p<0||p>119)&&I(10),ct(t,n,p<<25|c.getMonth()+1<<21|c.getDate()<<16|c.getHours()<<11|c.getMinutes()<<5|c.getSeconds()>>1),n+=4,-1!=o&&(ct(t,n,r.crc),ct(t,n+4,o<0?-o-2:o),ct(t,n+8,r.size)),ct(t,n+12,u),ct(t,n+14,l),n+=16,null!=s&&(ct(t,n,f),ct(t,n+6,r.attrs),ct(t,n+10,s),n+=14),t.set(e,n),n+=u,l)for(var v in h){var d=h[v],g=d.length;ct(t,n,+v),ct(t,n+2,g),t.set(d,n+4),n+=4+g}return f&&(t.set(a,n),n+=f),n},fn=function(t,n,r,e,i){ct(t,n,101010256),ct(t,n+8,r),ct(t,n+10,r),ct(t,n+12,e),ct(t,n+16,i)},ln=function(){function t(t){this.filename=t,this.c=Y(),this.size=0,this.compression=0}return t.prototype.process=function(t,n){this.ondata(null,t,n)},t.prototype.push=function(t,n){this.ondata||I(5),this.c.p(t),this.size+=t.length,n&&(this.crc=this.c.d()),this.process(t,n||!1)},t}();_e.ZipPassThrough=ln;var cn=function(){function t(t,n){var r=this;n||(n={}),ln.call(this,t),this.d=new wt(n,(function(t,n){r.ondata(null,t,n)})),this.compression=8,this.flag=en(n.level)}return t.prototype.process=function(t,n){try{this.d.push(t,n)}catch(t){this.ondata(t,null,n)}},t.prototype.push=function(t,n){ln.prototype.push.call(this,t,n)},t}();_e.ZipDeflate=cn;var pn=function(){function t(t,n){var r=this;n||(n={}),ln.call(this,t),this.d=new xt(n,(function(t,n,e){r.ondata(t,n,e)})),this.compression=8,this.flag=en(n.level),this.terminate=this.d.terminate}return t.prototype.process=function(t,n){this.d.push(t,n)},t.prototype.push=function(t,n){ln.prototype.push.call(this,t,n)},t}();_e.AsyncZipDeflate=pn;var vn=function(){function t(t){this.ondata=t,this.u=[],this.d=1}return t.prototype.add=function(t){var r=this;if(this.ondata||I(5),2&this.d)this.ondata(I(4+8*(1&this.d),0,1),null,!1);else{var e=nn(t.filename),i=e.length,o=t.comment,s=o&&nn(o),a=i!=t.filename.length||s&&o.length!=s.length,u=i+un(t.extra)+30;i>65535&&this.ondata(I(11,0,1),null,!1);var h=new n(u);hn(h,0,t,e,a,-1);var f=[h],l=function(){for(var t=0,n=f;t<n.length;t++)r.ondata(null,n[t],!1);f=[]},c=this.d;this.d=0;var p=this.u.length,v=Q(t,{f:e,u:a,o:s,t:function(){t.terminate&&t.terminate()},r:function(){if(l(),c){var t=r.u[p+1];t?t.r():r.d=1}c=1}}),d=0;t.ondata=function(e,i,o){if(e)r.ondata(e,i,o),r.terminate();else if(d+=i.length,f.push(i),o){var s=new n(16);ct(s,0,134695760),ct(s,4,t.crc),ct(s,8,d),ct(s,12,t.size),f.push(s),v.c=d,v.b=u+d+16,v.crc=t.crc,v.size=t.size,c&&v.r(),c=1}else c&&l()},this.u.push(v)}},t.prototype.end=function(){var t=this;2&this.d?this.ondata(I(4+8*(1&this.d),0,1),null,!0):(this.d?this.e():this.u.push({r:function(){1&t.d&&(t.u.splice(-1,1),t.e())},t:function(){}}),this.d=3)},t.prototype.e=function(){for(var t=0,r=0,e=0,i=0,o=this.u;i<o.length;i++)e+=46+(h=o[i]).f.length+un(h.extra)+(h.o?h.o.length:0);for(var s=new n(e+22),a=0,u=this.u;a<u.length;a++){var h;hn(s,t,h=u[a],h.f,h.u,-h.c-2,r,h.o),t+=46+h.f.length+un(h.extra)+(h.o?h.o.length:0),r+=h.b}fn(s,t,this.u.length,e,r),this.ondata(null,s,!0),this.d=2},t.prototype.terminate=function(){for(var t=0,n=this.u;t<n.length;t++)n[t].t();this.d=2},t}();function dn(t,r,e){e||(e=r,r={}),"function"!=typeof e&&I(7);var i={};Rt(t,"",i,r);var o=Object.keys(i),s=o.length,a=0,u=0,h=s,f=Array(s),l=[],c=function(){for(var t=0;t<l.length;++t)l[t]()},p=function(t,n){xn((function(){e(t,n)}))};xn((function(){p=e}));var v=function(){var t=new n(u+22),r=a,e=u-a;u=0;for(var i=0;i<h;++i){var o=f[i];try{var s=o.c.length;hn(t,u,o,o.f,o.u,s);var l=30+o.f.length+un(o.extra),c=u+l;t.set(o.c,c),hn(t,a,o,o.f,o.u,s,u,o.m),a+=16+l+(o.m?o.m.length:0),u=c+s}catch(t){return p(t,null)}}fn(t,a,f.length,e,r),p(null,t)};s||v();for(var d=function(t){var n=o[t],r=i[n],e=r[0],h=r[1],d=Y(),g=e.length;d.p(e);var y=nn(n),m=y.length,b=h.comment,w=b&&nn(b),x=w&&w.length,z=un(h.extra),k=0==h.level?0:8,M=function(r,e){if(r)c(),p(r,null);else{var i=e.length;f[t]=Q(h,{size:g,crc:d.d(),c:e,f:y,m:w,u:m!=n.length||w&&b.length!=x,compression:k}),a+=30+m+z+i,u+=76+2*(m+z)+(x||0)+i,--s||v()}};if(m>65535&&M(I(11,0,1),null),k)if(g<16e4)try{M(null,kt(e,h))}catch(t){M(t,null)}else l.push(zt(e,h,M));else M(null,e)},g=0;g<h;++g)d(g);return c}function gn(t,r){r||(r={});var e={},i=[];Rt(t,"",e,r);var o=0,s=0;for(var a in e){var u=e[a],h=u[0],f=u[1],l=0==f.level?0:8,c=(M=nn(a)).length,p=f.comment,v=p&&nn(p),d=v&&v.length,g=un(f.extra);c>65535&&I(11);var y=l?kt(h,f):h,m=y.length,b=Y();b.p(h),i.push(Q(f,{size:h.length,crc:b.d(),c:y,f:M,m:v,u:c!=a.length||v&&p.length!=d,o:o,compression:l})),o+=30+c+g+m,s+=76+2*(c+g)+(d||0)+m}for(var w=new n(s+22),x=o,z=s-o,k=0;k<i.length;++k){var M;hn(w,(M=i[k]).o,M,M.f,M.u,M.c.length);var S=30+M.f.length+un(M.extra);w.set(M.c,M.o+S),hn(w,o,M,M.f,M.u,M.c.length,M.o,M.m),o+=16+S+(M.m?M.m.length:0)}return fn(w,o,i.length,z,x),w}_e.Zip=vn,_e.zip=dn,_e.zipSync=gn;var yn=function(){function t(){}return t.prototype.push=function(t,n){this.ondata(null,t,n)},t.compression=0,t}();_e.UnzipPassThrough=yn;var mn=function(){function t(){var t=this;this.i=new Mt((function(n,r){t.ondata(null,n,r)}))}return t.prototype.push=function(t,n){try{this.i.push(t,n)}catch(t){this.ondata(t,null,n)}},t.compression=8,t}();_e.UnzipInflate=mn;var bn=function(){function t(t,n){var r=this;n<32e4?this.i=new Mt((function(t,n){r.ondata(null,t,n)})):(this.i=new St((function(t,n,e){r.ondata(t,n,e)})),this.terminate=this.i.terminate)}return t.prototype.push=function(t,n){this.i.terminate&&(t=D(t,0)),this.i.push(t,n)},t.compression=8,t}();_e.AsyncUnzipInflate=bn;var wn=function(){function t(t){this.onfile=t,this.k=[],this.o={0:yn},this.p=N}return t.prototype.push=function(t,r){var e=this;if(this.onfile||I(5),this.p||I(4),this.c>0){var i=Math.min(this.c,t.length),o=t.subarray(0,i);if(this.c-=i,this.d?this.d.push(o,!this.c):this.k[0].push(o),(t=t.subarray(i)).length)return this.push(t,r)}else{var s=0,a=0,u=void 0,h=void 0;this.p.length?t.length?((h=new n(this.p.length+t.length)).set(this.p),h.set(t,this.p.length)):h=this.p:h=t;for(var f=h.length,l=this.c,c=l&&this.d,p=function(){var t,n=ft(h,a);if(67324752==n){s=1,u=a,v.d=null,v.c=0;var r=ht(h,a+6),i=ht(h,a+8),o=2048&r,c=8&r,p=ht(h,a+26),d=ht(h,a+28);if(f>a+30+p+d){var g=[];v.k.unshift(g),s=2;var y,m=ft(h,a+18),b=ft(h,a+22),w=rn(h.subarray(a+30,a+=30+p),!o);4294967295==m?(t=c?[-2]:an(h,a),m=t[0],b=t[1]):c&&(m=-1),a+=d,v.c=m;var x={name:w,compression:i,start:function(){if(x.ondata||I(5),m){var t=e.o[i];t||x.ondata(I(14,"unknown compression type "+i,1),null,!1),(y=m<0?new t(w):new t(w,m,b)).ondata=function(t,n,r){x.ondata(t,n,r)};for(var n=0,r=g;n<r.length;n++)y.push(r[n],!1);e.k[0]==g&&e.c?e.d=y:y.push(N,!0)}else x.ondata(null,N,!0)},terminate:function(){y&&y.terminate&&y.terminate()}};m>=0&&(x.size=m,x.originalSize=b),v.onfile(x)}return"break"}if(l){if(134695760==n)return u=a+=12+(-2==l&&8),s=3,v.c=0,"break";if(33639248==n)return u=a-=4,s=3,v.c=0,"break"}},v=this;a<f-4&&"break"!==p();++a);if(this.p=N,l<0){var d=h.subarray(0,s?u-12-(-2==l&&8)-(134695760==ft(h,u-16)&&4):a);c?c.push(d,!!s):this.k[+(2==s)].push(d)}if(2&s)return this.push(h.subarray(a),r);this.p=h.subarray(a)}r&&(this.c&&I(13),this.p=null)},t.prototype.register=function(t){this.o[t.compression]=t},t}();_e.Unzip=wn;var xn="function"==typeof queueMicrotask?queueMicrotask:"function"==typeof setTimeout?setTimeout:function(t){t()};function zn(t,r,e){e||(e=r,r={}),"function"!=typeof e&&I(7);var i=[],o=function(){for(var t=0;t<i.length;++t)i[t]()},s={},a=function(t,n){xn((function(){e(t,n)}))};xn((function(){a=e}));for(var u=t.length-22;101010256!=ft(t,u);--u)if(!u||t.length-u>65558)return a(I(13,0,1),null),o;var h=ht(t,u+8);if(h){var f=h,l=ft(t,u+16),c=4294967295==l||65535==f;if(c){var p=ft(t,u-12);(c=101075792==ft(t,p))&&(f=h=ft(t,p+32),l=ft(t,p+48))}for(var v=r&&r.filter,d=function(r){var e=sn(t,l,c),u=e[0],f=e[1],p=e[2],d=e[3],g=e[4],y=on(t,e[5]);l=g;var m=function(t,n){t?(o(),a(t,null)):(n&&(s[d]=n),--h||a(null,s))};if(!v||v({name:d,size:f,originalSize:p,compression:u}))if(u)if(8==u){var b=t.subarray(y,y+f);if(p<524288||f>.8*p)try{m(null,Tt(b,{out:new n(p)}))}catch(t){m(t,null)}else i.push(At(b,{size:p},m))}else m(I(14,"unknown compression type "+u,1),null);else m(null,D(t,y,y+f));else m(null,null)},g=0;g<f;++g)d()}else a(null,{});return o}function kn(t,r){for(var e={},i=t.length-22;101010256!=ft(t,i);--i)(!i||t.length-i>65558)&&I(13);var o=ht(t,i+8);if(!o)return{};var s=ft(t,i+16),a=4294967295==s||65535==o;if(a){var u=ft(t,i-12);(a=101075792==ft(t,u))&&(o=ft(t,u+32),s=ft(t,u+48))}for(var h=r&&r.filter,f=0;f<o;++f){var l=sn(t,s,a),c=l[0],p=l[1],v=l[2],d=l[3],g=l[4],y=on(t,l[5]);s=g,h&&!h({name:d,size:p,originalSize:v,compression:c})||(c?8==c?e[d]=Tt(t.subarray(y,y+p),{out:new n(v)}):I(14,"unknown compression type "+c):e[d]=D(t,y,y+p))}return e}_e.unzip=zn,_e.unzipSync=kn;return _e});
 </script>
 <script>
+// ---- Payroster tools: payslip check, what-if, calendar, FTL, days off, year summary, backup ----
+// Shares the page's globals (state, t, eur, n2, hhmm, PR, monthName, key, prevKey, save, render…).
+
+const TOOLS = ['check','sim','cal','ftl','vac','year','backup'];
+let toolOpen = null, simDate = null;
+
+function renderToolbar(){
+  const bar = $('toolbar'); if(!bar) return;
+  bar.innerHTML = TOOLS.map(k => `<button class="btn ghost${toolOpen===k?' on':''}" type="button" data-tool="${k}">${t('tool_'+k)}</button>`).join('');
+}
+function openTool(k){
+  toolOpen = (toolOpen===k && k!=='sim') ? null : k;
+  renderToolbar();
+  const p = $('toolPanel');
+  if(!toolOpen){ p.hidden = true; p.innerHTML = ''; return; }
+  p.hidden = false;
+  ({check:renderCheck, sim:renderSim, cal:renderCal, ftl:renderFtl, vac:renderVac, year:renderYear, backup:renderBackup})[toolOpen]();
+  p.scrollIntoView({block:'nearest'});
+}
+function refreshTool(){ if(toolOpen) ({check:renderCheck, sim:renderSim, cal:renderCal, ftl:renderFtl, vac:renderVac, year:renderYear, backup:renderBackup})[toolOpen](); }
+const pnl = html => { $('toolPanel').innerHTML = html; };
+const hdr = (k, sub) => `<div class="eyebrow">${t('tool_'+k)}</div>${sub?`<p class="note" style="margin:6px 0 12px">${sub}</p>`:''}`;
+const fmtH = h => hhmm(Math.max(0,h||0));
+const nm = (y,m,o) => monthName(y,m,o||{month:'long',year:'numeric'});
+const kOf = (y,m) => y+'-'+String(m).padStart(2,'0');
+const prevYM = (y,m) => m===1 ? [y-1,12] : [y,m-1];
+const nextYM = (y,m) => m===12 ? [y+1,1] : [y,m+1];
+
+// ================= 1. payslip check =================
+function slipBuckets(lines){
+  const sum = (f, fld='dev') => lines.filter(f).reduce((a,l)=>a+(+l[fld]||0),0);
+  const L = l => (l.label||'').toLowerCase();
+  const isH = l => /^(tiempo de vuelo|tpo de vuelo|tpo vuelo)/.test(L(l));
+  const isAdd = l => /adicion/.test(L(l));
+  const viaje = l => /^viaje/.test(L(l));
+  const dType = l => (/inter/.test(L(l)) ? 'intl' : 'nat') + (/con pern/.test(L(l)) ? 'Night' : 'Day');
+  const counts = {intlNight:0,intlDay:0,natNight:0,natDay:0}, dAmt = {intlNight:0,intlDay:0,natNight:0,natDay:0};
+  lines.filter(viaje).forEach(l => { const k = dType(l); dAmt[k] += +l.dev||0; counts[k] += Math.round((+l.dev||0) / PR.DIETA[k]); });
+  const known = l => l.code==='1000' || /uniforme|formaci[oó]n de cabina|compra|comisi|asesoramiento|early|check/.test(L(l)) || isH(l) || viaje(l) || /^\//.test(l.code);
+  return {
+    base: sum(l=>l.code==='1000'), uniform: sum(l=>/uniforme/.test(L(l))), trainer: sum(l=>/formaci[oó]n de cabina/.test(L(l))),
+    buy: sum(l=>/compra/.test(L(l))), buyN: sum(l=>/compra/.test(L(l)),'units'),
+    hF: sum(l=>isH(l)&&!isAdd(l),'units'), hA: sum(l=>isH(l)&&isAdd(l),'units'), hours: sum(isH),
+    early: sum(l=>/early|check/.test(L(l))), sales: sum(l=>/comisi/.test(L(l))),
+    fiscal: sum(l=>/asesoramiento/.test(L(l))), ingCta: sum(l=>/ingreso a cuenta/.test(L(l)),'ded'),
+    ss: sum(l=>/^\/3[5-9]\d/.test(l.code),'ded'), irpf: sum(l=>l.code==='/401','ded'),
+    dietas: Object.values(dAmt).reduce((a,b)=>a+b,0), dCounts: counts,
+    other: lines.filter(l=>!known(l) && !/ingreso a cuenta/.test(L(l)))
+  };
+}
+function renderCheck(kSel){
+  const ro = state.months[state.current];
+  const keys = Object.keys(state.slips||{}).filter(k => (state.slips[k]||{}).lines).sort().reverse();
+  const k = kSel || (ro && (state.slips||{})[key(ro)] && state.slips[key(ro)].lines ? key(ro) : keys[0]);
+  if(!k){ pnl(hdr('check', t('chk_intro')) + `<p class="msg">${t('chk_needSlip')}</p><label class="btn" for="pdfIn" style="display:inline-block">${t('su_upload')}</label>`); return; }
+  const [y,m] = k.split('-').map(Number), [py,pm] = prevYM(y,m), prev = state.months[kOf(py,pm)];
+  const pick = `<label class="note">${t('chk_month')} <select id="chk-k">${keys.map(x=>{const [a,b]=x.split('-').map(Number);return `<option value="${x}"${x===k?' selected':''}>${nm(a,b)}</option>`;}).join('')}</select></label>`;
+  if(!prev){ pnl(hdr('check', t('chk_intro')) + pick + `<p class="msg err">${t('chk_needPrev',{m:nm(y,m),p:nm(py,pm)})}</p>`); return; }
+  const s = state.settings, c = PR.compute(prev, s, state.extras), P = PR.payslip(c, s, y, m), v = P.v, R = slipBuckets(state.slips[k].lines);
+  const rows = [];
+  const money = (lbl, real, app, hint) => rows.push({lbl, real:eur.format(real), app:eur.format(app), d:real-app, ok:Math.abs(real-app)<1, txt:eur.format(real-app), hint});
+  const daysOf = f => c.days.filter(f).map(d=>d.day).join(', ');
+  money(t('slip_base',{r:rankName(s.rank),l:P.level}), R.base, P.baseSalary, t('chk_hBase'));
+  if(R.trainer || P.allowTotal) money(t('slip_trainer'), R.trainer, P.allowTotal, t('chk_hTrainer',{d:daysOf(d=>d.isTrain||d.isCTday)||'—'}));
+  money(t('slip_uniform'), R.uniform, P.uniform);
+  // hours
+  const appF = (v.tiers||[]).reduce((a,x)=>a+x.hF,0), appA = (v.tiers||[]).reduce((a,x)=>a+x.hA,0);
+  rows.push({lbl:t('chk_hoursF'), real:fmtH(R.hF)+' h', app:fmtH(appF)+' h', d:R.hF-appF, ok:Math.abs(R.hF-appF)<0.1, small:Math.abs(R.hF-appF)<2, txt:(R.hF-appF>=0?'+':'−')+fmtH(Math.abs(R.hF-appF))+' h', hint:t('chk_hFdp')});
+  rows.push({lbl:t('chk_hoursA'), real:fmtH(R.hA)+' h', app:fmtH(appA)+' h', d:R.hA-appA, ok:Math.abs(R.hA-appA)<0.1, txt:(R.hA-appA>=0?'+':'−')+fmtH(Math.abs(R.hA-appA))+' h', hint:t('chk_hAdd')});
+  money(t('chk_hoursPay'), R.hours, v.hourPay+v.topUp, t('chk_hHoursPay')); rows[rows.length-1].small = Math.abs(rows[rows.length-1].d) < 15;
+  // per diems by type
+  for(const dt of ['intlNight','intlDay','natNight','natDay']){
+    const r = R.dCounts[dt], a = (v.dietaCounts||{})[dt]||0; if(!r && !a) continue;
+    rows.push({lbl:t('d_'+dt), real:'× '+r, app:'× '+a, d:r-a, ok:r===a, txt:(r-a>0?'+':'')+(r-a),
+      hint: r<a ? t('chk_hDietaLess',{d:daysOf(d=>d.dietaType===dt)}) : r>a ? t('chk_hDietaMore') : ''});
+  }
+  if(R.early || v.early) money('Early check-in', R.early, v.early, R.early<v.early ? t('chk_hEarly',{d:daysOf(d=>d.early>0)}) : '');
+  if(R.buy || v.extraFix) money(t('slip_buy'), R.buy, v.extraFix, R.buy<v.extraFix ? t('chk_hBuy',{d:daysOf(d=>d.extraFix>0)}) : '');
+  money(t('slip_sales'), R.sales, v.sales, !v.sales && R.sales ? t('chk_hSales',{p:nm(py,pm)}) : '');
+  if(R.fiscal || P.fiscalAid) money(t('slip_fiscalAid'), R.fiscal, P.fiscalAid, !s.joined ? t('askJoined') : '');
+  money(t('slip_ss'), R.ss, P.ss, t('chk_hTax')); rows[rows.length-1].small = Math.abs(rows[rows.length-1].d) < 5;
+  money(t('slip_irpf'), R.irpf, P.irpf, t('chk_hTax')); rows[rows.length-1].small = Math.abs(rows[rows.length-1].d) < 5;
+  const net = state.slips[k].net;
+  money(t('slip_net'), net, P.net, ''); rows[rows.length-1].small = Math.abs(rows[rows.length-1].d) < 10;
+  const bad = rows.filter(r=>!r.ok && !r.small && r.lbl!==t('slip_net') && r.lbl!==t('slip_ss') && r.lbl!==t('slip_irpf') && r.lbl!==t('chk_hoursPay'));
+  const summary = bad.length ? `<p class="msg err">${t('chk_bad',{n:bad.length})} ${bad.map(r=>`<b>${esc(r.lbl)}</b>`).join(', ')}.</p>` : `<p class="msg" style="background:var(--pay-soft);color:var(--pay)">${t('chk_ok',{d:eur.format(net-P.net)})}</p>`;
+  const others = R.other.length ? `<p class="note">${t('chk_other')}: ${R.other.map(l=>`${esc(l.label)} ${eur.format((l.dev||0)-(l.ded||0))}`).join(' · ')}</p>` : '';
+  pnl(hdr('check', t('chk_intro')) + pick + summary + `<div class="tablewrap"><table class="slip chk"><tr class="sec"><td>${t('chk_concept')}</td><td>${t('chk_colReal')}</td><td>App</td><td>${t('chk_colDiff')}</td></tr>
+    ${rows.map(r=>{ const st = r.ok ? '' : r.small ? 'meh' : 'bad';
+      return `<tr class="${st}"><td>${esc(r.lbl)}</td><td>${r.real}</td><td>${r.app}</td><td>${r.ok?'✓':esc(r.txt)}</td></tr>${!r.ok&&r.hint?`<tr class="hint ${st}"><td colspan="4">${r.hint}</td></tr>`:''}`; }).join('')}</table></div>` + others);
+}
+
+// ================= 2. what-if simulator =================
+const parseHM = s => { s = String(s||'').trim().replace(',', '.'); if(!s) return 0; const m = /^(\d{1,2}):(\d{2})$/.exec(s); return m ? +m[1] + m[2]/60 : (parseFloat(s)||0); };
+function renderSim(result){
+  const ro = state.months[state.current]; if(!ro){ pnl(hdr('sim')+`<p class="msg">${t('startText')}</p>`); return; }
+  const s = state.settings, c = PR.compute(ro, s, state.extras);
+  if(!simDate || !c.days.find(d=>d.date===simDate)) simDate = (c.days.find(d=>d.date>=todayISO()) || c.days[0]).date;
+  const d = c.days.find(x=>x.date===simDate);
+  const opt = c.days.map(x=>`<option value="${x.date}"${x.date===simDate?' selected':''}>${x.day} · ${esc(x.route||x.label||kind(x.kind).n)}</option>`).join('');
+  const dv = (id, v) => `value="${esc(v)}" id="${id}"`;
+  pnl(hdr('sim', t('sim_intro')) + `<div class="form" style="margin-top:0">
+      <label>${t('sim_day')}<select id="sim-date">${opt}</select></label>
+      <label>${t('sim_now')}<input type="text" readonly value="${esc((d.route||d.label||kind(d.kind).n) + ' · ' + hhmm(d.H)+' h · '+eur.format(d.total))}"></label>
+      <label>${t('sim_action')}<select id="sim-act"><option value="off">${t('sim_off')}</option><option value="duty">${t('sim_duty')}</option></select></label>
+      <label>FDP (h:mm)<input type="text" inputmode="decimal" placeholder="8:30" ${dv('sim-F', hhmm(d.F))}></label>
+      <label>${t('addDuty')} (h:mm)<input type="text" inputmode="decimal" placeholder="0:30" ${dv('sim-A', hhmm(d.A))}></label>
+      <label>${t('perDiems')}<select id="sim-d"><option value="">${t('no')}</option>${['intlDay','intlNight','natDay','natNight'].map(k=>`<option value="${k}"${d.dietaType===k?' selected':''}>${t('d_'+k)} · ${n2.format(PR.DIETA[k])} €</option>`).join('')}</select></label>
+      <label>${t('dayBought')}<select id="sim-b"><option value="">${t('no')}</option><option value="full"${d.buy==='full'?' selected':''}>${t('full')}</option><option value="half"${d.buy==='half'?' selected':''}>${t('half')}</option></select></label>
+      <label class="chk"><input type="checkbox" id="sim-e"${d.early?' checked':''}> ${t('earlyOff')} (${eur.format(s.earlyCheckin)})</label>
+      ${s.isTrainer?`<label class="chk"><input type="checkbox" id="sim-t"${d.isTrain?' checked':''}> ${t('sim_train')}</label>`:''}
+      <div class="wide"><button class="btn" id="sim-go" type="button">${t('sim_calc')}</button></div>
+    </div><div id="sim-out">${result||''}</div>`);
+}
+function runSim(){
+  const ro = state.months[state.current], s = state.settings;
+  const act = $('sim-act').value;
+  const sim = act==='off' ? { F:0, A:0, dieta:null, early:false, buy:null, train:false }
+    : { F:parseHM($('sim-F').value), A:parseHM($('sim-A').value), dieta:$('sim-d').value||null, early:$('sim-e').checked, buy:$('sim-b').value||null, train: $('sim-t') ? $('sim-t').checked : false };
+  const ex2 = JSON.parse(JSON.stringify(state.extras||{})); ex2[simDate] = Object.assign({}, ex2[simDate]||{}, {sim});
+  const a = PR.compute(ro, s, state.extras), b = PR.compute(ro, s, ex2);
+  const [ny,nmn] = nextYM(ro.year, ro.month), Na = PR.payslip(a, s, ny, nmn), Nb = PR.payslip(b, s, ny, nmn);
+  const tier = x => x.T>110?3:x.T>70?2:1, dv = b.variable-a.variable, dn = Nb.net-Na.net;
+  const sign = x => (x>=0?'+':'−')+eur.format(Math.abs(x));
+  $('sim-out').innerHTML = `<dl class="sumbox" style="margin-top:14px">
+    <dt>${t('variableIn',{m:nm(ro.year,ro.month,{month:'long'})})}</dt><dd>${eur.format(a.variable)} → <b>${eur.format(b.variable)}</b></dd>
+    <dt>${t('dutyTime',{h:fmtH(a.T)})} → ${fmtH(b.T)} h</dt><dd>${t('tierN',{n:tier(a)})} → ${t('tierN',{n:tier(b)})}</dd>
+    <dt class="netrow">${t('sim_net',{m:nm(ny,nmn,{month:'long'})})}</dt><dd class="netrow">${sign(dn)}</dd></dl>
+    <p class="note">${t('sim_result',{v:sign(dv),n:sign(dn)})}${tier(a)!==tier(b)?' '+t('sim_tier',{a:tier(a),b:tier(b)}):''}</p>`;
+}
+
+// ================= 3. calendar (.ics) =================
+function icsEsc(s){ return String(s||'').replace(/\\/g,'\\\\').replace(/;/g,'\\;').replace(/,/g,'\\,').replace(/\n/g,'\\n'); }
+function utcStamp(dateISO, hhmm, plusDays){ const [y,m,d] = dateISO.split('-').map(Number); const dt = new Date(Date.UTC(y,m-1,d+(plusDays||0), Math.floor(+hhmm/100), +hhmm%100)); return dt.toISOString().replace(/[-:]/g,'').slice(0,15)+'Z'; }
+function addMin(stamp, min){ const d = new Date(stamp.replace(/^(\d{4})(\d{2})(\d{2})T(\d{2})(\d{2})(\d{2})Z$/,'$1-$2-$3T$4:$5:$6Z')); d.setUTCMinutes(d.getUTCMinutes()+min); return d.toISOString().replace(/[-:]/g,'').slice(0,15)+'Z'; }
+function buildIcs(months, o){
+  const ev = [], me = (state.months[state.current]||{}).crew||'';
+  for(const ro of months){
+    const c = PR.compute(ro, state.settings, state.extras);
+    let open = null;
+    const close = (end) => { if(!open) return; open.end = end || open.end; ev.push(open); open = null; };
+    for(const d of c.days){
+      const raw = ro.days.find(x=>x.date===d.date) || {events:[]};
+      // a duty only carries over midnight when the next day starts with its remaining legs
+      if(open && !(raw.events[0] && (raw.events[0].type==='flt' || raw.events[0].type==='dh' || raw.events[0].type==='co'))) close();
+      for(const e of raw.events){
+        if(e.type==='ci' || e.type==='su'){ close(); open = { start: utcStamp(d.date, e.t1), legs:[], date:d.date, d }; continue; }
+        if(e.type==='flt' || e.type==='dh'){
+          if(!open) open = { start: utcStamp(d.date, e.t1), legs:[], date:d.date, d };
+          open.legs.push(e); open.end = utcStamp(d.date, e.t2, +e.t2 < +e.t1 ? 1 : 0); open.hotel = d.hotel || open.hotel;
+          if(!open.crew && d.crew && d.crew.length) open.crew = d.crew; continue; }
+        if(e.type==='co'){ if(open) close(utcStamp(d.date, e.t1)); continue; }
+        if(e.type==='code'){
+          const off = /^(O_|OFF|FREI|U$|SU$|U_)/.test(e.code);
+          if(off){ if(o.off && !open) ev.push({ allDay:d.date, title:e.code + (kind(d.kind).n?` · ${kind(d.kind).n}`:''), d }); continue; }
+          if(open){ open.extra = (open.extra||[]).concat(e.code); continue; }
+          if(e.t1 && e.t2) ev.push({ start: utcStamp(d.date, e.t1), end: utcStamp(d.date, e.t2, +e.t2 <= +e.t1 ? 1 : 0), title: e.label || e.code, loc: e.st, d, gcrew: d.gcrew });
+        }
+      }
+    }
+    close();
+  }
+  const lines = ['BEGIN:VCALENDAR','VERSION:2.0','PRODID:-//Payroster//Roster//ES','CALSCALE:GREGORIAN','METHOD:PUBLISH','X-WR-CALNAME:Payroster'];
+  const now = new Date().toISOString().replace(/[-:]/g,'').slice(0,15)+'Z';
+  for(const e of ev){
+    const legs = e.legs||[];
+    const title = legs.length ? (legs.some(l=>l.type==='flt') ? '' : 'DH ') + [legs[0].dep, ...legs.map(l=>l.arr)].join('–') : e.title;
+    const desc = [];
+    legs.forEach(l => desc.push(`${l.type==='dh'?'DH ':''}${l.flight} ${l.dep} ${t4(l.t1)}–${t4(l.t2)} ${l.arr} (UTC)`));
+    if(e.hotel) desc.push(t('nightIn',{st:e.hotel}));
+    if(e.extra) desc.push(e.extra.join(', '));
+    if(o.crew && e.crew) e.crew.forEach(l => desc.push(`${l.flight}: ` + l.members.filter(m=>m.name.trim()!==me.trim()).map(m=>m.role+' '+m.name).join(' · ')));
+    const uid = `${(e.start||e.allDay).replace(/[^0-9TZ]/g,'')}-${icsEsc(title).replace(/[^A-Za-z0-9]/g,'').slice(0,20)}@payroster`;
+    lines.push('BEGIN:VEVENT', 'UID:'+uid, 'DTSTAMP:'+now);
+    if(e.allDay){ const dd = e.allDay.replace(/-/g,''); const nx = new Date(e.allDay+'T12:00:00Z'); nx.setUTCDate(nx.getUTCDate()+1);
+      lines.push('DTSTART;VALUE=DATE:'+dd, 'DTEND;VALUE=DATE:'+nx.toISOString().slice(0,10).replace(/-/g,''), 'TRANSP:TRANSPARENT'); }
+    else lines.push('DTSTART:'+e.start, 'DTEND:'+(e.end||addMin(e.start,60)));
+    lines.push('SUMMARY:'+icsEsc(title));
+    if(legs[0] || e.loc) lines.push('LOCATION:'+icsEsc(legs[0] ? legs[0].dep : e.loc));
+    if(desc.length) lines.push('DESCRIPTION:'+icsEsc(desc.join('\n')));
+    if(o.alarm && !e.allDay) lines.push('BEGIN:VALARM','ACTION:DISPLAY','DESCRIPTION:'+icsEsc(title),'TRIGGER:-PT'+o.alarm+'M','END:VALARM');
+    lines.push('END:VEVENT');
+  }
+  lines.push('END:VCALENDAR');
+  // fold lines at 75 octets-ish
+  return { text: lines.map(l => l.length>74 ? l.match(/.{1,74}/g).join('\r\n ') : l).join('\r\n'), n: ev.length };
+}
+function renderCal(msg){
+  pnl(hdr('cal', t('cal_intro')) + `<div class="form" style="margin-top:0">
+    <label>${t('cal_range')}<select id="cal-r"><option value="cur">${t('cal_cur')}</option><option value="all">${t('cal_all')}</option></select></label>
+    <label>${t('cal_alarm')}<select id="cal-a"><option value="0">${t('no')}</option><option value="60">1 h</option><option value="90" selected>1:30 h</option><option value="120">2 h</option><option value="180">3 h</option></select></label>
+    <label class="chk"><input type="checkbox" id="cal-c" checked> ${t('cal_crew')}</label>
+    <label class="chk"><input type="checkbox" id="cal-o"> ${t('cal_off')}</label>
+    <div class="wide"><button class="btn" id="cal-go" type="button">${t('cal_make')}</button></div></div><div id="cal-out">${msg||''}</div>`);
+}
+async function giveFile(name, text, mime){
+  const file = new File([text], name, {type:mime});
+  if(navigator.canShare && navigator.canShare({files:[file]})){ try{ await navigator.share({files:[file], title:name}); return 'shared'; }catch(e){ if(e && e.name==='AbortError') return 'cancel'; } }
+  const a = document.createElement('a'); a.href = URL.createObjectURL(file); a.download = name; document.body.appendChild(a); a.click();
+  setTimeout(()=>{ URL.revokeObjectURL(a.href); a.remove(); }, 2000); return 'download';
+}
+async function runCal(){
+  const all = $('cal-r').value==='all';
+  const months = all ? Object.keys(state.months).sort().map(k=>state.months[k]) : [state.months[state.current]].filter(Boolean);
+  const o = { alarm: +$('cal-a').value, crew: $('cal-c').checked, off: $('cal-o').checked };
+  const ics = buildIcs(months, o);
+  const ro = state.months[state.current];
+  const name = all ? 'payroster-roster.ics' : `payroster-${key(ro)}.ics`;
+  const how = await giveFile(name, ics.text, 'text/calendar');
+  $('cal-out').innerHTML = `<p class="msg">${t('cal_done',{n:ics.n})}</p>`;
+}
+
+// ================= 4. FTL limits =================
+const blockMin = l => { const m = x => Math.floor(+x/100)*60 + (+x%100); let v = m(l.t2) - m(l.t1); if(v<0) v += 1440; return v; };
+function ftlTimeline(){
+  const map = {};
+  for(const k of Object.keys(state.months)){
+    const ro = state.months[k];
+    for(const d of ro.days){
+      const duty = d.dtLimit != null ? d.dtLimit : (d.dt || 0);
+      const blk = (d.events||[]).filter(e=>e.type==='flt').reduce((a,l)=>a+blockMin(l),0)/60;
+      map[d.date] = { duty, block: blk };
+    }
+  }
+  return map;
+}
+function renderFtl(){
+  const ro = state.months[state.current]; if(!ro){ pnl(hdr('ftl')+`<p class="msg">${t('startText')}</p>`); return; }
+  const map = ftlTimeline(), s = state.settings;
+  const sc = full => s.contract>=100 ? full : Math.min(full, Math.round(full * s.contract/100 * 1.1));
+  const dayAdd = (iso, n) => { const d = new Date(iso+'T12:00:00Z'); d.setUTCDate(d.getUTCDate()+n); return d.toISOString().slice(0,10); };
+  const win = (end, n, f) => { let sum=0, missing=false; for(let i=0;i<n;i++){ const x = map[dayAdd(end,-i)]; if(!x) missing=true; else sum += x[f]; } return {sum, missing}; };
+  const days = ro.days.map(d=>d.date), last = days[days.length-1];
+  const peak = (n, f) => { let best={sum:0,end:days[0],missing:false}; for(const dd of days){ const w = win(dd,n,f); if(w.sum>best.sum) best={...w,end:dd}; } return best; };
+  const yearSum = (f) => { let sum=0; for(const k in map){ if(k.startsWith(ro.year+'-') && k<=last) sum += map[k][f]; } return sum; };
+  const items = [
+    { lbl:t('ftl_d7'),  w:peak(7,'duty'),   lim:60 },
+    { lbl:t('ftl_d14'), w:peak(14,'duty'),  lim:110 },
+    { lbl:t('ftl_d28'), w:peak(28,'duty'),  lim:sc(190) },
+    { lbl:t('ftl_b28'), w:peak(28,'block'), lim:sc(100) },
+    { lbl:t('ftl_b12m'),w:win(last,365,'block'), lim:sc(1000) },
+    { lbl:t('ftl_byear',{y:ro.year}), w:{sum:yearSum('block')}, lim:sc(900) },
+    { lbl:t('ftl_dyear',{y:ro.year}), w:{sum:yearSum('duty')},  lim:sc(2000) },
+  ];
+  const anyMissing = items.some(i=>i.w.missing);
+  pnl(hdr('ftl', t('ftl_intro',{m:nm(ro.year,ro.month)})) + `<div class="ftl">${items.map(i=>{
+    const p = Math.min(100, i.w.sum/i.lim*100), cls = p>=100?'over':p>=90?'warn':'';
+    return `<div class="fr"><div class="fl"><span>${i.lbl}</span><span class="mono">${fmtH(i.w.sum)} / ${i.lim} h${i.w.end?` <span class="note">(${t('ftl_until',{d:+i.w.end.slice(8)})})</span>`:''}</span></div>
+      <div class="gtrack"><div class="gseg ${cls}" style="width:${p}%;background:${cls==='over'?'var(--warn)':cls==='warn'?'var(--k-train)':'var(--accent)'}"></div></div></div>`; }).join('')}</div>
+    ${anyMissing?`<p class="note">${t('ftl_missing')}</p>`:''}<p class="note">${t('ftl_note')}${s.contract<100?' '+t('ftl_pt',{c:s.contract}):''}</p>`);
+}
+
+// ================= 5. holidays & days off =================
+function vacEntitlement(year){
+  const j = state.settings.joined; if(!j) return { days:30, known:false };
+  const yrs = year - +j.slice(0,4) - ((+j.slice(5,7)>1 || +j.slice(8,10)>1) ? 1 : 0);
+  return { days: yrs>=25 ? 42 : yrs>=5 ? 35 : 30, known:true, yrs };
+}
+function renderVac(){
+  const ro = state.months[state.current]; const year = ro ? ro.year : new Date().getFullYear();
+  const absence = new Set(String(state.settings.absenceCodes||'').split(/[,\s]+/).filter(Boolean).map(x=>x.toUpperCase()));
+  const cats = ['vac','su','om','off','bez','sick'];
+  const rows = [];
+  for(let m=1;m<=12;m++){
+    const r = state.months[kOf(year,m)]; if(!r) continue;
+    const cnt = {vac:0,su:0,om:0,off:0,bez:0,sick:0};
+    for(const d of r.days){
+      const codes = d.events.filter(e=>e.type==='code').map(e=>e.code.toUpperCase());
+      if(codes.includes('U') || codes.some(c=>/^U_/.test(c) && c!=='U_OFF')) cnt.vac++;
+      else if(codes.includes('SU')) cnt.su++;
+      else if(codes.some(c=>/KRANK|SICK|^K_|^AU$/.test(c))) cnt.sick++;
+      else if(codes.includes('O_M')) cnt.om++;
+      else if(codes.some(c=>/^(O_|FREI|U_OFF|OFF$)/.test(c)) && !d.events.some(e=>e.type==='flt'||e.type==='ci')) cnt.off++;
+      if(codes.some(c=>/^OFF_BEZ/.test(c))) cnt.bez++;
+    }
+    rows.push({m, cnt});
+  }
+  const tot = cats.reduce((o,k)=>(o[k]=rows.reduce((a,r)=>a+r.cnt[k],0),o),{});
+  const ent = vacEntitlement(year);
+  pnl(hdr('vac', t('vac_intro',{y:year})) +
+    `<p class="msg">${t('vac_sum',{u:tot.vac,e:ent.days,l:Math.max(0,ent.days-tot.vac)})}${ent.known?'':' '+t('vac_noJoined')}</p>
+    <div class="tablewrap"><table class="slip chk"><tr class="sec"><td>${t('vac_month')}</td>${cats.map(k=>`<td>${t('vac_'+k)}</td>`).join('')}</tr>
+    ${rows.map(r=>`<tr><td style="text-transform:capitalize">${nm(year,r.m,{month:'long'})}</td>${cats.map(k=>`<td>${r.cnt[k]||''}</td>`).join('')}</tr>`).join('')}
+    <tr class="sum"><td>${t('vac_total')}</td>${cats.map(k=>`<td>${tot[k]}</td>`).join('')}</tr></table></div>
+    <p class="note">${t('vac_note')}</p>`);
+}
+
+// ================= 6. year summary =================
+function yearData(year){
+  const s = state.settings, out = [];
+  for(let m=1;m<=12;m++){
+    const k = kOf(year,m), real = (state.slips||{})[k];
+    if(real && real.lines){
+      const R = slipBuckets(real.lines);
+      const gross = real.totals && real.totals.devengos != null ? real.totals.devengos : null;
+      out.push({ m, real:true, gross: gross!=null ? gross : null, dietas:R.dietas, ss:R.ss, irpf:R.irpf + R.ingCta, net:real.net });
+      continue;
+    }
+    const [py,pm] = prevYM(year,m), prev = state.months[kOf(py,pm)];
+    if(!prev && !state.months[k]) continue;
+    const c = prev ? PR.compute(prev, s, state.extras) : null, P = PR.payslip(c, s, year, m);
+    out.push({ m, real:false, partial:!prev, gross:P.gross, dietas:P.dietas, ss:P.ss, irpf:P.irpf + P.ingresoCta, net:P.net });
+  }
+  return out;
+}
+function renderYear(){
+  const years = [...new Set([...Object.keys(state.months), ...Object.keys(state.slips||{})].map(k=>+k.slice(0,4)))].sort();
+  const ro = state.months[state.current];
+  const year = +($('yr-y') && $('yr-y').value) || (ro ? ro.year : years[years.length-1]);
+  if(!year){ pnl(hdr('year')+`<p class="msg">${t('startText')}</p>`); return; }
+  const rows = yearData(year);
+  const full = rows.filter(r=>!r.partial), nPart = rows.length - full.length;
+  const sum = f => full.reduce((a,r)=>a+(+r[f]||0),0);
+  const max = Math.max(1, ...rows.map(r=>r.net));
+  const W = 600, H = 170, bw = W/12;
+  const bars = rows.map(r=>{ const h = r.net/max*(H-34); const x = (r.m-1)*bw;
+    return `<rect x="${x+6}" y="${H-18-h}" width="${bw-12}" height="${h}" rx="3" fill="${r.real?'var(--pay)':'var(--accent)'}" opacity="${r.partial?0.45:1}"></rect>
+      <text x="${x+bw/2}" y="${H-18-h-4}" text-anchor="middle" font-size="10" fill="var(--muted)">${Math.round(r.net)}</text>`; }).join('');
+  const labels = [...Array(12)].map((_,i)=>`<text x="${i*bw+bw/2}" y="${H-4}" text-anchor="middle" font-size="10" fill="var(--muted)">${new Date(2024,i,1).toLocaleDateString(LOC,{month:'short'}).replace('.','')}</text>`).join('');
+  pnl(hdr('year', t('yr_intro')) + `<label class="note">${t('yr_year')} <select id="yr-y">${years.map(y=>`<option${y===year?' selected':''}>${y}</option>`).join('')}</select></label>
+    <div class="tablewrap" style="margin-top:10px"><svg viewBox="0 0 ${W} ${H}" width="100%" style="max-width:${W}px;display:block" role="img" aria-label="${t('yr_chart')}">${bars}${labels}</svg></div>
+    <div class="legend"><span><i style="background:var(--pay)"></i>${t('yr_real')}</span><span><i style="background:var(--accent)"></i>${t('yr_est')}</span></div>
+    <div class="tablewrap"><table class="slip chk"><tr class="sec"><td>${t('vac_month')}</td><td>${t('grossTotal')}</td><td>${t('yr_diet')}</td><td>${t('slip_ss')}</td><td>IRPF</td><td>${t('slip_net')}</td></tr>
+    ${rows.map(r=>`<tr${r.partial?' style="opacity:.55"':''}><td style="text-transform:capitalize">${nm(year,r.m,{month:'short'})} <span class="note">${r.real?t('yr_realS'):r.partial?t('yr_partial'):t('yr_estS')}</span></td><td>${r.gross!=null?eur.format(r.gross):'—'}</td><td>${eur.format(r.dietas)}</td><td>${eur.format(r.ss)}</td><td>${eur.format(r.irpf)}</td><td>${eur.format(r.net)}</td></tr>`).join('')}
+    <tr class="sum"><td>${t('vac_total')}</td><td>${eur.format(sum('gross'))}</td><td>${eur.format(sum('dietas'))}</td><td>${eur.format(sum('ss'))}</td><td>${eur.format(sum('irpf'))}</td><td>${eur.format(sum('net'))}</td></tr></table></div>
+    ${nPart?`<p class="note">${t('yr_partNote',{n:nPart})}</p>`:''}<p class="note">${t('yr_note',{g:eur.format(sum('gross')-sum('dietas')),i:eur.format(sum('irpf')),s:eur.format(sum('ss')),d:eur.format(sum('dietas'))})}</p>`);
+}
+
+// ================= 7. backup =================
+function renderBackup(msg){
+  const n = Object.keys(state.months).length, ns = Object.keys(state.slips||{}).length;
+  pnl(hdr('backup', t('bk_intro')) + `<p class="note">${t('bk_have',{m:n,s:ns})}</p>
+    <div class="row"><button class="btn" id="bk-exp" type="button">${t('bk_export')}</button>
+    <label class="btn ghost" for="bk-in" style="display:inline-block">${t('bk_import')}</label><input type="file" id="bk-in" accept="application/json,.json" class="sr"></div>
+    <div id="bk-out">${msg||''}</div>`);
+}
+let bkPending = null;
+document.addEventListener('change', async e=>{
+  if(e.target.id==='bk-in'){
+    const f = e.target.files[0]; if(!f) return;
+    try{ const j = JSON.parse(await f.text()); if(j.app!=='payroster' || !j.state || !j.state.months) throw 0;
+      bkPending = j.state;
+      $('bk-out').innerHTML = `<p class="msg err">${t('bk_confirm',{m:Object.keys(j.state.months).length,d:esc(j.exported||'')})}</p><div class="row"><button class="btn danger" id="bk-ok" type="button">${t('bk_replace')}</button><button class="btn ghost" id="bk-no" type="button">${t('no')}</button></div>`;
+    }catch(err){ $('bk-out').innerHTML = `<p class="msg err">${t('bk_bad')}</p>`; }
+    e.target.value = ''; return;
+  }
+  if(e.target.id==='sim-date'){ simDate = e.target.value; renderSim(); return; }
+  if(e.target.id==='chk-k'){ renderCheck(e.target.value); return; }
+  if(e.target.id==='yr-y'){ renderYear(); return; }
+});
+document.addEventListener('click', async e=>{
+  const tb = e.target.closest('[data-tool]'); if(tb){ openTool(tb.dataset.tool); return; }
+  const sd = e.target.closest('[data-sim]'); if(sd){ simDate = sd.dataset.sim; toolOpen = null; openTool('sim'); return; }
+  const id = e.target.id;
+  if(id==='sim-go'){ runSim(); return; }
+  if(id==='cal-go'){ e.target.disabled = true; try{ await runCal(); } finally { e.target.disabled = false; } return; }
+  if(id==='bk-exp'){
+    const {stale, ...keep} = state;
+    const data = JSON.stringify({ app:'payroster', v:1, exported: todayISO(), state: keep });
+    await giveFile(`payroster-copia-${todayISO()}.json`, data, 'application/json');
+    $('bk-out').innerHTML = `<p class="msg">${t('bk_done')}</p>`; return; }
+  if(id==='bk-ok' && bkPending){ const lang = state.lang; state = Object.assign({ extras:{}, slips:{}, shared:{} }, bkPending); state.lang = state.lang || lang; bkPending = null;
+    save(); location.reload(); return; }
+  if(id==='bk-no'){ bkPending = null; $('bk-out').innerHTML=''; return; }
+});
+
+</script>
+<script>
 const SEED = null;
 const SEED_SETTINGS = null;
-const APP_VERSION = '2026.11.08-1416';
+const APP_VERSION = '2026.11.08-1441';
 const IS_PWA_BUILD = true;
 const LS = 'payroster.v1';
 const KC = { flight:'--k-flight', deadhead:'--k-dh', training:'--k-train', standby:'--k-sby', reserve:'--k-sby', ground:'--k-ground', off:'--k-off', empty:'--k-off', other:'--k-ground' };
@@ -4900,6 +6358,7 @@ function render(){
   const mDate = new Date(ro.year, ro.month-1, 1);
   $('mLabel').textContent = mDate.toLocaleDateString(LOC,{month:'short',year:'numeric'}).replace('.','');
   renderHero(c, ro); renderStrip(c, ro); renderDays(c, ro); renderSlip(c, ro); renderForm(); renderStored();
+  if(typeof renderToolbar==='function'){ renderToolbar(); if(['check','ftl','vac','year'].includes(toolOpen)) refreshTool(); }
 }
 
 function renderHero(c, ro){
@@ -5026,6 +6485,7 @@ function renderDays(c, ro){
           ${offish?`<label>${t('dayBought')} <select id="b-${d.date}" data-f="buy"><option value="">${t('buyAuto',{v: d.autoBuy==='full'?t('full'):d.autoBuy==='half'?t('half'):t('no')})}${d.buyWhy?' · '+buyWhyText(d):''}</option><option value="none"${ex.buy==='none'?' selected':''}>${t('no')}</option><option value="full"${ex.buy==='full'?' selected':''}>${t('full')}</option><option value="half"${ex.buy==='half'?' selected':''}>${t('half')}</option></select></label>`:''}
           ${d.codes.includes('O_M')?`<label><input type="checkbox" id="o-${d.date}" data-f="omDefer"${ex.omDefer?' checked':''}> ${t('omDeferred')}</label>`:''}
           ${(!offish && d.kind!=='flight')?`<span class="note">${t('noExtras')}</span>`:''}
+          <button class="btn ghost" type="button" data-sim="${d.date}" style="margin-left:auto">${t('sim_btn')}</button>
         </div>
       </div>
     </details>`;
@@ -5146,7 +6606,7 @@ function applyPayslip(p){
   if(p.irpf!=null) s.irpf = p.irpf;
   if(p.joined) s.joined = p.joined;
   if(p.ss) s.ss = PR.r2(p.ss);
-  if(p.period && p.net!=null){ state.slips = state.slips||{}; state.slips[p.period.year+'-'+String(p.period.month).padStart(2,'0')] = { net: p.net }; }
+  if(p.period && p.net!=null){ state.slips = state.slips||{}; state.slips[p.period.year+'-'+String(p.period.month).padStart(2,'0')] = { net: p.net, lines: p.lines, totals: p.totals }; }
   s.configured = true; $('form').dataset.ready=''; save(); render();
   const expected = (PR.BASE[p.rank][p.level]||0) * s.contract/100;
   const mes = p.period ? monthName(p.period.year,p.period.month,{month:'long',year:'numeric'}) : '';
