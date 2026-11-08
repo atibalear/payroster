@@ -141,7 +141,9 @@ input[type=number],input[type=text],select{background:var(--surface);border:1px 
 .sumbox .gross{background:var(--pay-soft);color:var(--pay);font-weight:700;padding:6px 8px;border-radius:6px}
 .sumbox dt.gross{border-radius:6px 0 0 6px} .sumbox dd.gross{border-radius:0 6px 6px 0}
 .salesm{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-top:12px;font-size:13px;color:var(--muted);background:var(--sunk);border-radius:8px;padding:8px 10px}
-.salesm input{width:110px;text-align:right}
+.salesm input{width:110px;text-align:right;flex:0 0 auto}
+.salesm .src{display:block;margin-top:2px;font-size:11.5px;font-weight:600}
+.src.s-slip{color:var(--pay)} .src.s-man{color:var(--accent)} .src.s-none{color:var(--warn)}
 .askj{display:flex;flex-direction:column;gap:10px;margin-top:12px;font-size:13px;color:var(--muted);background:var(--warn-soft);border-radius:8px;padding:10px 12px}
 .askjin{display:flex;flex-direction:column;gap:4px;color:var(--ink);font-weight:600;font-size:13px}
 /* iOS draws an empty date field with no width: give it a real box */
@@ -958,6 +960,10 @@ var I18N = {
   names: { es: 'Español', ca: 'Català', en: 'English', de: 'Deutsch', fr: 'Français', it: 'Italiano', pt: 'Português', ro: 'Română', hu: 'Magyar', sk: 'Slovenčina', cs: 'Čeština' },
   locales: { es: 'es-ES', ca: 'ca-ES', en: 'en-GB', de: 'de-DE', fr: 'fr-FR', it: 'it-IT', pt: 'pt-PT', ro: 'ro-RO', hu: 'hu-HU', sk: 'sk-SK', cs: 'cs-CZ' },
   es: {
+    src_est: 'sin dato: uso tu estimación de {v}',
+    src_none: 'sin dato: cuenta 0 €. Escríbelo o sube la nómina',
+    src_manual: 'escrito por ti',
+    src_slip: 'de tu nómina',
     slip_oneOff: 'Pago único / extra',
     oneOffMonth: 'Pago único en la nómina de {m} (si lo has tenido)',
     e_image: '{f}: este PDF es una imagen (foto o captura) y no tiene texto, así que no se puede leer. Descarga el PDF original del portal de Eurowings.',
@@ -1187,6 +1193,10 @@ var I18N = {
     e_noPeriod: 'No encuentro el periodo del roster. ¿Es el «Individual duty plan» de IDP en PDF?'
   },
   ca: {
+    src_est: 'sense dada: faig servir la teva estimació de {v}',
+    src_none: 'sense dada: compta 0 €. Escriu-lo o puja la nòmina',
+    src_manual: 'escrit per tu',
+    src_slip: 'de la teva nòmina',
     slip_oneOff: 'Pagament únic / extra',
     oneOffMonth: 'Pagament únic a la nòmina de {m} (si l’has tingut)',
     e_image: '{f}: aquest PDF és una imatge (foto o captura) i no té text, per això no es pot llegir. Descarrega el PDF original del portal d’Eurowings.',
@@ -1416,6 +1426,10 @@ var I18N = {
     e_noPeriod: 'No trobo el període del roster. És l’«Individual duty plan» d’IDP en PDF?'
   },
   en: {
+    src_est: 'no data: using your estimate of {v}',
+    src_none: 'no data: counts as €0. Type it or upload the payslip',
+    src_manual: 'typed by you',
+    src_slip: 'from your payslip',
     slip_oneOff: 'One-off payment / bonus',
     oneOffMonth: 'One-off payment in the {m} payslip (if you had any)',
     e_image: '{f}: this PDF is an image (photo or screenshot) with no text, so it can’t be read. Download the original PDF from the Eurowings portal.',
@@ -1645,6 +1659,10 @@ var I18N = {
     e_noPeriod: 'I can’t find the roster period. Is this the IDP “Individual duty plan” PDF?'
   },
   de: {
+    src_est: 'keine Angabe: deine Schätzung von {v}',
+    src_none: 'keine Angabe: zählt 0 €. Eintragen oder Abrechnung hochladen',
+    src_manual: 'von dir eingegeben',
+    src_slip: 'aus deiner Abrechnung',
     slip_oneOff: 'Einmalzahlung / Extra',
     oneOffMonth: 'Einmalzahlung in der Abrechnung {m} (falls du eine hattest)',
     e_image: '{f}: Dieses PDF ist ein Bild (Foto oder Screenshot) ohne Text und kann nicht gelesen werden. Lade das Original-PDF im Eurowings-Portal herunter.',
@@ -1874,6 +1892,10 @@ var I18N = {
     e_noPeriod: 'Ich finde den Zeitraum des Dienstplans nicht. Ist das der „Individual duty plan“ aus IDP als PDF?'
   },
   fr: {
+    src_est: 'pas de donnée : ton estimation de {v}',
+    src_none: 'pas de donnée : compte 0 €. Saisis-le ou importe la fiche',
+    src_manual: 'saisi par toi',
+    src_slip: 'de ta fiche de paie',
     slip_oneOff: 'Paiement unique / prime',
     oneOffMonth: 'Paiement unique sur la fiche de paie de {m} (si tu en as eu un)',
     e_image: '{f} : ce PDF est une image (photo ou capture) sans texte, il ne peut pas être lu. Télécharge le PDF original sur le portail Eurowings.',
@@ -2103,6 +2125,10 @@ var I18N = {
     e_noPeriod: 'Je ne trouve pas la période du planning. Est-ce bien l’« Individual duty plan » d’IDP en PDF ?'
   },
   hu: {
+    src_est: 'nincs adat: a becslésedet használom ({v})',
+    src_none: 'nincs adat: 0 €-val számol. Írd be vagy töltsd fel a bérjegyzéket',
+    src_manual: 'te írtad be',
+    src_slip: 'a bérjegyzékedből',
     slip_oneOff: 'Egyszeri kifizetés / extra',
     oneOffMonth: 'Egyszeri kifizetés a(z) {m} havi bérjegyzékben (ha volt)',
     e_image: '{f}: ez a PDF egy kép (fotó vagy képernyőkép), nincs benne szöveg, ezért nem olvasható. Töltsd le az eredeti PDF-et az Eurowings portálról.',
@@ -2332,6 +2358,10 @@ var I18N = {
     e_noPeriod: 'Nem találom a beosztás időszakát. Ez az IDP „Individual duty plan” PDF-je?'
   },
   sk: {
+    src_est: 'bez údaja: používam tvoj odhad {v}',
+    src_none: 'bez údaja: počíta sa 0 €. Zadaj ho alebo nahraj pásku',
+    src_manual: 'zadané tebou',
+    src_slip: 'z tvojej výplatnej pásky',
     slip_oneOff: 'Jednorazová platba / extra',
     oneOffMonth: 'Jednorazová platba vo výplatnej páske za {m} (ak si nejakú mal)',
     e_image: '{f}: toto PDF je obrázok (fotka alebo snímka obrazovky) bez textu, preto sa nedá prečítať. Stiahni pôvodné PDF z portálu Eurowings.',
@@ -2561,6 +2591,10 @@ var I18N = {
     e_noPeriod: 'Nenachádzam obdobie rozpisu. Je to „Individual duty plan“ z IDP v PDF?'
   },
   cs: {
+    src_est: 'bez údaje: používám tvůj odhad {v}',
+    src_none: 'bez údaje: počítá se 0 €. Zadej ho nebo nahraj pásku',
+    src_manual: 'zadáno tebou',
+    src_slip: 'z tvé výplatní pásky',
     slip_oneOff: 'Jednorázová platba / extra',
     oneOffMonth: 'Jednorázová platba ve výplatní pásce za {m} (pokud jsi nějakou měl)',
     e_image: '{f}: toto PDF je obrázek (fotka nebo snímek obrazovky) bez textu, proto ho nelze přečíst. Stáhni původní PDF z portálu Eurowings.',
@@ -2790,6 +2824,10 @@ var I18N = {
     e_noPeriod: 'Nenacházím období rozpisu. Je to „Individual duty plan“ z IDP v PDF?'
   },
   it: {
+    "src_est": "nessun dato: uso la tua stima di {v}",
+    "src_none": "nessun dato: conta 0 €. Inseriscilo o carica la busta paga",
+    "src_manual": "inserito da te",
+    "src_slip": "dalla tua busta paga",
     "slip_oneOff": "Pagamento unico / extra",
     "oneOffMonth": "Pagamento unico nella busta paga di {m} (se l’hai avuto)",
     "e_image": "{f}: questo PDF è un’immagine (foto o screenshot) senza testo, quindi non si può leggere. Scarica il PDF originale dal portale Eurowings.",
@@ -3125,6 +3163,10 @@ var I18N = {
     "e_noPeriod": "Non trovo il periodo del turno. È l’«Individual duty plan» di IDP in PDF?"
   },
   pt: {
+    "src_est": "sem dados: uso a tua estimativa de {v}",
+    "src_none": "sem dados: conta 0 €. Escreve-o ou carrega o recibo",
+    "src_manual": "escrito por ti",
+    "src_slip": "do teu recibo",
     "slip_oneOff": "Pagamento único / extra",
     "oneOffMonth": "Pagamento único no recibo de {m} (se tiveste algum)",
     "e_image": "{f}: este PDF é uma imagem (foto ou captura) sem texto, por isso não pode ser lido. Descarrega o PDF original no portal da Eurowings.",
@@ -3460,6 +3502,10 @@ var I18N = {
     "e_noPeriod": "Não encontro o período da escala. É o «Individual duty plan» do IDP em PDF?"
   },
   ro: {
+    "src_est": "fără date: folosesc estimarea ta de {v}",
+    "src_none": "fără date: contează 0 €. Scrie-l sau încarcă fluturașul",
+    "src_manual": "introdus de tine",
+    "src_slip": "din fluturașul tău",
     "slip_oneOff": "Plată unică / extra",
     "oneOffMonth": "Plată unică în fluturașul din {m} (dacă ai avut)",
     "e_image": "{f}: acest PDF este o imagine (poză sau captură) fără text, deci nu poate fi citit. Descarcă PDF-ul original din portalul Eurowings.",
@@ -6472,7 +6518,7 @@ document.addEventListener('click', async e=>{
 <script>
 const SEED = null;
 const SEED_SETTINGS = null;
-const APP_VERSION = '2026.11.08-1921';
+const APP_VERSION = '2026.11.08-1925';
 const IS_PWA_BUILD = true;
 const LS = 'payroster.v1';
 const KC = { flight:'--k-flight', deadhead:'--k-dh', training:'--k-train', standby:'--k-sby', reserve:'--k-sby', ground:'--k-ground', off:'--k-off', empty:'--k-off', other:'--k-ground' };
@@ -6585,10 +6631,18 @@ function salesFromSlips(s){
     }
   }
 }
+function salesInput(k, mName){
+  const ex = state.extras[k]||{}, has = ex.sales!=null && ex.sales!=='', est = +state.settings.salesEstimate||0;
+  const src = has && ex.salesSlip ? `<span class="src s-slip">✓ ${t('src_slip')}</span>`
+    : has ? `<span class="src s-man">✎ ${t('src_manual')}</span>`
+    : `<span class="src s-none">${est ? t('src_est',{v:eur.format(est)}) : t('src_none')}</span>`;
+  return `<label class="salesm"><span>${t('salesMonth',{m:mName})}${src}</span><input type="text" inputmode="decimal" id="ms-${k}" data-msales="${k}" value="${has ? (ex.salesSlip ? n2.format(ex.sales) : ex.sales) : ''}" placeholder="0,00"></label>`;
+}
 function slipFor(c, s, y, m){ return PR.payslip(c, s, y, m, oneOffOf(y,m).v); }
 function oneOffInput(y,m){
   const k = y+'-'+String(m).padStart(2,'0'), o = oneOffOf(y,m);
-  return `<label class="salesm">${t('oneOffMonth',{m:monthName(y,m)})}<input type="text" inputmode="decimal" id="mo-${k}" data-moneoff="${k}" value="${o.manual ? o.v : (o.v ? n2.format(o.v) : '')}" placeholder="0,00"></label>`;
+  const src = o.manual ? `<span class="src s-man">✎ ${t('src_manual')}</span>` : o.fromSlip ? `<span class="src s-slip">✓ ${t('src_slip')}</span>` : '';
+  return `<label class="salesm"><span>${t('oneOffMonth',{m:monthName(y,m)})}${src}</span><input type="text" inputmode="decimal" id="mo-${k}" data-moneoff="${k}" value="${o.manual ? o.v : (o.v ? n2.format(o.v) : '')}" placeholder="0,00"></label>`;
 }
 function prevKey(y,m){ return m===1 ? (y-1)+'-12' : y+'-'+String(m-1).padStart(2,'0'); }
 function save(){ try{ const {stale, ...keep} = state; localStorage.setItem(LS, JSON.stringify(keep)); }catch(e){} }
@@ -6650,7 +6704,7 @@ function renderHero(c, ro){
       <dt class="netrow"><span class="op">=</span>${t('youGet')}</dt><dd class="netrow">${eur.format(N.net)}</dd>
       ${cmp(N.net, realNext)}
     </dl>
-    <label class="salesm">${t('salesMonth',{m:mNow})}<input type="text" inputmode="decimal" id="ms-${key(ro)}" data-msales="${key(ro)}" value="${(state.extras[key(ro)]||{}).sales ?? ''}" placeholder="0,00"></label>
+    ${salesInput(key(ro), mNow)}
     ${oneOffInput(N.year, N.month)}
     ${N.month===12 && !state.settings.joined ? `<div class="askj"><span>${t('askJoined')}</span><label class="askjin">${t('f_joinedShort')}<input type="date" id="q-joined"></label><button class="btn" id="q-joined-save" type="button" style="align-self:flex-start">${t('saveDate')}</button></div>` : ''}
     <div class="eyebrow" style="margin-top:16px">${t('variableOf',{p:mNow})}</div>
@@ -6683,7 +6737,7 @@ function renderHero(c, ro){
         <dt class="netrow"><span class="op">=</span>${t('youGet')}</dt><dd class="netrow">${eur.format(P.net)}</dd>
         ${cmp(P.net, realNow)}
       </dl>
-      <label class="salesm">${t('salesMonth',{m:mPrev})}<input type="text" inputmode="decimal" id="ms-${pk}" data-msales="${pk}" value="${(state.extras[pk]||{}).sales ?? ''}" placeholder="0,00"></label>
+      ${salesInput(pk, mPrev)}
       ${oneOffInput(ro.year, ro.month)}`
     : realNow && realNow.net!=null ? `
       <div class="netfig num">${eur.format(realNow.net)}</div>
@@ -6946,7 +7000,7 @@ document.addEventListener('change', e=>{
   if(el.dataset.moneoff){ const k = el.dataset.moneoff; const v = String(el.value).trim();
     state.extras[k] = state.extras[k]||{}; state.extras[k].oneOff = v==='' ? null : (parseFloat(/,/.test(v) ? v.replace(/\./g,'').replace(',','.') : v)||0); save(); render(); return; }
   if(el.dataset.msales){ const k = el.dataset.msales; const v = String(el.value).trim();
-    state.extras[k] = state.extras[k]||{}; state.extras[k].sales = v==='' ? null : (parseFloat(v.replace(',','.'))||0); state.extras[k].salesSlip = false; save(); render(); return; }
+    state.extras[k] = state.extras[k]||{}; state.extras[k].sales = v==='' ? null : (parseFloat(/,/.test(v) ? v.replace(/\./g,'').replace(',','.') : v)||0); state.extras[k].salesSlip = false; save(); render(); return; }
   const box = el.closest('.extras');
   if(box && el.dataset.f){
     const d = box.dataset.date; const ex = state.extras[d] = state.extras[d]||{};
