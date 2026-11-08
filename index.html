@@ -242,7 +242,7 @@ input[type=date]::-webkit-date-and-time-value{text-align:left}
       <button class="iconbtn" id="nextM" aria-label="" data-i18n-aria="nextMonth">›</button>
     </div>
     <label class="iconbtn" for="pdfIn" title="" data-i18n-title="importTitle">＋ PDF</label>
-    <input type="file" id="pdfIn" accept="application/pdf,.pdf" class="sr">
+    <input type="file" id="pdfIn" accept="application/pdf,.pdf" class="sr" multiple>
   </header>
 
   <div id="updBar" class="msg" hidden></div>
@@ -6380,7 +6380,7 @@ document.addEventListener('click', async e=>{
 <script>
 const SEED = null;
 const SEED_SETTINGS = null;
-const APP_VERSION = '2026.11.08-1514';
+const APP_VERSION = '2026.11.08-1850';
 const IS_PWA_BUILD = true;
 const LS = 'payroster.v1';
 const KC = { flight:'--k-flight', deadhead:'--k-dh', training:'--k-train', standby:'--k-sby', reserve:'--k-sby', ground:'--k-ground', off:'--k-off', empty:'--k-off', other:'--k-ground' };
@@ -6708,7 +6708,15 @@ function renderSetup(){
 }
 function applyPayslip(p){
   const s = state.settings;
-  if(!p.rank || p.level==null){ showMsg(t('e_noCat'), true); return; }
+  if(!p.rank || p.level==null) return {html:t('e_noCat'), err:true};
+  const pk = p.period ? p.period.year+'-'+String(p.period.month).padStart(2,'0') : '';
+  const mes = p.period ? monthName(p.period.year,p.period.month,{month:'long',year:'numeric'}) : '';
+  state.slips = state.slips||{};
+  // an older payslip is only stored for the history; the contract data comes from the newest one
+  const newest = Object.keys(state.slips).sort().pop();
+  const older = s.configured && pk && newest && pk < newest;
+  if(pk && p.net!=null) state.slips[pk] = { net: p.net, lines: p.lines, totals: p.totals };
+  if(older){ save(); render(); return {html: t('ps_saved',{m:mes})}; }
   s.rank = p.rank; s.level = p.level; s.contract = p.contract || 100;
   if(p.since){ s.levelMode='date'; s.since=p.since; } else s.levelMode='manual';
   // concept 1046 «Formación de cabina»: 270 € or more = trainer, 80–269 € = competence team only
@@ -6717,16 +6725,15 @@ function applyPayslip(p){
   if(p.irpf!=null) s.irpf = p.irpf;
   if(p.joined) s.joined = p.joined;
   if(p.ss) s.ss = PR.r2(p.ss);
-  if(p.period && p.net!=null){ state.slips = state.slips||{}; state.slips[p.period.year+'-'+String(p.period.month).padStart(2,'0')] = { net: p.net, lines: p.lines, totals: p.totals }; }
   s.configured = true; $('form').dataset.ready=''; save(); render();
   const expected = (PR.BASE[p.rank][p.level]||0) * s.contract/100;
-  const mes = p.period ? monthName(p.period.year,p.period.month,{month:'long',year:'numeric'}) : '';
   let html = t('ps_read',{m: mes?t('ps_of',{m:mes}):'', r: rankName(p.rank), l: p.level, c: s.contract!==100?t('ps_at',{c:s.contract}):'', irpf: n2.format(s.irpf),
     t: s.isTrainer?t('ps_trainer'):(s.isCT?t('ps_ct'):''), n: p.nextIncrease?t('ps_next',{d:new Date(p.nextIncrease+'T12:00').toLocaleDateString(LOC)}):''});
-  if(p.basePay && Math.abs(p.basePay-expected)>1) html += ' <br>'+t('ps_mismatch',{a:eur.format(p.basePay),b:eur.format(expected)});
-  if(p.period && p.net!=null) html += ' '+t('ps_saved',{m:mes});
+  const bad = p.basePay && Math.abs(p.basePay-expected)>1;
+  if(bad) html += ' <br>'+t('ps_mismatch',{a:eur.format(p.basePay),b:eur.format(expected)});
+  if(pk && p.net!=null) html += ' '+t('ps_saved',{m:mes});
   if(!Object.keys(state.months).length) html += ' '+t('ps_nowRoster');
-  showMsg(html, p.basePay && Math.abs(p.basePay-expected)>1);
+  return {html, err:bad};
 }
 function saveSetup(){
   const s = state.settings, v = id => $(id).value;
@@ -6814,21 +6821,29 @@ async function readPdf(file){
   return pages;
 }
 function showMsg(html, err){ const m=$('importMsg'); m.hidden=false; m.className='msg'+(err?' err':''); m.innerHTML=html; }
-$('pdfIn').addEventListener('change', async e=>{
-  const f = e.target.files[0]; if(!f) return;
-  showMsg(t('reading',{f:esc(f.name)}));
+async function importPdf(f){
   try{
     const pages = await readPdf(f);
     const slip = PR.parsePayslip(pages[0] ? pages[0].items : []);
-    if(slip){ applyPayslip(slip); e.target.value=''; return; }
+    if(slip) return Object.assign({slip:true, period: slip.period}, applyPayslip(slip));
     const ro = PR.parseRoster(pages);
     ro.raw = pages.map(p => p.items.map(i => [Math.round(i.x*10)/10, Math.round(i.y*10)/10, i.str]));
     const k = key(ro);
     state.months[k] = ro; state.current = k; if(state.stale) state.stale = state.stale.filter(x=>x!==k); save(); render();
     const flights = ro.days.filter(d=>d.events.some(x=>x.type==='flt')).length;
-    showMsg(t('imported',{m:monthName(ro.year,ro.month,{month:'long',year:'numeric'}),d:ro.days.length,f:flights}));
-  }catch(err){ const m=String(err.message||err); showMsg(/^No encuentro el periodo/.test(m)?t('e_noPeriod'):esc(m), true); }
+    return {html: t('imported',{m:monthName(ro.year,ro.month,{month:'long',year:'numeric'}),d:ro.days.length,f:flights})};
+  }catch(err){ const m=String(err.message||err); return {html: esc(f.name)+': '+(/^No encuentro el periodo/.test(m)?t('e_noPeriod'):esc(m)), err:true}; }
+}
+$('pdfIn').addEventListener('change', async e=>{
+  // several PDFs at once (rosters and payslips, any order): only the newest payslip sets the contract data
+  const files = [...e.target.files]; if(!files.length) return;
   e.target.value='';
+  const out = [];
+  for(let i=0;i<files.length;i++){
+    showMsg(t('reading',{f:esc(files[i].name)}) + (files.length>1 ? ` (${i+1}/${files.length})` : ''));
+    out.push(await importPdf(files[i]));
+  }
+  showMsg(out.map(r=>r.html).join('<br>'), out.some(r=>r.err));
 });
 
 
