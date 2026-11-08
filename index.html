@@ -6472,7 +6472,7 @@ document.addEventListener('click', async e=>{
 <script>
 const SEED = null;
 const SEED_SETTINGS = null;
-const APP_VERSION = '2026.11.08-1919';
+const APP_VERSION = '2026.11.08-1920';
 const IS_PWA_BUILD = true;
 const LS = 'payroster.v1';
 const KC = { flight:'--k-flight', deadhead:'--k-dh', training:'--k-train', standby:'--k-sby', reserve:'--k-sby', ground:'--k-ground', off:'--k-off', empty:'--k-off', other:'--k-ground' };
@@ -6531,6 +6531,7 @@ function load(){
     else if(!(SEED && k===key(SEED))) s.stale.push(k);
   }
   pruneRaws(s);
+  salesFromSlips(s);
   if(!s.current || !s.months[s.current]) s.current = Object.keys(s.months).sort().pop();
   return s;
 }
@@ -6564,6 +6565,25 @@ function oneOffOf(y,m){
   const sl = (state.slips||{})[k];
   const v = sl && sl.lines ? sl.lines.filter(l=>isOneOff(l) && !l.retro).reduce((a,l)=>a+(+l.dev||0),0) : 0;
   return {v: PR.r2(v), fromSlip: v>0};
+}
+// Sales commission read from an uploaded payslip (5128 «Comisión de Ventas»): it is paid with the
+// month it belongs to in the «Retro» column (202608), or the month before the payslip. Fills that
+// month only when the user hasn't typed a value.
+function salesFromSlips(s){
+  s.extras = s.extras || {};
+  for(const [k, sl] of Object.entries(s.slips||{})){
+    if(!sl || !sl.lines) continue;
+    const [y,m] = k.split('-').map(Number), pk = prevKey(y,m), by = {};
+    for(const l of sl.lines){
+      if(!/comisi/i.test(l.label||'') && l.code!=='5128') continue;
+      const mk = l.retro && /^\d{6}$/.test(l.retro) ? l.retro.slice(0,4)+'-'+l.retro.slice(4) : pk;
+      by[mk] = PR.r2((by[mk]||0) + (+l.dev||0) - (+l.ded||0));
+    }
+    for(const [mk, v] of Object.entries(by)){
+      const ex = s.extras[mk] = s.extras[mk] || {};
+      if(ex.sales == null || ex.salesSlip) { ex.sales = v; ex.salesSlip = true; }
+    }
+  }
 }
 function slipFor(c, s, y, m){ return PR.payslip(c, s, y, m, oneOffOf(y,m).v); }
 function oneOffInput(y,m){
@@ -6850,7 +6870,7 @@ function applyPayslip(p){
   // an older payslip is only stored for the history; the contract data comes from the newest one
   const newest = Object.keys(state.slips).sort().pop();
   const older = s.configured && pk && newest && pk < newest;
-  if(pk && p.net!=null) state.slips[pk] = { net: p.net, lines: p.lines, totals: p.totals };
+  if(pk && p.net!=null){ state.slips[pk] = { net: p.net, lines: p.lines, totals: p.totals }; salesFromSlips(state); }
   if(older){ save(); render(); return {html: t('ps_saved',{m:mes})}; }
   s.rank = p.rank; s.level = p.level; s.contract = p.contract || 100;
   if(p.since){ s.levelMode='date'; s.since=p.since; } else s.levelMode='manual';
@@ -6926,7 +6946,7 @@ document.addEventListener('change', e=>{
   if(el.dataset.moneoff){ const k = el.dataset.moneoff; const v = String(el.value).trim();
     state.extras[k] = state.extras[k]||{}; state.extras[k].oneOff = v==='' ? null : (parseFloat(/,/.test(v) ? v.replace(/\./g,'').replace(',','.') : v)||0); save(); render(); return; }
   if(el.dataset.msales){ const k = el.dataset.msales; const v = String(el.value).trim();
-    state.extras[k] = state.extras[k]||{}; state.extras[k].sales = v==='' ? null : (parseFloat(v.replace(',','.'))||0); save(); render(); return; }
+    state.extras[k] = state.extras[k]||{}; state.extras[k].sales = v==='' ? null : (parseFloat(v.replace(',','.'))||0); state.extras[k].salesSlip = false; save(); render(); return; }
   const box = el.closest('.extras');
   if(box && el.dataset.f){
     const d = box.dataset.date; const ex = state.extras[d] = state.extras[d]||{};
