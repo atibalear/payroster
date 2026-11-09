@@ -1551,6 +1551,7 @@ var I18N = {
     e_noPeriod: 'No encuentro el periodo del roster. ¿Es el «Individual duty plan» de IDP en PDF?'
   },
   ca: {
+    k_empty: '—',
     priv_show: 'Mostrar imports',
     priv_hide: 'Amagar imports',
     mm_route: 'Ruta completa',
@@ -1955,6 +1956,7 @@ var I18N = {
     e_noPeriod: 'No trobo el període del roster. És l’«Individual duty plan» d’IDP en PDF?'
   },
   en: {
+    k_empty: '—',
     priv_show: 'Show amounts',
     priv_hide: 'Hide amounts',
     mm_route: 'Whole route',
@@ -2359,6 +2361,7 @@ var I18N = {
     e_noPeriod: 'I can’t find the roster period. Is this the IDP “Individual duty plan” PDF?'
   },
   de: {
+    k_empty: '—',
     priv_show: 'Beträge anzeigen',
     priv_hide: 'Beträge ausblenden',
     mm_route: 'Ganze Strecke',
@@ -2763,6 +2766,7 @@ var I18N = {
     e_noPeriod: 'Ich finde den Zeitraum des Dienstplans nicht. Ist das der „Individual duty plan“ aus IDP als PDF?'
   },
   fr: {
+    k_empty: '—',
     priv_show: 'Afficher les montants',
     priv_hide: 'Masquer les montants',
     mm_route: 'Route entière',
@@ -3167,6 +3171,7 @@ var I18N = {
     e_noPeriod: 'Je ne trouve pas la période du planning. Est-ce bien l’« Individual duty plan » d’IDP en PDF ?'
   },
   hu: {
+    k_empty: '—',
     priv_show: 'Összegek mutatása',
     priv_hide: 'Összegek elrejtése',
     mm_route: 'Teljes útvonal',
@@ -3571,6 +3576,7 @@ var I18N = {
     e_noPeriod: 'Nem találom a beosztás időszakát. Ez az IDP „Individual duty plan” PDF-je?'
   },
   sk: {
+    k_empty: '—',
     priv_show: 'Zobraziť sumy',
     priv_hide: 'Skryť sumy',
     mm_route: 'Celá trasa',
@@ -3975,6 +3981,7 @@ var I18N = {
     e_noPeriod: 'Nenachádzam obdobie rozpisu. Je to „Individual duty plan“ z IDP v PDF?'
   },
   cs: {
+    k_empty: '—',
     priv_show: 'Zobrazit částky',
     priv_hide: 'Skrýt částky',
     mm_route: 'Celá trasa',
@@ -9199,7 +9206,7 @@ function renderMoving(){
       ${st(land ? esc(land) : t('mm_sea'), t('mm_over'))}`;
   const fix = src === 'gps' ? t('mm_fix', {s: Math.round((now - f.at) / 1000), a: Math.round(f.acc || 0)}) : '';
   if(mm.tilt == null) mm.tilt = true;
-  const key = [L.flight, L.dep, L.start, !!mm.follow, !!mm.sim, !!mm.tilt].join('|');
+  const key = [L.flight, L.dep, L.start, !!mm.follow, !!mm.sim, !!mm.tilt, lang].join('|');
   const el = $('mm-map');
   if(el && mm._key === key){
     // only move the plane and refresh the numbers: the map itself stays
@@ -9410,7 +9417,7 @@ document.addEventListener('click', async e => {
 <script>
 const SEED = null;
 const SEED_SETTINGS = null;
-const APP_VERSION = '2026.11.09-1112';
+const APP_VERSION = '2026.11.09-1120';
 const IS_PWA_BUILD = true;
 const LS = 'payroster.v1';
 const KC = { flight:'--k-flight', deadhead:'--k-dh', training:'--k-train', standby:'--k-sby', reserve:'--k-sby', ground:'--k-ground', off:'--k-off', empty:'--k-off', other:'--k-ground' };
@@ -9911,7 +9918,7 @@ $('prevM').onclick = ()=>{ const k=Object.keys(state.months).sort(); const i=k.i
 $('nextM').onclick = ()=>{ const k=Object.keys(state.months).sort(); const i=k.indexOf(state.current); if(i<k.length-1){state.current=k[i+1]; save(); render();} };
 
 document.addEventListener('change', e=>{
-  if(e.target.id==='f-lang' || e.target.id==='p-lang'){ state.lang = e.target.value; setLang(state.lang); if(IS_PWA_BUILD) $('verTxt').textContent = t('version',{v:APP_VERSION}); save(); $('form').dataset.ready=''; $('setup').innerHTML=''; $('setup').hidden=true; render(); return; }
+  if(e.target.id==='f-lang' || e.target.id==='p-lang'){ state.lang = e.target.value; setLang(state.lang); if(IS_PWA_BUILD) $('verTxt').textContent = t('version',{v:APP_VERSION}); save(); $('form').dataset.ready=''; $('setup').innerHTML=''; $('setup').hidden=true; render(); if(typeof refreshTool==='function') refreshTool(); const pb=$('privBtn'); if(pb) pb.title=t(PRIV?'priv_show':'priv_hide'); return; }
   const el = e.target;
   if(el.id==='q-joined') return;   // iOS fires change on every wheel move: wait for the Save button
   if(el.dataset.moneoff){ const k = el.dataset.moneoff; const v = String(el.value).trim();
