@@ -57,6 +57,7 @@ body.viewer .tabbar{display:none}
 .tile{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:7px;min-height:86px;padding:12px 6px;border-radius:14px;border:1px solid var(--line);background:var(--surface);color:var(--ink);font:600 12.5px/1.25 var(--f-body);text-align:center;cursor:pointer}
 .tile svg{width:26px;height:26px;fill:none;stroke:var(--accent);stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
 .tile.on{border-color:var(--accent);background:var(--accent-soft)}
+.restorebox{margin-top:14px;padding:12px;border-radius:10px;background:var(--sunk)}
 .mono{font-family:var(--f-mono);font-variant-numeric:tabular-nums}
 .num{font-variant-numeric:tabular-nums}
 button,select,input{font:inherit;color:inherit}
@@ -294,7 +295,7 @@ input[type=date]::-webkit-date-and-time-value{text-align:left}
       <button class="iconbtn" id="nextM" aria-label="" data-i18n-aria="nextMonth">›</button>
     </div>
     <label class="iconbtn" for="pdfIn" title="" data-i18n-title="importTitle">＋ PDF</label>
-    <input type="file" id="pdfIn" accept="application/pdf,.pdf,image/*" class="sr" multiple>
+    <input type="file" id="pdfIn" accept="application/pdf,.pdf,image/*,application/json,.json" class="sr" multiple>
   </header>
 
   <div id="updBar" class="msg" hidden></div>
@@ -1124,6 +1125,8 @@ var I18N = {
   names: { es: 'Español', ca: 'Català', en: 'English', de: 'Deutsch', fr: 'Français', it: 'Italiano', pt: 'Português', ro: 'Română', hu: 'Magyar', sk: 'Slovenčina', cs: 'Čeština' },
   locales: { es: 'es-ES', ca: 'ca-ES', en: 'en-GB', de: 'de-DE', fr: 'fr-FR', it: 'it-IT', pt: 'pt-PT', ro: 'ro-RO', hu: 'hu-HU', sk: 'sk-SK', cs: 'cs-CZ' },
   es: {
+    su_restore: 'Recupera tu copia de seguridad (el archivo payroster-copia-….json que guardaste en Archivos o iCloud Drive) y vuelven todos tus rosters, nóminas y datos.',
+    su_restoreT: '¿Ya usabas Payroster?',
     tab_more: 'Mis datos',
     tab_roster: 'Roster',
     mm_stop: 'Parar moving map',
@@ -1462,6 +1465,8 @@ var I18N = {
     e_noPeriod: 'No encuentro el periodo del roster. ¿Es el «Individual duty plan» de IDP en PDF?'
   },
   ca: {
+    su_restore: 'Recupera la teva còpia de seguretat (el fitxer payroster-copia-….json que vas desar a Fitxers o iCloud Drive) i tornen tots els rosters, nòmines i dades.',
+    su_restoreT: 'Ja feies servir Payroster?',
     tab_more: 'Les meves dades',
     tab_roster: 'Roster',
     mm_stop: 'Aturar moving map',
@@ -1800,6 +1805,8 @@ var I18N = {
     e_noPeriod: 'No trobo el període del roster. És l’«Individual duty plan» d’IDP en PDF?'
   },
   en: {
+    su_restore: 'Restore your backup (the payroster-copia-….json file you saved to Files or iCloud Drive) and all your rosters, payslips and details come back.',
+    su_restoreT: 'Already used Payroster?',
     tab_more: 'My details',
     tab_roster: 'Roster',
     mm_stop: 'Stop moving map',
@@ -2138,6 +2145,8 @@ var I18N = {
     e_noPeriod: 'I can’t find the roster period. Is this the IDP “Individual duty plan” PDF?'
   },
   de: {
+    su_restore: 'Stelle deine Sicherung wieder her (die Datei payroster-copia-….json in Dateien oder iCloud Drive), dann sind alle Dienstpläne, Abrechnungen und Daten zurück.',
+    su_restoreT: 'Hast du Payroster schon benutzt?',
     tab_more: 'Meine Daten',
     tab_roster: 'Dienstplan',
     mm_stop: 'Moving Map beenden',
@@ -2476,6 +2485,8 @@ var I18N = {
     e_noPeriod: 'Ich finde den Zeitraum des Dienstplans nicht. Ist das der „Individual duty plan“ aus IDP als PDF?'
   },
   fr: {
+    su_restore: 'Restaure ta sauvegarde (le fichier payroster-copia-….json enregistré dans Fichiers ou iCloud Drive) et tous tes plannings, fiches de paie et données reviennent.',
+    su_restoreT: 'Tu utilisais déjà Payroster ?',
     tab_more: 'Mes données',
     tab_roster: 'Planning',
     mm_stop: 'Arrêter la moving map',
@@ -2814,6 +2825,8 @@ var I18N = {
     e_noPeriod: 'Je ne trouve pas la période du planning. Est-ce bien l’« Individual duty plan » d’IDP en PDF ?'
   },
   hu: {
+    su_restore: 'Állítsd vissza a mentésedet (a Fájlokba vagy iCloud Drive-ra mentett payroster-copia-….json fájlt), és visszajön minden beosztás, bérjegyzék és adat.',
+    su_restoreT: 'Használtad már a Payrostert?',
     tab_more: 'Adataim',
     tab_roster: 'Beosztás',
     mm_stop: 'Moving map leállítása',
@@ -3152,6 +3165,8 @@ var I18N = {
     e_noPeriod: 'Nem találom a beosztás időszakát. Ez az IDP „Individual duty plan” PDF-je?'
   },
   sk: {
+    su_restore: 'Obnov zálohu (súbor payroster-copia-….json uložený v Súboroch alebo na iCloud Drive) a vrátia sa všetky rozpisy, výplatné pásky a údaje.',
+    su_restoreT: 'Už si používal/a Payroster?',
     tab_more: 'Moje údaje',
     tab_roster: 'Rozpis',
     mm_stop: 'Zastaviť moving map',
@@ -3490,6 +3505,8 @@ var I18N = {
     e_noPeriod: 'Nenachádzam obdobie rozpisu. Je to „Individual duty plan“ z IDP v PDF?'
   },
   cs: {
+    su_restore: 'Obnov zálohu (soubor payroster-copia-….json uložený v Souborech nebo na iCloud Drive) a vrátí se všechny rozpisy, výplatní pásky a údaje.',
+    su_restoreT: 'Už jsi používal/a Payroster?',
     tab_more: 'Moje údaje',
     tab_roster: 'Rozpis',
     mm_stop: 'Zastavit moving map',
@@ -3828,6 +3845,8 @@ var I18N = {
     e_noPeriod: 'Nenacházím období rozpisu. Je to „Individual duty plan“ z IDP v PDF?'
   },
   it: {
+    "su_restore": "Recupera il backup (il file payroster-copia-….json salvato in File o iCloud Drive) e tornano tutti i roster, le buste paga e i dati.",
+    "su_restoreT": "Usavi già Payroster?",
     "tab_more": "I miei dati",
     "tab_roster": "Roster",
     "mm_stop": "Ferma moving map",
@@ -4272,6 +4291,8 @@ var I18N = {
     "e_noPeriod": "Non trovo il periodo del turno. È l’«Individual duty plan» di IDP in PDF?"
   },
   pt: {
+    "su_restore": "Recupera a tua cópia de segurança (o ficheiro payroster-copia-….json guardado em Ficheiros ou iCloud Drive) e voltam todas as escalas, recibos e dados.",
+    "su_restoreT": "Já usavas o Payroster?",
     "tab_more": "Os meus dados",
     "tab_roster": "Escala",
     "mm_stop": "Parar moving map",
@@ -4716,6 +4737,8 @@ var I18N = {
     "e_noPeriod": "Não encontro o período da escala. É o «Individual duty plan» do IDP em PDF?"
   },
   ro: {
+    "su_restore": "Recuperează copia de siguranță (fișierul payroster-copia-….json salvat în Fișiere sau iCloud Drive) și revin toate rosterele, fluturașii și datele.",
+    "su_restoreT": "Foloseai deja Payroster?",
     "tab_more": "Datele mele",
     "tab_roster": "Roster",
     "mm_stop": "Oprește moving map",
@@ -7873,17 +7896,22 @@ function renderBackup(msg){
   const n = Object.keys(state.months).length, ns = Object.keys(state.slips||{}).length;
   pnl(hdr('backup', t('bk_intro')) + `<p class="note">${t('bk_have',{m:n,s:ns})}</p>
     <div class="row"><button class="btn" id="bk-exp" type="button">${t('bk_export')}</button>
-    <label class="btn ghost" for="bk-in" style="display:inline-block">${t('bk_import')}</label><input type="file" id="bk-in" accept="application/json,.json" class="sr"></div>
+    <label class="btn ghost" for="bk-in" style="display:inline-block">${t('bk_import')}</label><input type="file" id="bk-in" class="sr"></div>
     <div id="bk-out">${msg||''}</div>`);
 }
 let bkPending = null;
+// any file can be picked (iOS greys out .json files when the picker filters by type); the content is checked here
+async function readBackup(f, outId){
+  const out = $(outId); if(!out) return;
+  try{ const j = JSON.parse(await f.text()); if(j.app!=='payroster' || !j.state || !j.state.months) throw 0;
+    bkPending = j.state;
+    out.innerHTML = `<p class="msg err">${t('bk_confirm',{m:Object.keys(j.state.months).length,d:esc(j.exported||'')})}</p><div class="row"><button class="btn danger" id="bk-ok" type="button">${t('bk_replace')}</button><button class="btn ghost" id="bk-no" type="button">${t('no')}</button></div>`;
+  }catch(err){ out.innerHTML = `<p class="msg err">${t('bk_bad')}</p>`; }
+}
 document.addEventListener('change', async e=>{
-  if(e.target.id==='bk-in'){
+  if(e.target.id==='bk-in' || e.target.id==='bk-in0'){
     const f = e.target.files[0]; if(!f) return;
-    try{ const j = JSON.parse(await f.text()); if(j.app!=='payroster' || !j.state || !j.state.months) throw 0;
-      bkPending = j.state;
-      $('bk-out').innerHTML = `<p class="msg err">${t('bk_confirm',{m:Object.keys(j.state.months).length,d:esc(j.exported||'')})}</p><div class="row"><button class="btn danger" id="bk-ok" type="button">${t('bk_replace')}</button><button class="btn ghost" id="bk-no" type="button">${t('no')}</button></div>`;
-    }catch(err){ $('bk-out').innerHTML = `<p class="msg err">${t('bk_bad')}</p>`; }
+    await readBackup(f, e.target.id==='bk-in' ? 'bk-out' : 'bk-out0');
     e.target.value = ''; return;
   }
   if(e.target.id==='sim-date'){ simDate = e.target.value; renderSim(); return; }
@@ -7922,7 +7950,7 @@ document.addEventListener('click', async e=>{
     $('bk-out').innerHTML = `<p class="msg">${t('bk_done')}</p>`; return; }
   if(id==='bk-ok' && bkPending){ const lang = state.lang; state = Object.assign({ extras:{}, slips:{}, shared:{} }, bkPending); state.lang = state.lang || lang; bkPending = null;
     save(); location.reload(); return; }
-  if(id==='bk-no'){ bkPending = null; $('bk-out').innerHTML=''; return; }
+  if(id==='bk-no'){ bkPending = null; ['bk-out','bk-out0'].forEach(x => $(x) && ($(x).innerHTML='')); return; }
 });
 
 // ---- Payroster: today card, roster changes, minimum rest, year in review, compare with a colleague, parents ----
@@ -8378,7 +8406,7 @@ document.addEventListener('click', e => {
 <script>
 const SEED = null;
 const SEED_SETTINGS = null;
-const APP_VERSION = '2026.11.09-0828';
+const APP_VERSION = '2026.11.09-0851';
 const IS_PWA_BUILD = true;
 const LS = 'payroster.v1';
 const KC = { flight:'--k-flight', deadhead:'--k-dh', training:'--k-train', standby:'--k-sby', reserve:'--k-sby', ground:'--k-ground', off:'--k-off', empty:'--k-off', other:'--k-ground' };
@@ -8764,6 +8792,8 @@ function renderSetup(){
     <h2 style="margin:4px 0 6px">${t('su_title')}</h2>
     <p class="note">${t('su_note')}</p>
     <div class="row" style="margin-top:10px"><label class="btn" for="pdfIn" style="display:inline-block">${t('su_upload')}</label></div>
+    <div class="restorebox"><b>${t('su_restoreT')}</b><p class="note" style="margin:4px 0 8px">${t('su_restore')}</p>
+      <label class="btn ghost" for="bk-in0" style="display:inline-block">${t('bk_import')}</label><input type="file" id="bk-in0" class="sr"><div id="bk-out0"></div></div>
     <p class="note" style="margin-top:14px">${t('su_manual')}</p>
     <div class="form">
       <label>${t('f_rank')}<select id="p-rank"><option value="PU"${s.rank==='PU'?' selected':''}>${t('optPU')}</option><option value="CA"${s.rank==='CA'?' selected':''}>${t('optCA')}</option></select></label>
@@ -8975,7 +9005,9 @@ async function importPdf(f){
 }
 $('pdfIn').addEventListener('change', async e=>{
   // several PDFs at once (rosters and payslips, any order): only the newest payslip sets the contract data
-  const files = [...e.target.files]; if(!files.length) return;
+  let files = [...e.target.files]; if(!files.length) return;
+  const bk = files.find(f => /\.json$/i.test(f.name) || f.type === 'application/json');
+  if(bk){ e.target.value=''; openTool('backup'); readBackup(bk, 'bk-out'); return; }
   e.target.value='';
   const out = [];
   for(let i=0;i<files.length;i++){
