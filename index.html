@@ -64,6 +64,9 @@ body.viewer .tabbar{display:none}
 body.priv .privbtn{color:var(--warn)}
 
 .brand .plus{color:var(--pay);font-size:.8em;margin-left:1px;vertical-align:super;line-height:0}
+.chip.fatlvl-hi{background:var(--warn);color:#1a1205;font-weight:700}
+.chip.fatlvl-mid{background:var(--warn-soft);font-weight:600}
+.chip.fatlvl-lo{background:var(--pay-soft)}
 .licalert{border-left:4px solid var(--warn);padding-block:12px}
 .licalert .chip{cursor:pointer}
 .lic-del{padding:2px 10px;font-size:16px;line-height:1}
@@ -354,6 +357,7 @@ input[type=date]::-webkit-date-and-time-value{text-align:left}
   </section>
 
   <h2 data-tab="more" data-i18n="tab_more"></h2>
+  <section class="panel" id="licTable" data-tab="more"></section>
   <details class="box panel" id="setBox" data-tab="more" open>
     <summary data-i18n="contractData"></summary>
     <div class="form" id="form"></div>
@@ -749,6 +753,8 @@ var PR = (function () {
     const ev = day.events;
     const codes = ev.filter(e => e.type === 'code').map(e => e.code);
     if (ev.some(e => e.type === 'flt')) return 'flight';
+    // sick: KCC-SBY / KCC-FLD / KCC-GND (sick on a standby / flight / ground day), SICK, KRANK, AU
+    if (codes.some(c => /^KCC|KRANK|SICK|^AU$/.test(c))) return 'sick';
     if (codes.some(c => /^STBY|^SBY|^RES(?!ERVE)/.test(c))) return 'standby';
     if (codes.some(c => /^RESERVE/.test(c))) return 'reserve';
     if (codes.some(c => /TRNG|SIM|CRS|^DT_|^CATR|^CAB_K/.test(c)) && !codes.some(c => /MEET/.test(c))) return 'training';
@@ -1169,6 +1175,16 @@ var I18N = {
   names: { es: 'Español', ca: 'Català', en: 'English', de: 'Deutsch', fr: 'Français', it: 'Italiano', pt: 'Português', ro: 'Română', hu: 'Magyar', sk: 'Slovenčina', cs: 'Čeština' },
   locales: { es: 'es-ES', ca: 'ca-ES', en: 'en-GB', de: 'de-DE', fr: 'fr-FR', it: 'it-IT', pt: 'pt-PT', ro: 'ro-RO', hu: 'hu-HU', sk: 'sk-SK', cs: 'cs-CZ' },
   es: {
+    lic_tableEmpty: 'Sube un roster de IDP (trae la tabla «Recurrent Training / Checks») o añádelas en Herramientas → Caducidades.',
+    lic_years: '{n} años',
+    lic_colLeft: 'Queda',
+    lic_colExp: 'Caduca',
+    lic_colName: 'Curso / documento',
+    lic_edit: 'Editar',
+    lic_tableT: 'Mis caducidades',
+    vac_sickNote: 'En el roster salen como KCC-SBY, KCC-FLD o KCC-GND (baja en un día de imaginaria, de vuelo o de tierra). Si la baja no estaba avisada antes de publicarse el roster, se paga lo que tenías programado; por eso un KCC-SBY cuenta 3 h, como la imaginaria.',
+    vac_sickT: 'Bajas por enfermedad ({n} días)',
+    k_sick: 'Baja',
     lic_fromRoster: 'del roster',
     priv_show: 'Mostrar importes',
     priv_hide: 'Ocultar importes',
@@ -1574,6 +1590,16 @@ var I18N = {
     e_noPeriod: 'No encuentro el periodo del roster. ¿Es el «Individual duty plan» de IDP en PDF?'
   },
   ca: {
+    lic_tableEmpty: 'Puja un roster d’IDP (porta la taula «Recurrent Training / Checks») o afegeix-les a Eines → Caducitats.',
+    lic_years: '{n} anys',
+    lic_colLeft: 'Queda',
+    lic_colExp: 'Caduca',
+    lic_colName: 'Curs / document',
+    lic_edit: 'Editar',
+    lic_tableT: 'Les meves caducitats',
+    vac_sickNote: 'Al roster surten com KCC-SBY, KCC-FLD o KCC-GND (baixa en un dia d’imaginària, de vol o de terra). Si la baixa no estava avisada abans de publicar-se el roster, es paga el que tenies programat; per això un KCC-SBY compta 3 h, com la imaginària.',
+    vac_sickT: 'Baixes per malaltia ({n} dies)',
+    k_sick: 'Baixa',
     lic_fromRoster: 'del roster',
     k_empty: '—',
     priv_show: 'Mostrar imports',
@@ -1980,6 +2006,16 @@ var I18N = {
     e_noPeriod: 'No trobo el període del roster. És l’«Individual duty plan» d’IDP en PDF?'
   },
   en: {
+    lic_tableEmpty: 'Upload an IDP roster (it has the “Recurrent Training / Checks” table) or add them in Tools → Expiry dates.',
+    lic_years: '{n} years',
+    lic_colLeft: 'Left',
+    lic_colExp: 'Expires',
+    lic_colName: 'Course / document',
+    lic_edit: 'Edit',
+    lic_tableT: 'My expiry dates',
+    vac_sickNote: 'The roster shows them as KCC-SBY, KCC-FLD or KCC-GND (sick on a standby, flight or ground day). If the sickness wasn’t notified before the roster was published, what was scheduled is paid; that’s why a KCC-SBY counts 3 h, like the standby.',
+    vac_sickT: 'Sick days ({n})',
+    k_sick: 'Sick',
     lic_fromRoster: 'from roster',
     k_empty: '—',
     priv_show: 'Show amounts',
@@ -2386,6 +2422,16 @@ var I18N = {
     e_noPeriod: 'I can’t find the roster period. Is this the IDP “Individual duty plan” PDF?'
   },
   de: {
+    lic_tableEmpty: 'Lade einen IDP-Dienstplan hoch (mit der Tabelle „Recurrent Training / Checks“) oder trage sie unter Werkzeuge → Gültigkeiten ein.',
+    lic_years: '{n} Jahre',
+    lic_colLeft: 'Noch',
+    lic_colExp: 'Gültig bis',
+    lic_colName: 'Kurs / Dokument',
+    lic_edit: 'Bearbeiten',
+    lic_tableT: 'Meine Gültigkeiten',
+    vac_sickNote: 'Im Dienstplan stehen sie als KCC-SBY, KCC-FLD oder KCC-GND (krank an einem Standby-, Flug- oder Bodentag). War die Krankmeldung nicht vor Veröffentlichung des Dienstplans, wird das Geplante bezahlt; deshalb zählt ein KCC-SBY 3 h wie das Standby.',
+    vac_sickT: 'Krankheitstage ({n})',
+    k_sick: 'Krank',
     lic_fromRoster: 'aus Dienstplan',
     k_empty: '—',
     priv_show: 'Beträge anzeigen',
@@ -2792,6 +2838,16 @@ var I18N = {
     e_noPeriod: 'Ich finde den Zeitraum des Dienstplans nicht. Ist das der „Individual duty plan“ aus IDP als PDF?'
   },
   fr: {
+    lic_tableEmpty: 'Importe un planning IDP (avec le tableau « Recurrent Training / Checks ») ou ajoute-les dans Outils → Échéances.',
+    lic_years: '{n} ans',
+    lic_colLeft: 'Reste',
+    lic_colExp: 'Expire',
+    lic_colName: 'Cours / document',
+    lic_edit: 'Modifier',
+    lic_tableT: 'Mes échéances',
+    vac_sickNote: 'Le planning les affiche comme KCC-SBY, KCC-FLD ou KCC-GND (malade un jour de réserve, de vol ou au sol). Si l’arrêt n’était pas signalé avant la publication du planning, ce qui était prévu est payé ; c’est pourquoi un KCC-SBY compte 3 h, comme la réserve.',
+    vac_sickT: 'Jours de maladie ({n})',
+    k_sick: 'Maladie',
     lic_fromRoster: 'du planning',
     k_empty: '—',
     priv_show: 'Afficher les montants',
@@ -3198,6 +3254,16 @@ var I18N = {
     e_noPeriod: 'Je ne trouve pas la période du planning. Est-ce bien l’« Individual duty plan » d’IDP en PDF ?'
   },
   hu: {
+    lic_tableEmpty: 'Tölts fel egy IDP-beosztást (benne van a „Recurrent Training / Checks” táblázat), vagy add meg az Eszközök → Lejáratok alatt.',
+    lic_years: '{n} év',
+    lic_colLeft: 'Hátra',
+    lic_colExp: 'Lejár',
+    lic_colName: 'Tanfolyam / irat',
+    lic_edit: 'Szerkesztés',
+    lic_tableT: 'Lejárataim',
+    vac_sickNote: 'A beosztásban KCC-SBY, KCC-FLD vagy KCC-GND néven szerepelnek (beteg készenléti, repülős vagy földi napon). Ha a betegséget nem jelentették be a beosztás megjelenése előtt, a tervezettet fizetik; ezért egy KCC-SBY 3 órát ér, mint a készenlét.',
+    vac_sickT: 'Betegnapok ({n})',
+    k_sick: 'Betegség',
     lic_fromRoster: 'beosztásból',
     k_empty: '—',
     priv_show: 'Összegek mutatása',
@@ -3604,6 +3670,16 @@ var I18N = {
     e_noPeriod: 'Nem találom a beosztás időszakát. Ez az IDP „Individual duty plan” PDF-je?'
   },
   sk: {
+    lic_tableEmpty: 'Nahraj rozpis z IDP (obsahuje tabuľku „Recurrent Training / Checks“) alebo ich pridaj v Nástroje → Platnosti.',
+    lic_years: '{n} roka',
+    lic_colLeft: 'Zostáva',
+    lic_colExp: 'Platí do',
+    lic_colName: 'Kurz / doklad',
+    lic_edit: 'Upraviť',
+    lic_tableT: 'Moje platnosti',
+    vac_sickNote: 'V rozpise sú ako KCC-SBY, KCC-FLD alebo KCC-GND (choroba v deň pohotovosti, letu alebo na zemi). Ak choroba nebola nahlásená pred zverejnením rozpisu, platí sa plánované; preto KCC-SBY počíta 3 h ako pohotovosť.',
+    vac_sickT: 'Dni práceneschopnosti ({n})',
+    k_sick: 'PN',
     lic_fromRoster: 'z rozpisu',
     k_empty: '—',
     priv_show: 'Zobraziť sumy',
@@ -4010,6 +4086,16 @@ var I18N = {
     e_noPeriod: 'Nenachádzam obdobie rozpisu. Je to „Individual duty plan“ z IDP v PDF?'
   },
   cs: {
+    lic_tableEmpty: 'Nahraj rozpis z IDP (obsahuje tabulku „Recurrent Training / Checks“) nebo je přidej v Nástroje → Platnosti.',
+    lic_years: '{n} roku',
+    lic_colLeft: 'Zbývá',
+    lic_colExp: 'Platí do',
+    lic_colName: 'Kurz / doklad',
+    lic_edit: 'Upravit',
+    lic_tableT: 'Moje platnosti',
+    vac_sickNote: 'V rozpisu jsou jako KCC-SBY, KCC-FLD nebo KCC-GND (nemoc v den pohotovosti, letu nebo na zemi). Pokud nemoc nebyla nahlášena před zveřejněním rozpisu, platí se naplánované; proto KCC-SBY počítá 3 h jako pohotovost.',
+    vac_sickT: 'Dny nemoci ({n})',
+    k_sick: 'Nemoc',
     lic_fromRoster: 'z rozpisu',
     k_empty: '—',
     priv_show: 'Zobrazit částky',
@@ -4416,6 +4502,16 @@ var I18N = {
     e_noPeriod: 'Nenacházím období rozpisu. Je to „Individual duty plan“ z IDP v PDF?'
   },
   it: {
+    "lic_tableEmpty": "Carica un roster IDP (ha la tabella «Recurrent Training / Checks») o aggiungile in Strumenti → Scadenze.",
+    "lic_years": "{n} anni",
+    "lic_colLeft": "Manca",
+    "lic_colExp": "Scade",
+    "lic_colName": "Corso / documento",
+    "lic_edit": "Modifica",
+    "lic_tableT": "Le mie scadenze",
+    "vac_sickNote": "Nel roster compaiono come KCC-SBY, KCC-FLD o KCC-GND (malattia in un giorno di riserva, volo o terra). Se la malattia non era comunicata prima della pubblicazione del roster, si paga quanto programmato; per questo un KCC-SBY conta 3 h, come la riserva.",
+    "vac_sickT": "Giorni di malattia ({n})",
+    "k_sick": "Malattia",
     "lic_fromRoster": "dal roster",
     "priv_show": "Mostra importi",
     "priv_hide": "Nascondi importi",
@@ -4927,6 +5023,16 @@ var I18N = {
     "e_noPeriod": "Non trovo il periodo del turno. È l’«Individual duty plan» di IDP in PDF?"
   },
   pt: {
+    "lic_tableEmpty": "Carrega uma escala do IDP (tem a tabela «Recurrent Training / Checks») ou adiciona-as em Ferramentas → Validades.",
+    "lic_years": "{n} anos",
+    "lic_colLeft": "Falta",
+    "lic_colExp": "Expira",
+    "lic_colName": "Curso / documento",
+    "lic_edit": "Editar",
+    "lic_tableT": "As minhas validades",
+    "vac_sickNote": "Na escala aparecem como KCC-SBY, KCC-FLD ou KCC-GND (baixa num dia de assistência, voo ou terra). Se a baixa não foi avisada antes de publicar a escala, paga-se o que estava programado; por isso um KCC-SBY conta 3 h, como a assistência.",
+    "vac_sickT": "Dias de baixa ({n})",
+    "k_sick": "Baixa",
     "lic_fromRoster": "da escala",
     "priv_show": "Mostrar valores",
     "priv_hide": "Ocultar valores",
@@ -5438,6 +5544,16 @@ var I18N = {
     "e_noPeriod": "Não encontro o período da escala. É o «Individual duty plan» do IDP em PDF?"
   },
   ro: {
+    "lic_tableEmpty": "Încarcă un roster IDP (are tabelul „Recurrent Training / Checks”) sau adaugă-le în Instrumente → Valabilități.",
+    "lic_years": "{n} ani",
+    "lic_colLeft": "Rămas",
+    "lic_colExp": "Expiră",
+    "lic_colName": "Curs / document",
+    "lic_edit": "Editează",
+    "lic_tableT": "Valabilitățile mele",
+    "vac_sickNote": "În roster apar ca KCC-SBY, KCC-FLD sau KCC-GND (bolnav într-o zi de rezervă, zbor sau sol). Dacă boala n-a fost anunțată înainte de publicarea rosterului, se plătește ce era programat; de aceea un KCC-SBY contează 3 h, ca rezerva.",
+    "vac_sickT": "Zile de concediu medical ({n})",
+    "k_sick": "Medical",
     "lic_fromRoster": "din roster",
     "priv_show": "Arată sumele",
     "priv_hide": "Ascunde sumele",
@@ -8584,7 +8700,7 @@ function renderVac(){
   const ro = state.months[state.current]; const year = ro ? ro.year : new Date().getFullYear();
   const absence = new Set(String(state.settings.absenceCodes||'').split(/[,\s]+/).filter(Boolean).map(x=>x.toUpperCase()));
   const cats = ['vac','su','om','off','bez','sick'];
-  const rows = [], vacDays = [];
+  const rows = [], vacDays = [], sickDays = [];
   for(let m=1;m<=12;m++){
     const r = state.months[kOf(year,m)]; if(!r) continue;
     const cnt = {vac:0,su:0,om:0,off:0,bez:0,sick:0};
@@ -8592,7 +8708,7 @@ function renderVac(){
       const codes = d.events.filter(e=>e.type==='code').map(e=>e.code.toUpperCase());
       if(codes.includes('U') || codes.some(c=>/^U_/.test(c) && c!=='U_OFF')){ cnt.vac++; vacDays.push(d.date); }
       else if(codes.includes('SU')) cnt.su++;
-      else if(codes.some(c=>/KRANK|SICK|^K_|^AU$/.test(c))) cnt.sick++;
+      else if(codes.some(c=>/^KCC|KRANK|SICK|^K_|^AU$/.test(c))){ cnt.sick++; sickDays.push(d.date); }
       else if(codes.includes('O_M')) cnt.om++;
       else if(codes.some(c=>/^(O_|FREI|U_OFF|OFF$)/.test(c)) && !d.events.some(e=>e.type==='flt'||e.type==='ci')) cnt.off++;
       if(codes.some(c=>/^OFF_BEZ/.test(c))) cnt.bez++;
@@ -8607,12 +8723,16 @@ function renderVac(){
   for(const dt of vacDays){ const last = per[per.length-1];
     if(last && (Date.parse(dt) - Date.parse(last.b)) === 864e5) last.b = dt; else per.push({a:dt, b:dt}); }
   const dshort = iso => new Date(iso+'T12:00').toLocaleDateString(LOC,{day:'numeric',month:'short'});
+  const perOf = days => { const out = []; for(const dt of days){ const l = out[out.length-1]; if(l && Date.parse(dt) - Date.parse(l.b) === 864e5) l.b = dt; else out.push({a:dt, b:dt}); } return out; };
+  const sickTxt = perOf(sickDays).map(p => { const n = Math.round((Date.parse(p.b)-Date.parse(p.a))/864e5)+1;
+    return `<span class="chip c-sick">${p.a===p.b ? dshort(p.a) : dshort(p.a)+' – '+dshort(p.b)} <b>${n}</b></span>`; }).join('');
   const perTxt = per.map(p=>{ const n = Math.round((Date.parse(p.b)-Date.parse(p.a))/864e5)+1;
     return `<span class="chip c-vac">${p.a===p.b ? dshort(p.a) : dshort(p.a)+' – '+dshort(p.b)} <b>${n}</b></span>`; }).join('');
   pnl(hdr('vac', t('vac_intro',{y:year})) +
     `<p class="msg${over>0?' err':''}">${t('vac_sum',{u:tot.vac,e:have,l:Math.max(0,have-tot.vac)})}${over>0?' '+t('vac_over',{x:over,e:have}):''}${ent.known?'':' '+t('vac_noJoined')}</p>
     <label class="note salesm" style="margin:0 0 10px"><span>${t('vac_carry',{y:year-1,e:ent.days})}</span><input type="text" inputmode="numeric" id="vac-carry" data-y="${year}" value="${carry||''}" placeholder="0"></label>
     ${per.length ? `<div class="mrow"><div class="mh">${t('vac_periods')}</div><div class="chips">${perTxt}</div></div>` : ''}
+    ${sickDays.length ? `<div class="mrow"><div class="mh">${t('vac_sickT', {n: sickDays.length})}</div><div class="chips">${sickTxt}</div><p class="note" style="margin:6px 0 0">${t('vac_sickNote')}</p></div>` : ''}
     <div class="mlist">${rows.map(r=>`<div class="mrow"><div class="mh">${nm(year,r.m,{month:'long'})}</div><div class="chips">${cats.filter(k=>r.cnt[k]).map(k=>`<span class="chip c-${k}">${t('vac_'+k)} <b>${r.cnt[k]}</b></span>`).join('') || '<span class="note">—</span>'}</div></div>`).join('')}
       <div class="mrow tot"><div class="mh">${t('vac_total')}</div><div class="chips">${cats.filter(k=>tot[k]).map(k=>`<span class="chip c-${k}">${t('vac_'+k)} <b>${tot[k]}</b></span>`).join('')}</div></div></div>
     <p class="note">${t('vac_note')}</p>`);
@@ -9302,6 +9422,17 @@ function renderLicAlert(){
   const el = $('licAlert'); if(!el) return;
   const h = licAlertsHtml(); el.hidden = !h; el.innerHTML = h ? `<div class="eyebrow">${t('lic_alertT')}</div>${h}` : '';
 }
+// table of all expiry dates (tab "My details")
+function renderLicTable(){
+  const el = $('licTable'); if(!el) return;
+  const L = licList().filter(x => !x.del && x.exp).sort((a,b) => a.exp.localeCompare(b.exp));
+  const dl = iso => new Date(iso+'T12:00').toLocaleDateString(LOC, {day:'numeric', month:'short', year:'numeric'});
+  el.innerHTML = `<div class="h2row"><h2 style="margin:0">${t('lic_tableT')}</h2><button class="btn ghost" type="button" data-tool="lic" style="font-size:13px">${t('lic_edit')}</button></div>
+    ${L.length ? `<div class="tablewrap"><table class="slip lictab"><tr class="sec"><td>${t('lic_colName')}</td><td>${t('lic_colExp')}</td></tr>
+    ${L.map(x => { const d = licDays(x.exp), cls = d < 0 || d <= 30 ? 'bad' : d <= 60 ? 'meh' : '';
+      return `<tr class="${cls}"><td>${esc(licName(x))}${x.rcode ? ` <span class="note mono">${esc(x.rcode)}</span>` : ''}</td><td style="white-space:nowrap">${dl(x.exp)}<div class="note" style="font-family:var(--f-body)">${d < 0 ? t('lic_expired') : d > 365 ? t('lic_years', {n: (d/365).toFixed(1).replace('.', LOC.startsWith('en') ? '.' : ',')}) : t('lic_inDays', {n: d})}</div></td></tr>`; }).join('')}</table></div>`
+    : `<p class="note">${t('lic_tableEmpty')}</p>`}`;
+}
 function renderLic(){
   const L = licList().filter(x => !x.del);
   const used = new Set(L.map(x => x.key).filter(Boolean));
@@ -9374,8 +9505,9 @@ function renderFat(){
   const dd = iso => new Date(iso+'T12:00').toLocaleDateString(LOC, {day:'numeric', month:'short'});
   const flagDays = c.days.filter(d => F[d.date] && F[d.date].pts >= 2);
   pnl(hdr('fat', t('fat_intro')) + `<div class="mlist">${weeks.map(w => `<div class="mrow"><div class="mh nc">${dd(w.a)} – ${dd(w.b)}
-      <span class="chip ${w.lvl==='hi'?'c-sick':w.lvl==='mid'?'c-bez':'c-vac'}">${t('fat_'+w.lvl)}</span></div>
-      <div class="note">${t('fat_week', {h: hhmm(w.hrs), e: w.early, n: w.night, s: w.short, c: w.consec})}</div></div>`).join('')}</div>
+      <span class="chip fatlvl-${w.lvl}">${w.lvl==='hi' ? '⚠ ' : ''}${t('fat_'+w.lvl)}</span></div>
+      <div class="note">${t('fat_week', {h: hhmm(w.hrs), e: w.early, n: w.night, s: w.short, c: w.consec})}</div>
+      ${w.lvl === 'hi' ? `<button class="btn" type="button" data-fatweek="${w.a}|${w.b}" style="margin-top:8px;font-size:13px">✍ ${t('fat_report')}</button>` : ''}</div>`).join('')}</div>
     <h3 class="wh">${t('fat_daysT')}</h3>
     <div class="mlist">${flagDays.map(d => { const f = F[d.date];
       const tags = ['early','night','late','short','long'].filter(k => f[k]).map(k => `<span class="chip">${t('fat_'+k)}</span>`).join('');
@@ -9383,6 +9515,21 @@ function renderFat(){
         <button class="btn ghost" type="button" data-fatrep="${d.date}" style="margin-top:6px;font-size:13px">✍ ${t('fat_report')}</button></div>`; }).join('') || `<p class="note">${t('fat_none')}</p>`}</div>
     <div id="fat-out"></div>
     <p class="note">${t('fat_note')}</p>`);
+}
+// report for a whole week with a high load: every duty of the week with its factors
+function fatigueReportWeek(a, b, L){
+  return withLang(L, () => {
+    const F = fatigueDays(), base = state.settings.base || 'PMI';
+    const ro = state.months[a.slice(0,7)] || {}, parts = String(ro.crew||'').split(',').map(s => s.trim()), name = parts.length > 1 ? parts[1]+' '+parts[0] : (parts[0]||'');
+    const days = Object.keys(F).filter(d => d >= a && d <= b).sort();
+    const lines = days.map(d => { const f = F[d], x = f.x, fl = (x.d.legs||[]).map(l => l.flight + ' ' + l.dep + '-' + l.arr).join(', ');
+      const why = ['early','night','late','short','long'].filter(k => f[k]).map(k => t('fat_'+k)).join('; ');
+      return `- ${d}: ${fl || x.route} · ${localHM(x.start, x.st)}–${x.end ? localHM(x.end, x.endSt || base) : '—'} (${hhmm(f.len)} h)${why ? ' · ' + why : ''}`; }).join('\n');
+    const tot = days.reduce((s, d) => s + F[d].len, 0);
+    return L === 'es'
+      ? { s: `Fatigue report – semana ${a} a ${b} – ${name}`, b: `Semana: ${a} a ${b}\nServicios: ${days.length} · ${hhmm(tot)} h de servicio\n\n${lines}\n\nHoras de sueño medias por noche: __\nNivel de fatiga (Samn-Perelli 1–7): __\nCómo me afecta: __\n\n${name}` }
+      : { s: `Fatigue report – week ${a} to ${b} – ${name}`, b: `Week: ${a} to ${b}\nDuties: ${days.length} · ${hhmm(tot)} h duty\n\n${lines}\n\nAverage sleep per night: __\nFatigue level (Samn-Perelli 1–7): __\nHow it affects me: __\n\n${name}` };
+  });
 }
 function fatigueReport(date, L){
   return withLang(L, () => {
@@ -9430,7 +9577,7 @@ function renderSales(){
 // events
 document.addEventListener('change', e => {
   const el = e.target;
-  if(el.dataset.licexp){ const x = licList().find(y => y.id === el.dataset.licexp); if(x){ x.exp = el.value || ''; save(); renderLic(); renderLicAlert(); } return; }
+  if(el.dataset.licexp){ const x = licList().find(y => y.id === el.dataset.licexp); if(x){ x.exp = el.value || ''; save(); renderLic(); renderLicAlert(); renderLicTable(); } return; }
   if(el.id === 'lic-pre'){ $('lic-name').hidden = el.value !== '_'; return; }
   if(el.dataset.delay){ const k = el.dataset.delay; state.extras[k] = state.extras[k] || {}; const v = parseInt(el.value, 10);
     if(v > 0) state.extras[k].delay = v; else delete state.extras[k].delay; save(); render(); return; }
@@ -9451,8 +9598,9 @@ document.addEventListener('click', async e => {
     if(x && x.rcode) x.del = true; else state.lic = licList().filter(y => y.id !== el.dataset.licdel);
     save(); renderLic(); renderLicAlert(); return; }
   if(id === 'lic-ics'){ await giveFile('payroster-caducidades.ics', licIcs(), 'text/calendar'); return; }
-  const fr = el.closest && el.closest('[data-fatrep]');
-  if(fr){ const date = fr.dataset.fatrep, L = (lang === 'es' || lang === 'ca') ? 'es' : 'en', r = fatigueReport(date, L);
+  const fr = el.closest && (el.closest('[data-fatrep]') || el.closest('[data-fatweek]'));
+  if(fr){ const L = (lang === 'es' || lang === 'ca') ? 'es' : 'en';
+    const r = fr.dataset.fatweek ? fatigueReportWeek(...fr.dataset.fatweek.split('|'), L) : fatigueReport(fr.dataset.fatrep, L);
     $('fat-out').innerHTML = `<div class="mailbox"><label class="note">${t('mail_subj')}<input type="text" id="mail-s" value="${esc(r.s)}"></label>
       <textarea id="mail-b" rows="16">${esc(r.b)}</textarea>
       <div class="row"><button class="btn" id="mail-copy" type="button">${t('mail_copy')}</button><button class="btn ghost" id="mail-open" type="button">${t('mail_open')}</button></div>
@@ -9464,10 +9612,10 @@ document.addEventListener('click', async e => {
 <script>
 const SEED = null;
 const SEED_SETTINGS = null;
-const APP_VERSION = '2026.11.09-1130';
+const APP_VERSION = '2026.11.09-1307';
 const IS_PWA_BUILD = true;
 const LS = 'payroster.v1';
-const KC = { flight:'--k-flight', deadhead:'--k-dh', training:'--k-train', standby:'--k-sby', reserve:'--k-sby', ground:'--k-ground', off:'--k-off', empty:'--k-off', other:'--k-ground' };
+const KC = { sick:'--warn', flight:'--k-flight', deadhead:'--k-dh', training:'--k-train', standby:'--k-sby', reserve:'--k-sby', ground:'--k-ground', off:'--k-off', empty:'--k-off', other:'--k-ground' };
 const kind = k => ({ n: t('k_'+(KC[k]?k:'other')), c: KC[k]||KC.other });
 const LANGS = Object.keys(I18N.names);
 let lang = 'es', LOC = 'es-ES', eur, eur0, n2;
@@ -9624,7 +9772,7 @@ function render(){
   const s = state.settings;
   { const b = $('privBtn'); if(b && !b.innerHTML){ b.innerHTML = privIcon(); b.title = t(PRIV ? 'priv_show' : 'priv_hide'); b.setAttribute('aria-pressed', PRIV ? 'true' : 'false'); } }
   renderSetup();
-  try{ renderToday(); renderChanges(ro); renderLicAlert(); }catch(e){ console.warn(e); }
+  try{ renderToday(); renderChanges(ro); renderLicAlert(); renderLicTable(); }catch(e){ console.warn(e); }
   if(ro.base && !s.baseSetByUser) s.base = ro.base;
   const w = $('rankWarn');
   if(s.configured && ro.rankNorm && ro.rankNorm!==s.rank){
@@ -10149,7 +10297,7 @@ const b64u = bytes => { let s=''; bytes.forEach(b=>s+=String.fromCharCode(b)); r
 const unb64u = str => { const s=atob(str.replace(/-/g,'+').replace(/_/g,'/')); return Uint8Array.from(s, ch=>ch.charCodeAt(0)); };
 async function pipe(bytes, Stream, fmt){ const r = new Response(new Blob([bytes]).stream().pipeThrough(new Stream(fmt))); return new Uint8Array(await r.arrayBuffer()); }
 // v2: compact text (names table, short codes), deflate-raw, base64url, prefixed "2"
-const KC2 = {flight:'F',deadhead:'D',training:'T',standby:'S',reserve:'R',ground:'G',off:'O',empty:'E',other:'X'};
+const KC2 = {sick:'K',flight:'F',deadhead:'D',training:'T',standby:'S',reserve:'R',ground:'G',off:'O',empty:'E',other:'X'};
 const KC2R = Object.fromEntries(Object.entries(KC2).map(([k,v])=>[v,k]));
 const clean = s => String(s||'').replace(/[~|\n;:,\/]/g,' ');
 const shortName = n => { const [s,f] = n.split(',').map(x=>x.trim()); return s.split(' ')[0] + (f ? ' '+f[0]+'.' : ''); };
