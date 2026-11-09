@@ -260,7 +260,7 @@ table.chk tr.bad:not(.hint) td:last-child{color:var(--warn);font-weight:700}
 .mm-box{position:relative}
 .mm-btns{position:absolute;right:8px;bottom:8px;display:flex;gap:6px;z-index:2}
 .mm-box.tilt{background:linear-gradient(180deg, var(--map-sky) 0%, var(--map-sea) 46%);perspective:760px;overflow:hidden}
-.mm-box.tilt .mapsvg{transform:rotateX(42deg) scale(1.32);transform-origin:50% 62%;border-radius:0}
+.mm-box.tilt .mapsvg{transform:rotateX(38deg) scale(1.12);transform-origin:50% 60%;border-radius:0}
 .mm-zoom{border:1px solid var(--line);background:color-mix(in srgb, var(--surface) 88%, transparent);color:var(--ink);border-radius:999px;padding:6px 12px;font:600 12.5px var(--f-body);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px)}
 .mapbtn{font-size:13px;padding:6px 10px;justify-self:start}
 .mm-head{font-size:14px;margin-bottom:4px}
@@ -9027,7 +9027,8 @@ const MAP = (() => {
     if(opt.plane) pts.push(P(opt.plane.lon, opt.plane.lat));
     if(!pts.length) pts.push(P(2.7, 39.5));
     let x0 = Math.min(...pts.map(p => p[0])), x1 = Math.max(...pts.map(p => p[0])), y0 = Math.min(...pts.map(p => p[1])), y1 = Math.max(...pts.map(p => p[1]));
-    const pad = Math.max(2.2, (x1 - x0) * 0.12, (y1 - y0) * 0.12);
+    // the moving map is tilted in 3D: leave more room so both airports stay on screen
+    const f = opt.done != null ? 0.3 : 0.12, pad = Math.max(2.2, (x1 - x0) * f, (y1 - y0) * f);
     x0 -= pad; x1 += pad; y0 -= pad; y1 += pad;
     const w = x1 - x0, h = y1 - y0, want = 4/3;
     if(w/h < want){ const e = (h*want - w)/2; x0 -= e; x1 += e; } else { const e = (w/want - h)/2; y0 -= e; y1 += e; }
@@ -9417,7 +9418,7 @@ document.addEventListener('click', async e => {
 <script>
 const SEED = null;
 const SEED_SETTINGS = null;
-const APP_VERSION = '2026.11.09-1120';
+const APP_VERSION = '2026.11.09-1124';
 const IS_PWA_BUILD = true;
 const LS = 'payroster.v1';
 const KC = { flight:'--k-flight', deadhead:'--k-dh', training:'--k-train', standby:'--k-sby', reserve:'--k-sby', ground:'--k-ground', off:'--k-off', empty:'--k-off', other:'--k-ground' };
