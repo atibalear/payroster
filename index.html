@@ -67,6 +67,7 @@ body.priv .privbtn{color:var(--warn)}
 .chip.fatlvl-hi{background:var(--warn);color:#1a1205;font-weight:700}
 .chip.fatlvl-mid{background:var(--warn-soft);font-weight:600}
 .chip.fatlvl-lo{background:var(--pay-soft)}
+.fatwhy{margin:6px 0 0;padding-left:18px;font-size:13.5px;line-height:1.45} .fatwhy li{margin:3px 0}
 .licalert{border-left:4px solid var(--warn);padding-block:12px}
 .licalert .chip{cursor:pointer}
 .lic-del{padding:2px 10px;font-size:16px;line-height:1}
@@ -1175,6 +1176,17 @@ var I18N = {
   names: { es: 'Español', ca: 'Català', en: 'English', de: 'Deutsch', fr: 'Français', it: 'Italiano', pt: 'Português', ro: 'Română', hu: 'Magyar', sk: 'Slovenčina', cs: 'Čeština' },
   locales: { es: 'es-ES', ca: 'ca-ES', en: 'en-GB', de: 'de-DE', fr: 'fr-FR', it: 'it-IT', pt: 'pt-PT', ro: 'ro-RO', hu: 'hu-HU', sk: 'sk-SK', cs: 'cs-CZ' },
   es: {
+    fat_note2: 'Es una orientación con las reglas EASA, no una evaluación médica. Si te sientes fatigado, díselo al comandante y repórtalo según el OM-A de Eurowings.',
+    fe_long: '{n} FDP de 11 h o más.',
+    fe_recov: 'Sin descanso de recuperación de 36 h con 2 noches locales en la semana (ORO.FTL.235 d).',
+    fe_rest: '{n} descanso(s) por debajo del mínimo (ORO.FTL.235).',
+    fe_wocl: '{n} servicios dentro de la ventana del ritmo circadiano bajo, 02:00–05:59 (WOCL).',
+    fe_disr: '{n} servicios disruptivos (firma antes de las 06:00 o fin después de las 23:00) (CS FTL.1.235).',
+    fe_duty: '{h} h de servicio en la semana: cerca del límite de 60 h en 7 días (ORO.FTL.210).',
+    fat_noneHi: 'Ninguna semana con carga alta este mes.',
+    fat_weekS: '{h} h de servicio · días con servicio: {d}',
+    fat_hiShort: 'Alta',
+    fat_intro2: 'Semanas en las que el roster cumple factores de riesgo de fatiga según EASA. Solo se marcan las de carga alta, con el motivo.',
     lic_tableEmpty: 'Sube un roster de IDP (trae la tabla «Recurrent Training / Checks») o añádelas en Herramientas → Caducidades.',
     lic_years: '{n} años',
     lic_colLeft: 'Queda',
@@ -1590,6 +1602,17 @@ var I18N = {
     e_noPeriod: 'No encuentro el periodo del roster. ¿Es el «Individual duty plan» de IDP en PDF?'
   },
   ca: {
+    fat_note2: 'És una orientació amb les regles EASA, no una avaluació mèdica. Si et sents fatigat, digues-ho al comandant i reporta-ho segons l’OM-A d’Eurowings.',
+    fe_long: '{n} FDP d’11 h o més.',
+    fe_recov: 'Sense descans de recuperació de 36 h amb 2 nits locals a la setmana (ORO.FTL.235 d).',
+    fe_rest: '{n} descans(os) per sota del mínim (ORO.FTL.235).',
+    fe_wocl: '{n} serveis dins la finestra del ritme circadià baix, 02:00–05:59 (WOCL).',
+    fe_disr: '{n} serveis disruptius (firma abans de les 06:00 o final després de les 23:00) (CS FTL.1.235).',
+    fe_duty: '{h} h de servei a la setmana: a prop del límit de 60 h en 7 dies (ORO.FTL.210).',
+    fat_noneHi: 'Cap setmana amb càrrega alta aquest mes.',
+    fat_weekS: '{h} h de servei · dies amb servei: {d}',
+    fat_hiShort: 'Alta',
+    fat_intro2: 'Setmanes en què el roster compleix factors de risc de fatiga segons EASA. Només es marquen les de càrrega alta, amb el motiu.',
     lic_tableEmpty: 'Puja un roster d’IDP (porta la taula «Recurrent Training / Checks») o afegeix-les a Eines → Caducitats.',
     lic_years: '{n} anys',
     lic_colLeft: 'Queda',
@@ -2006,6 +2029,17 @@ var I18N = {
     e_noPeriod: 'No trobo el període del roster. És l’«Individual duty plan» d’IDP en PDF?'
   },
   en: {
+    fat_note2: 'A guide based on EASA rules, not a medical assessment. If you feel fatigued, tell the commander and report it following the Eurowings OM-A.',
+    fe_long: '{n} FDPs of 11 h or more.',
+    fe_recov: 'No 36 h recovery rest including 2 local nights in the week (ORO.FTL.235 d).',
+    fe_rest: '{n} rest period(s) below the minimum (ORO.FTL.235).',
+    fe_wocl: '{n} duties inside the window of circadian low, 02:00–05:59 (WOCL).',
+    fe_disr: '{n} disruptive duties (report before 06:00 or finish after 23:00) (CS FTL.1.235).',
+    fe_duty: '{h} h of duty in the week: close to the 60 h in 7 days limit (ORO.FTL.210).',
+    fat_noneHi: 'No high-load week this month.',
+    fat_weekS: '{h} h duty · duty days: {d}',
+    fat_hiShort: 'High',
+    fat_intro2: 'Weeks where the roster meets EASA fatigue risk factors. Only high-load weeks are flagged, with the reason.',
     lic_tableEmpty: 'Upload an IDP roster (it has the “Recurrent Training / Checks” table) or add them in Tools → Expiry dates.',
     lic_years: '{n} years',
     lic_colLeft: 'Left',
@@ -2422,6 +2456,17 @@ var I18N = {
     e_noPeriod: 'I can’t find the roster period. Is this the IDP “Individual duty plan” PDF?'
   },
   de: {
+    fat_note2: 'Eine Orientierung nach EASA-Regeln, keine medizinische Bewertung. Wenn du müde bist, sag es dem Kommandanten und melde es nach dem Eurowings OM-A.',
+    fe_long: '{n} FDPs von 11 h oder mehr.',
+    fe_recov: 'Keine 36-h-Erholungsruhezeit mit 2 lokalen Nächten in der Woche (ORO.FTL.235 d).',
+    fe_rest: '{n} Ruhezeit(en) unter dem Minimum (ORO.FTL.235).',
+    fe_wocl: '{n} Dienste im zirkadianen Tief, 02:00–05:59 (WOCL).',
+    fe_disr: '{n} störende Dienste (Check-in vor 06:00 oder Ende nach 23:00) (CS FTL.1.235).',
+    fe_duty: '{h} h Dienst in der Woche: nahe am Limit von 60 h in 7 Tagen (ORO.FTL.210).',
+    fat_noneHi: 'Diesen Monat keine Woche mit hoher Belastung.',
+    fat_weekS: '{h} h Dienst · Diensttage: {d}',
+    fat_hiShort: 'Hoch',
+    fat_intro2: 'Wochen, in denen der Dienstplan EASA-Ermüdungsrisikofaktoren erfüllt. Nur Wochen mit hoher Belastung werden markiert, mit Grund.',
     lic_tableEmpty: 'Lade einen IDP-Dienstplan hoch (mit der Tabelle „Recurrent Training / Checks“) oder trage sie unter Werkzeuge → Gültigkeiten ein.',
     lic_years: '{n} Jahre',
     lic_colLeft: 'Noch',
@@ -2838,6 +2883,17 @@ var I18N = {
     e_noPeriod: 'Ich finde den Zeitraum des Dienstplans nicht. Ist das der „Individual duty plan“ aus IDP als PDF?'
   },
   fr: {
+    fat_note2: 'Indication basée sur les règles EASA, pas une évaluation médicale. Si tu te sens fatigué, dis-le au commandant et signale-le selon l’OM-A d’Eurowings.',
+    fe_long: '{n} FDP de 11 h ou plus.',
+    fe_recov: 'Pas de repos de récupération de 36 h avec 2 nuits locales dans la semaine (ORO.FTL.235 d).',
+    fe_rest: '{n} repos en dessous du minimum (ORO.FTL.235).',
+    fe_wocl: '{n} services dans la fenêtre de creux circadien, 02:00–05:59 (WOCL).',
+    fe_disr: '{n} services perturbants (présentation avant 06:00 ou fin après 23:00) (CS FTL.1.235).',
+    fe_duty: '{h} h de service dans la semaine : proche de la limite de 60 h sur 7 jours (ORO.FTL.210).',
+    fat_noneHi: 'Aucune semaine à charge élevée ce mois-ci.',
+    fat_weekS: '{h} h de service · jours de service : {d}',
+    fat_hiShort: 'Élevée',
+    fat_intro2: 'Semaines où le planning réunit des facteurs de risque de fatigue selon l’EASA. Seules les semaines à charge élevée sont signalées, avec la raison.',
     lic_tableEmpty: 'Importe un planning IDP (avec le tableau « Recurrent Training / Checks ») ou ajoute-les dans Outils → Échéances.',
     lic_years: '{n} ans',
     lic_colLeft: 'Reste',
@@ -3254,6 +3310,17 @@ var I18N = {
     e_noPeriod: 'Je ne trouve pas la période du planning. Est-ce bien l’« Individual duty plan » d’IDP en PDF ?'
   },
   hu: {
+    fat_note2: 'EASA-szabályokon alapuló tájékoztatás, nem orvosi értékelés. Ha fáradt vagy, szólj a kapitánynak, és jelentsd az Eurowings OM-A szerint.',
+    fe_long: '{n} db 11 órás vagy hosszabb FDP.',
+    fe_recov: 'Nincs 36 órás, 2 helyi éjszakát tartalmazó regeneráló pihenő a héten (ORO.FTL.235 d).',
+    fe_rest: '{n} pihenő a minimum alatt (ORO.FTL.235).',
+    fe_wocl: '{n} szolgálat a cirkadián mélypont idején, 02:00–05:59 (WOCL).',
+    fe_disr: '{n} zavaró szolgálat (jelentkezés 06:00 előtt vagy befejezés 23:00 után) (CS FTL.1.235).',
+    fe_duty: '{h} h szolgálat a héten: közel a 7 nap alatti 60 órás határhoz (ORO.FTL.210).',
+    fat_noneHi: 'Ebben a hónapban nincs magas terhelésű hét.',
+    fat_weekS: '{h} h szolgálat · szolgálati napok: {d}',
+    fat_hiShort: 'Magas',
+    fat_intro2: 'Hetek, amikor a beosztás az EASA szerinti fáradtsági kockázati tényezőknek megfelel. Csak a magas terhelésű hetek vannak jelölve, indoklással.',
     lic_tableEmpty: 'Tölts fel egy IDP-beosztást (benne van a „Recurrent Training / Checks” táblázat), vagy add meg az Eszközök → Lejáratok alatt.',
     lic_years: '{n} év',
     lic_colLeft: 'Hátra',
@@ -3670,6 +3737,17 @@ var I18N = {
     e_noPeriod: 'Nem találom a beosztás időszakát. Ez az IDP „Individual duty plan” PDF-je?'
   },
   sk: {
+    fat_note2: 'Orientácia podľa pravidiel EASA, nie lekárske hodnotenie. Ak si unavený/á, povedz to kapitánovi a nahlás to podľa OM-A Eurowings.',
+    fe_long: '{n} FDP 11 h a viac.',
+    fe_recov: 'Žiadny 36 h regeneračný odpočinok s 2 miestnymi nocami v týždni (ORO.FTL.235 d).',
+    fe_rest: '{n} odpočinok/odpočinky pod minimom (ORO.FTL.235).',
+    fe_wocl: '{n} služby v okne cirkadiánneho minima, 02:00–05:59 (WOCL).',
+    fe_disr: '{n} rušivé služby (nástup pred 06:00 alebo koniec po 23:00) (CS FTL.1.235).',
+    fe_duty: '{h} h služby za týždeň: blízko limitu 60 h za 7 dní (ORO.FTL.210).',
+    fat_noneHi: 'Tento mesiac žiadny týždeň s vysokou záťažou.',
+    fat_weekS: '{h} h služby · dni služby: {d}',
+    fat_hiShort: 'Vysoká',
+    fat_intro2: 'Týždne, keď rozpis spĺňa rizikové faktory únavy podľa EASA. Označené sú len týždne s vysokou záťažou, s dôvodom.',
     lic_tableEmpty: 'Nahraj rozpis z IDP (obsahuje tabuľku „Recurrent Training / Checks“) alebo ich pridaj v Nástroje → Platnosti.',
     lic_years: '{n} roka',
     lic_colLeft: 'Zostáva',
@@ -4086,6 +4164,17 @@ var I18N = {
     e_noPeriod: 'Nenachádzam obdobie rozpisu. Je to „Individual duty plan“ z IDP v PDF?'
   },
   cs: {
+    fat_note2: 'Orientace podle pravidel EASA, ne lékařské hodnocení. Pokud jsi unavený/á, řekni to kapitánovi a nahlas to podle OM-A Eurowings.',
+    fe_long: '{n} FDP 11 h a více.',
+    fe_recov: 'Žádný 36h regenerační odpočinek se 2 místními nocemi v týdnu (ORO.FTL.235 d).',
+    fe_rest: '{n} odpočinek/odpočinky pod minimem (ORO.FTL.235).',
+    fe_wocl: '{n} služby v okně cirkadiánního minima, 02:00–05:59 (WOCL).',
+    fe_disr: '{n} rušivé služby (nástup před 06:00 nebo konec po 23:00) (CS FTL.1.235).',
+    fe_duty: '{h} h služby za týden: blízko limitu 60 h za 7 dní (ORO.FTL.210).',
+    fat_noneHi: 'Tento měsíc žádný týden s vysokou zátěží.',
+    fat_weekS: '{h} h služby · dny služby: {d}',
+    fat_hiShort: 'Vysoká',
+    fat_intro2: 'Týdny, kdy rozpis splňuje rizikové faktory únavy podle EASA. Označené jsou jen týdny s vysokou zátěží, s důvodem.',
     lic_tableEmpty: 'Nahraj rozpis z IDP (obsahuje tabulku „Recurrent Training / Checks“) nebo je přidej v Nástroje → Platnosti.',
     lic_years: '{n} roku',
     lic_colLeft: 'Zbývá',
@@ -4502,6 +4591,17 @@ var I18N = {
     e_noPeriod: 'Nenacházím období rozpisu. Je to „Individual duty plan“ z IDP v PDF?'
   },
   it: {
+    "fat_note2": "Indicazione basata sulle regole EASA, non una valutazione medica. Se ti senti affaticato, dillo al comandante e segnalalo secondo l’OM-A di Eurowings.",
+    "fe_long": "{n} FDP di 11 h o più.",
+    "fe_recov": "Nessun riposo di recupero di 36 h con 2 notti locali nella settimana (ORO.FTL.235 d).",
+    "fe_rest": "{n} riposo/i sotto il minimo (ORO.FTL.235).",
+    "fe_wocl": "{n} servizi nella finestra di minimo circadiano, 02:00–05:59 (WOCL).",
+    "fe_disr": "{n} servizi disruptive (presentazione prima delle 06:00 o fine dopo le 23:00) (CS FTL.1.235).",
+    "fe_duty": "{h} h di servizio nella settimana: vicino al limite di 60 h in 7 giorni (ORO.FTL.210).",
+    "fat_noneHi": "Nessuna settimana a carico alto questo mese.",
+    "fat_weekS": "{h} h di servizio · giorni di servizio: {d}",
+    "fat_hiShort": "Alto",
+    "fat_intro2": "Settimane in cui il roster presenta fattori di rischio di fatica secondo EASA. Sono segnalate solo quelle a carico alto, con il motivo.",
     "lic_tableEmpty": "Carica un roster IDP (ha la tabella «Recurrent Training / Checks») o aggiungile in Strumenti → Scadenze.",
     "lic_years": "{n} anni",
     "lic_colLeft": "Manca",
@@ -5023,6 +5123,17 @@ var I18N = {
     "e_noPeriod": "Non trovo il periodo del turno. È l’«Individual duty plan» di IDP in PDF?"
   },
   pt: {
+    "fat_note2": "É uma orientação com as regras da EASA, não uma avaliação médica. Se te sentes fatigado, diz ao comandante e reporta segundo o OM-A da Eurowings.",
+    "fe_long": "{n} FDP de 11 h ou mais.",
+    "fe_recov": "Sem descanso de recuperação de 36 h com 2 noites locais na semana (ORO.FTL.235 d).",
+    "fe_rest": "{n} descanso(s) abaixo do mínimo (ORO.FTL.235).",
+    "fe_wocl": "{n} serviços dentro da janela de baixo circadiano, 02:00–05:59 (WOCL).",
+    "fe_disr": "{n} serviços disruptivos (apresentação antes das 06:00 ou fim depois das 23:00) (CS FTL.1.235).",
+    "fe_duty": "{h} h de serviço na semana: perto do limite de 60 h em 7 dias (ORO.FTL.210).",
+    "fat_noneHi": "Nenhuma semana com carga alta este mês.",
+    "fat_weekS": "{h} h de serviço · dias de serviço: {d}",
+    "fat_hiShort": "Alta",
+    "fat_intro2": "Semanas em que a escala tem fatores de risco de fadiga segundo a EASA. Só se marcam as de carga alta, com o motivo.",
     "lic_tableEmpty": "Carrega uma escala do IDP (tem a tabela «Recurrent Training / Checks») ou adiciona-as em Ferramentas → Validades.",
     "lic_years": "{n} anos",
     "lic_colLeft": "Falta",
@@ -5544,6 +5655,17 @@ var I18N = {
     "e_noPeriod": "Não encontro o período da escala. É o «Individual duty plan» do IDP em PDF?"
   },
   ro: {
+    "fat_note2": "Orientativ după regulile EASA, nu o evaluare medicală. Dacă ești obosit, spune-i comandantului și raportează după OM-A Eurowings.",
+    "fe_long": "{n} FDP de 11 h sau mai mult.",
+    "fe_recov": "Fără odihnă de recuperare de 36 h cu 2 nopți locale în săptămână (ORO.FTL.235 d).",
+    "fe_rest": "{n} odihnă/odihne sub minim (ORO.FTL.235).",
+    "fe_wocl": "{n} servicii în fereastra minimului circadian, 02:00–05:59 (WOCL).",
+    "fe_disr": "{n} servicii perturbatoare (prezentare înainte de 06:00 sau final după 23:00) (CS FTL.1.235).",
+    "fe_duty": "{h} h de serviciu în săptămână: aproape de limita de 60 h în 7 zile (ORO.FTL.210).",
+    "fat_noneHi": "Nicio săptămână cu încărcare mare luna asta.",
+    "fat_weekS": "{h} h de serviciu · zile de serviciu: {d}",
+    "fat_hiShort": "Mare",
+    "fat_intro2": "Săptămâni în care rosterul îndeplinește factori de risc de oboseală după EASA. Sunt marcate doar cele cu încărcare mare, cu motivul.",
     "lic_tableEmpty": "Încarcă un roster IDP (are tabelul „Recurrent Training / Checks”) sau adaugă-le în Instrumente → Valabilități.",
     "lic_years": "{n} ani",
     "lic_colLeft": "Rămas",
@@ -9489,64 +9611,50 @@ function fatigueDays(){
   });
   return out;
 }
+// A week is shown as HIGH when the roster matches EASA fatigue risk factors:
+//  · ORO.FTL.210: more than 50 h of duty in the 7 days (limit 60 h)
+//  · CS FTL.1.235(b) disruptive schedules: 3 or more early starts (before 06:00) or late finishes (after 23:00)
+//  · WOCL (02:00–05:59): 2 or more duties touching the night
+//  · ORO.FTL.235: a rest shorter than the minimum, or no 36 h recovery rest with 2 local nights in the week
+//  · 2 or more FDPs of 11 h or more
 function renderFat(){
   const ro = state.months[state.current]; if(!ro){ pnl(hdr('fat') + `<p class="msg">${t('startText')}</p>`); return; }
-  const F = fatigueDays(), c = PR.compute(ro, state.settings, state.extras);
-  // rolling 7 days ending on each day of the month
+  const F = fatigueDays(), duties = allDuties(), c = PR.compute(ro, state.settings, state.extras), base = state.settings.base || 'PMI';
+  const hLoc = (ms, st) => { const p = new Intl.DateTimeFormat('en-GB', {timeZone: PR.tzOf(st || base), hour:'2-digit', hourCycle:'h23'}).format(new Date(ms)); return +p; };
+  // end of the last recovery rest before each duty
+  const recov = [];
+  for(let j = 0; j < duties.length - 1; j++){
+    const gs = duties[j].end, ge = duties[j+1].start; if(!gs || ge - gs < 36*36e5) continue;
+    let nights = 0; for(let x = gs; x < ge; x += 36e5) if(hLoc(x, duties[j].endSt) === 3) nights++;
+    if(nights >= 2) recov.push(ge);
+  }
+  const first = duties.length ? duties[0].start : 0;
+  const lastRecovery = x => { let r = first; for(const g of recov) if(g <= x.start) r = g; return r; };
   const weeks = [];
   for(let i = 0; i < c.days.length; i += 7){
-    const ds = c.days.slice(i, i+7), fs = ds.map(d => F[d.date]).filter(Boolean);
-    const pts = fs.reduce((a, f) => a + f.pts, 0), early = fs.filter(f => f.early).length, night = fs.filter(f => f.night).length, short = fs.filter(f => f.short).length;
-    const hrs = fs.reduce((a, f) => a + f.len, 0);
-    let consec = 0, run = 0; for(const d of ds){ if(F[d.date]) { run++; consec = Math.max(consec, run); } else run = 0; }
-    const lvl = pts >= 12 || night >= 3 || hrs > 50 ? 'hi' : pts >= 6 || early >= 3 ? 'mid' : 'lo';
-    weeks.push({ a: ds[0].date, b: ds[ds.length-1].date, pts, early, night, short, hrs, consec, lvl });
+    const ds = c.days.slice(i, i+7), a = ds[0].date, b = ds[ds.length-1].date;
+    const fs = ds.map(d => F[d.date]).filter(Boolean);
+    const hrs = fs.reduce((x, f) => x + f.len, 0);
+    const early = fs.filter(f => f.early || f.late).length, night = fs.filter(f => f.night).length, short = fs.filter(f => f.short).length, long = fs.filter(f => f.long).length;
+    // recovery rest (ORO.FTL.235 d): never more than 168 h between two rests of 36 h with 2 local nights
+    const noRecov = duties.some(x => x.date >= a && x.date <= b && x.end && x.end - lastRecovery(x) > 168*36e5);
+    const why = [];
+    if(hrs > 50) why.push(t('fe_duty', {h: hhmm(hrs)}));
+    if(early >= 3) why.push(t('fe_disr', {n: early}));
+    if(night >= 2) why.push(t('fe_wocl', {n: night}));
+    if(short >= 1) why.push(t('fe_rest', {n: short}));
+    if(noRecov) why.push(t('fe_recov'));
+    if(long >= 2) why.push(t('fe_long', {n: long}));
+    weeks.push({ a, b, hrs, n: fs.length, why, hi: why.length > 0 });
   }
   const dd = iso => new Date(iso+'T12:00').toLocaleDateString(LOC, {day:'numeric', month:'short'});
-  const flagDays = c.days.filter(d => F[d.date] && F[d.date].pts >= 2);
-  pnl(hdr('fat', t('fat_intro')) + `<div class="mlist">${weeks.map(w => `<div class="mrow"><div class="mh nc">${dd(w.a)} – ${dd(w.b)}
-      <span class="chip fatlvl-${w.lvl}">${w.lvl==='hi' ? '⚠ ' : ''}${t('fat_'+w.lvl)}</span></div>
-      <div class="note">${t('fat_week', {h: hhmm(w.hrs), e: w.early, n: w.night, s: w.short, c: w.consec})}</div>
-      ${w.lvl === 'hi' ? `<button class="btn" type="button" data-fatweek="${w.a}|${w.b}" style="margin-top:8px;font-size:13px">✍ ${t('fat_report')}</button>` : ''}</div>`).join('')}</div>
-    <h3 class="wh">${t('fat_daysT')}</h3>
-    <div class="mlist">${flagDays.map(d => { const f = F[d.date];
-      const tags = ['early','night','late','short','long'].filter(k => f[k]).map(k => `<span class="chip">${t('fat_'+k)}</span>`).join('');
-      return `<div class="mrow"><div class="mh">${new Date(d.date+'T12:00').toLocaleDateString(LOC,{weekday:'short', day:'numeric'})} · ${esc(d.route||d.label||'')}</div><div class="chips">${tags}</div>
-        <button class="btn ghost" type="button" data-fatrep="${d.date}" style="margin-top:6px;font-size:13px">✍ ${t('fat_report')}</button></div>`; }).join('') || `<p class="note">${t('fat_none')}</p>`}</div>
-    <div id="fat-out"></div>
-    <p class="note">${t('fat_note')}</p>`);
+  const hi = weeks.filter(w => w.hi);
+  pnl(hdr('fat', t('fat_intro2')) + (hi.length ? '' : `<p class="msg" style="background:var(--pay-soft);color:var(--pay)">${t('fat_noneHi')}</p>`) +
+    `<div class="mlist">${weeks.map(w => `<div class="mrow"><div class="mh nc">${dd(w.a)} – ${dd(w.b)}${w.hi ? `<span class="chip fatlvl-hi">⚠ ${t('fat_hiShort')}</span>` : ''}</div>
+      <div class="note">${t('fat_weekS', {h: hhmm(w.hrs), d: w.n})}</div>
+      ${w.hi ? `<ul class="fatwhy">${w.why.map(x => `<li>${x}</li>`).join('')}</ul>` : ''}</div>`).join('')}</div>
+    <p class="note">${t('fat_note2')}</p>`);
 }
-// report for a whole week with a high load: every duty of the week with its factors
-function fatigueReportWeek(a, b, L){
-  return withLang(L, () => {
-    const F = fatigueDays(), base = state.settings.base || 'PMI';
-    const ro = state.months[a.slice(0,7)] || {}, parts = String(ro.crew||'').split(',').map(s => s.trim()), name = parts.length > 1 ? parts[1]+' '+parts[0] : (parts[0]||'');
-    const days = Object.keys(F).filter(d => d >= a && d <= b).sort();
-    const lines = days.map(d => { const f = F[d], x = f.x, fl = (x.d.legs||[]).map(l => l.flight + ' ' + l.dep + '-' + l.arr).join(', ');
-      const why = ['early','night','late','short','long'].filter(k => f[k]).map(k => t('fat_'+k)).join('; ');
-      return `- ${d}: ${fl || x.route} · ${localHM(x.start, x.st)}–${x.end ? localHM(x.end, x.endSt || base) : '—'} (${hhmm(f.len)} h)${why ? ' · ' + why : ''}`; }).join('\n');
-    const tot = days.reduce((s, d) => s + F[d].len, 0);
-    return L === 'es'
-      ? { s: `Fatigue report – semana ${a} a ${b} – ${name}`, b: `Semana: ${a} a ${b}\nServicios: ${days.length} · ${hhmm(tot)} h de servicio\n\n${lines}\n\nHoras de sueño medias por noche: __\nNivel de fatiga (Samn-Perelli 1–7): __\nCómo me afecta: __\n\n${name}` }
-      : { s: `Fatigue report – week ${a} to ${b} – ${name}`, b: `Week: ${a} to ${b}\nDuties: ${days.length} · ${hhmm(tot)} h duty\n\n${lines}\n\nAverage sleep per night: __\nFatigue level (Samn-Perelli 1–7): __\nHow it affects me: __\n\n${name}` };
-  });
-}
-function fatigueReport(date, L){
-  return withLang(L, () => {
-    const F = fatigueDays()[date], x = F.x, d = x.d, base = state.settings.base || 'PMI';
-    const ro = state.months[date.slice(0,7)] || {}, parts = String(ro.crew||'').split(',').map(s => s.trim()), name = parts.length > 1 ? parts[1]+' '+parts[0] : (parts[0]||'');
-    const flights = (d.legs||[]).map(l => `${l.flight} ${l.dep}-${l.arr}`).join(', ');
-    const reasons = ['early','night','late','short','long'].filter(k => F[k]).map(k => '- ' + t('fat_'+k)).join('\n');
-    const M = L === 'es' ? {
-      s: `Fatigue report – ${date} – ${name}`,
-      b: `Fecha: ${date}\nServicio: ${flights || d.route}\nFirma: ${localHM(x.start, x.st)} local (${x.st || base}) · Fin: ${x.end ? localHM(x.end, x.endSt || base) : '—'} local\nDuración del servicio: ${hhmm(F.len)} h\n\nFactores del roster:\n${reasons}\n\nHoras de sueño en las 24 h anteriores: __\nNivel de fatiga (Samn-Perelli 1–7): __\nCómo me afectó en el servicio: __\n\n${name}` }
-    : {
-      s: `Fatigue report – ${date} – ${name}`,
-      b: `Date: ${date}\nDuty: ${flights || d.route}\nReport: ${localHM(x.start, x.st)} local (${x.st || base}) · End: ${x.end ? localHM(x.end, x.endSt || base) : '—'} local\nDuty length: ${hhmm(F.len)} h\n\nRoster factors:\n${reasons}\n\nSleep in the previous 24 h: __\nFatigue level (Samn-Perelli 1–7): __\nHow it affected the duty: __\n\n${name}` };
-    return M;
-  });
-}
-
 // ---------- 6. on-board sales log ----------
 function salesOfMonth(k){ const log = (state.salesLog||{})[k] || {}; return Object.values(log).reduce((a, v) => a + (+v||0), 0); }
 function applySalesLog(k){
@@ -9598,21 +9706,14 @@ document.addEventListener('click', async e => {
     if(x && x.rcode) x.del = true; else state.lic = licList().filter(y => y.id !== el.dataset.licdel);
     save(); renderLic(); renderLicAlert(); return; }
   if(id === 'lic-ics'){ await giveFile('payroster-caducidades.ics', licIcs(), 'text/calendar'); return; }
-  const fr = el.closest && (el.closest('[data-fatrep]') || el.closest('[data-fatweek]'));
-  if(fr){ const L = (lang === 'es' || lang === 'ca') ? 'es' : 'en';
-    const r = fr.dataset.fatweek ? fatigueReportWeek(...fr.dataset.fatweek.split('|'), L) : fatigueReport(fr.dataset.fatrep, L);
-    $('fat-out').innerHTML = `<div class="mailbox"><label class="note">${t('mail_subj')}<input type="text" id="mail-s" value="${esc(r.s)}"></label>
-      <textarea id="mail-b" rows="16">${esc(r.b)}</textarea>
-      <div class="row"><button class="btn" id="mail-copy" type="button">${t('mail_copy')}</button><button class="btn ghost" id="mail-open" type="button">${t('mail_open')}</button></div>
-      <p class="note">${t('fat_repNote')}</p></div>`;
-    $('fat-out').scrollIntoView({block:'nearest'}); return; }
+
 });
 
 </script>
 <script>
 const SEED = null;
 const SEED_SETTINGS = null;
-const APP_VERSION = '2026.11.09-1307';
+const APP_VERSION = '2026.11.09-1333';
 const IS_PWA_BUILD = true;
 const LS = 'payroster.v1';
 const KC = { sick:'--warn', flight:'--k-flight', deadhead:'--k-dh', training:'--k-train', standby:'--k-sby', reserve:'--k-sby', ground:'--k-ground', off:'--k-off', empty:'--k-off', other:'--k-ground' };
