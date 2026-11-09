@@ -13,6 +13,7 @@
 <link rel="icon" href="icons/icon4-192.png">
 <style>:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0}img{max-width:100%}[hidden]{display:none!important}</style>
 <title>Payroster+</title>
+<script>try{if(localStorage.getItem('pr.lock'))document.documentElement.classList.add('locked')}catch(e){}</script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@75..100,500..800&family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
@@ -248,6 +249,14 @@ table.chk tr.bad:not(.hint) td:last-child{color:var(--warn);font-weight:700}
 #ptr.done .ptr-ic{color:var(--pay)}
 @keyframes ptrspin{to{transform:rotate(360deg)}}
 html,body{overscroll-behavior-y:contain}
+.td-sleep{margin-top:4px}.td-sleep.late{color:var(--warn);font-weight:600}
+.wxrow{margin-top:8px}.chip.wxc small{color:var(--muted);font-weight:400}
+html.locked body > *:not(#lockScr){visibility:hidden}
+#lockScr{display:none}
+html.locked #lockScr{display:flex;position:fixed;inset:0;z-index:999;background:var(--bg);align-items:center;justify-content:center;visibility:visible}
+#lockScr .lk-in{text-align:center;display:grid;gap:14px;justify-items:center}
+#lockScr .lk-logo{font-family:var(--f-display,inherit);font-size:30px;font-weight:800;color:var(--ink)}#lockScr .lk-logo span{color:var(--accent)}#lockScr .lk-logo sup{color:var(--pay)}
+#lockScr .lk-ic{font-size:44px}
 .td-count{text-align:right;display:flex;flex-direction:column;gap:2px}.td-count span{display:block;margin-bottom:4px}.td-pk{font-weight:600}.td-count small{display:block;font-family:inherit;font-size:11px;font-weight:600;letter-spacing:.04em;text-transform:uppercase;color:var(--muted,#667);margin-bottom:2px}
 .td-legs{margin-top:6px;line-height:1.6}
 .chg{border-left:4px solid var(--warn)}
@@ -346,6 +355,7 @@ input[type=date]::-webkit-date-and-time-value{text-align:left}
   <section class="panel" id="setup" hidden></section>
 
   <div class="panel licalert" id="licAlert" hidden data-tab="roster"></div>
+  <div class="panel licalert" id="bkRemind" hidden data-tab="roster"></div>
   <section class="panel today" id="today" hidden data-tab="roster"></section>
   <div class="panel chg" id="chgCard" hidden data-tab="roster"></div>
   <div class="herowrap" data-tab="roster"><button class="privbtn" id="privBtn" type="button" aria-pressed="false"></button><section class="hero" id="hero"></section></div>
@@ -378,6 +388,7 @@ input[type=date]::-webkit-date-and-time-value{text-align:left}
 
   <h2 data-tab="more" data-i18n="tab_more"></h2>
   <section class="panel" id="licTable" data-tab="more"></section>
+  <section class="panel" id="lockBox" data-tab="more" hidden></section>
   <details class="box panel" id="setBox" data-tab="more" open>
     <summary data-i18n="contractData"></summary>
     <div class="form" id="form"></div>
@@ -1195,6 +1206,29 @@ var I18N = {
   names: { es: 'Español', ca: 'Català', en: 'English', de: 'Deutsch', fr: 'Français', it: 'Italiano', pt: 'Português', ro: 'Română', hu: 'Magyar', sk: 'Slovenčina', cs: 'Čeština' },
   locales: { es: 'es-ES', ca: 'ca-ES', en: 'en-GB', de: 'de-DE', fr: 'fr-FR', it: 'it-IT', pt: 'pt-PT', ro: 'ro-RO', hu: 'hu-HU', sk: 'sk-SK', cs: 'cs-CZ' },
   es: {
+    wr_countries: 'Países',
+    wr_topRoute: 'Rutas más repetidas',
+    bkr_later: 'Más tarde',
+    bkr_days: 'Tu última copia es de hace {n} días. Haz una nueva para no perder datos.',
+    bkr_never: 'Aún no has hecho ninguna copia de tus datos. Guárdala en Archivos o iCloud por si cambias de móvil o se borra algo.',
+    bkr_title: 'Copia de seguridad',
+    ftl_peak: 'pico {h} h el {d}',
+    ftl_left: 'Te quedan {h} h',
+    ftl_nowT: 'Desde hoy (ventanas móviles)',
+    lk_open: 'Desbloquear',
+    lk_fail: 'No se ha podido verificar. Inténtalo otra vez.',
+    lk_off: 'Bloqueo desactivado',
+    lk_on: 'Bloqueo activado',
+    lk_note: 'Al abrir la app (y al volver tras 1 minuto) te pedirá Face ID, Touch ID o el código del iPhone.',
+    lk_toggle: 'Bloquear la app con Face ID / código',
+    lk_title: 'Seguridad',
+    wx_tz: '{h} h de diferencia',
+    cal_night: 'Aviso la noche antes (hora de acostarte)',
+    sl_prep: 'Tiempo para prepararte',
+    sl_hours: 'Horas de sueño',
+    sl_alarm: 'Hora de acostarse · despertador {w}',
+    sl_late: 'Ya es hora de dormir: despertador a las {w} ({n} h)',
+    sl_line: 'Para dormir {h} h: a la cama a las {b} · despertador {w}',
     td_pkin: 'Transporte en',
     td_pick: 'Recogida (transporte) a las {h} local',
     ptr_ok: 'Todo al día',
@@ -1633,6 +1667,29 @@ var I18N = {
     e_noPeriod: 'No encuentro el periodo del roster. ¿Es el «Individual duty plan» de IDP en PDF?'
   },
   ca: {
+    wr_countries: 'Països',
+    wr_topRoute: 'Rutes més repetides',
+    bkr_later: 'Més tard',
+    bkr_days: 'La teva darrera còpia és de fa {n} dies. Fes-ne una de nova.',
+    bkr_never: 'Encara no has fet cap còpia de les teves dades. Desa-la a Arxius o iCloud.',
+    bkr_title: 'Còpia de seguretat',
+    ftl_peak: 'pic {h} h el {d}',
+    ftl_left: 'Et queden {h} h',
+    ftl_nowT: 'Des d’avui (finestres mòbils)',
+    lk_open: 'Desbloquejar',
+    lk_fail: 'No s’ha pogut verificar. Torna-ho a provar.',
+    lk_off: 'Bloqueig desactivat',
+    lk_on: 'Bloqueig activat',
+    lk_note: 'En obrir l’app (i en tornar després d’1 minut) et demanarà Face ID, Touch ID o el codi de l’iPhone.',
+    lk_toggle: 'Bloquejar l’app amb Face ID / codi',
+    lk_title: 'Seguretat',
+    wx_tz: '{h} h de diferència',
+    cal_night: 'Avís la nit abans (hora d’anar a dormir)',
+    sl_prep: 'Temps per preparar-te',
+    sl_hours: 'Hores de son',
+    sl_alarm: 'Hora d’anar a dormir · despertador {w}',
+    sl_late: 'Ja és hora de dormir: despertador a les {w} ({n} h)',
+    sl_line: 'Per dormir {h} h: al llit a les {b} · despertador {w}',
     td_pkin: 'Transport en',
     td_pick: 'Recollida (transport) a les {h} local',
     ptr_ok: 'Tot al dia',
@@ -2072,6 +2129,29 @@ var I18N = {
     e_noPeriod: 'No trobo el període del roster. És l’«Individual duty plan» d’IDP en PDF?'
   },
   en: {
+    wr_countries: 'Countries',
+    wr_topRoute: 'Most flown routes',
+    bkr_later: 'Later',
+    bkr_days: 'Your last backup was {n} days ago. Make a new one so you don’t lose data.',
+    bkr_never: 'You have never backed up your data. Save a copy to Files or iCloud in case you change phone or something gets deleted.',
+    bkr_title: 'Backup',
+    ftl_peak: 'peak {h} h on {d}',
+    ftl_left: '{h} h left',
+    ftl_nowT: 'From today (rolling windows)',
+    lk_open: 'Unlock',
+    lk_fail: 'Could not verify. Try again.',
+    lk_off: 'Lock off',
+    lk_on: 'Lock on',
+    lk_note: 'When you open the app (and when you come back after 1 minute) it asks for Face ID, Touch ID or your iPhone passcode.',
+    lk_toggle: 'Lock the app with Face ID / passcode',
+    lk_title: 'Security',
+    wx_tz: '{h} h time difference',
+    cal_night: 'Reminder the night before (bedtime)',
+    sl_prep: 'Time to get ready',
+    sl_hours: 'Hours of sleep',
+    sl_alarm: 'Bedtime · alarm {w}',
+    sl_late: 'Time to sleep: alarm at {w} ({n} h)',
+    sl_line: 'To sleep {h} h: bed at {b} · alarm {w}',
     td_pkin: 'Pick-up in',
     td_pick: 'Transport pick-up at {h} local',
     ptr_ok: 'Up to date',
@@ -2511,6 +2591,29 @@ var I18N = {
     e_noPeriod: 'I can’t find the roster period. Is this the IDP “Individual duty plan” PDF?'
   },
   de: {
+    wr_countries: 'Länder',
+    wr_topRoute: 'Häufigste Strecken',
+    bkr_later: 'Später',
+    bkr_days: 'Deine letzte Sicherung ist {n} Tage alt. Mach eine neue.',
+    bkr_never: 'Du hast noch keine Sicherung gemacht. Speichere eine Kopie in Dateien oder iCloud.',
+    bkr_title: 'Datensicherung',
+    ftl_peak: 'Spitze {h} h am {d}',
+    ftl_left: 'Noch {h} h',
+    ftl_nowT: 'Ab heute (rollierende Zeiträume)',
+    lk_open: 'Entsperren',
+    lk_fail: 'Überprüfung fehlgeschlagen. Nochmal versuchen.',
+    lk_off: 'Sperre aus',
+    lk_on: 'Sperre an',
+    lk_note: 'Beim Öffnen (und nach 1 Minute im Hintergrund) fragt die App nach Face ID, Touch ID oder dem iPhone-Code.',
+    lk_toggle: 'App mit Face ID / Code sperren',
+    lk_title: 'Sicherheit',
+    wx_tz: '{h} h Zeitunterschied',
+    cal_night: 'Erinnerung am Vorabend (Schlafenszeit)',
+    sl_prep: 'Zeit zum Fertigmachen',
+    sl_hours: 'Stunden Schlaf',
+    sl_alarm: 'Schlafenszeit · Wecker {w}',
+    sl_late: 'Zeit zu schlafen: Wecker um {w} ({n} h)',
+    sl_line: 'Für {h} h Schlaf: ins Bett um {b} · Wecker {w}',
     td_pkin: 'Abholung in',
     td_pick: 'Abholung (Transport) um {h} Ortszeit',
     ptr_ok: 'Alles aktuell',
@@ -2950,6 +3053,29 @@ var I18N = {
     e_noPeriod: 'Ich finde den Zeitraum des Dienstplans nicht. Ist das der „Individual duty plan“ aus IDP als PDF?'
   },
   fr: {
+    wr_countries: 'Pays',
+    wr_topRoute: 'Routes les plus fréquentes',
+    bkr_later: 'Plus tard',
+    bkr_days: 'Ta dernière sauvegarde date de {n} jours. Fais-en une nouvelle.',
+    bkr_never: 'Tu n’as encore fait aucune sauvegarde. Enregistre une copie dans Fichiers ou iCloud.',
+    bkr_title: 'Sauvegarde',
+    ftl_peak: 'pic {h} h le {d}',
+    ftl_left: 'Il te reste {h} h',
+    ftl_nowT: 'À partir d’aujourd’hui (périodes glissantes)',
+    lk_open: 'Déverrouiller',
+    lk_fail: 'Vérification impossible. Réessaie.',
+    lk_off: 'Verrouillage désactivé',
+    lk_on: 'Verrouillage activé',
+    lk_note: 'À l’ouverture (et au retour après 1 minute), l’app demande Face ID, Touch ID ou le code de l’iPhone.',
+    lk_toggle: 'Verrouiller l’app avec Face ID / code',
+    lk_title: 'Sécurité',
+    wx_tz: '{h} h de décalage',
+    cal_night: 'Rappel la veille (heure du coucher)',
+    sl_prep: 'Temps pour te préparer',
+    sl_hours: 'Heures de sommeil',
+    sl_alarm: 'Heure du coucher · réveil {w}',
+    sl_late: 'Il est temps de dormir : réveil à {w} ({n} h)',
+    sl_line: 'Pour dormir {h} h : au lit à {b} · réveil {w}',
     td_pkin: 'Transport dans',
     td_pick: 'Prise en charge (transport) à {h} locale',
     ptr_ok: 'À jour',
@@ -3389,6 +3515,29 @@ var I18N = {
     e_noPeriod: 'Je ne trouve pas la période du planning. Est-ce bien l’« Individual duty plan » d’IDP en PDF ?'
   },
   hu: {
+    wr_countries: 'Országok',
+    wr_topRoute: 'Leggyakoribb útvonalak',
+    bkr_later: 'Később',
+    bkr_days: 'Az utolsó mentésed {n} napja készült. Készíts újat.',
+    bkr_never: 'Még nem készítettél mentést. Mentsd a Fájlokba vagy az iCloudba.',
+    bkr_title: 'Biztonsági mentés',
+    ftl_peak: 'csúcs {h} óra: {d}',
+    ftl_left: 'Még {h} óra',
+    ftl_nowT: 'Mától (gördülő időszakok)',
+    lk_open: 'Feloldás',
+    lk_fail: 'Nem sikerült az ellenőrzés. Próbáld újra.',
+    lk_off: 'Zárolás kikapcsolva',
+    lk_on: 'Zárolás bekapcsolva',
+    lk_note: 'Megnyitáskor (és 1 perc után visszatérve) Face ID-t, Touch ID-t vagy az iPhone kódját kéri.',
+    lk_toggle: 'App zárolása Face ID-val / kóddal',
+    lk_title: 'Biztonság',
+    wx_tz: '{h} óra időeltolódás',
+    cal_night: 'Emlékeztető előző este (lefekvés)',
+    sl_prep: 'Készülődési idő',
+    sl_hours: 'Alvás (óra)',
+    sl_alarm: 'Lefekvés · ébresztő {w}',
+    sl_late: 'Ideje aludni: ébresztő {w} ({n} óra)',
+    sl_line: '{h} óra alváshoz: lefekvés {b} · ébresztő {w}',
     td_pkin: 'Transzferig',
     td_pick: 'Transzfer indulása {h} helyi idő',
     ptr_ok: 'Minden naprakész',
@@ -3828,6 +3977,29 @@ var I18N = {
     e_noPeriod: 'Nem találom a beosztás időszakát. Ez az IDP „Individual duty plan” PDF-je?'
   },
   sk: {
+    wr_countries: 'Krajiny',
+    wr_topRoute: 'Najčastejšie trasy',
+    bkr_later: 'Neskôr',
+    bkr_days: 'Posledná záloha je {n} dní stará. Sprav novú.',
+    bkr_never: 'Ešte si nespravil žiadnu zálohu. Ulož kópiu do Súborov alebo iCloudu.',
+    bkr_title: 'Záloha',
+    ftl_peak: 'vrchol {h} h dňa {d}',
+    ftl_left: 'Zostáva {h} h',
+    ftl_nowT: 'Od dnes (kĺzavé obdobia)',
+    lk_open: 'Odomknúť',
+    lk_fail: 'Overenie zlyhalo. Skús znova.',
+    lk_off: 'Zámok vypnutý',
+    lk_on: 'Zámok zapnutý',
+    lk_note: 'Pri otvorení (a po návrate po 1 minúte) vyžaduje Face ID, Touch ID alebo kód iPhonu.',
+    lk_toggle: 'Zamknúť aplikáciu cez Face ID / kód',
+    lk_title: 'Zabezpečenie',
+    wx_tz: '{h} h časový rozdiel',
+    cal_night: 'Pripomienka večer predtým (čas spánku)',
+    sl_prep: 'Čas na prípravu',
+    sl_hours: 'Hodiny spánku',
+    sl_alarm: 'Čas ísť spať · budík {w}',
+    sl_late: 'Je čas spať: budík o {w} ({n} h)',
+    sl_line: 'Na {h} h spánku: do postele o {b} · budík {w}',
     td_pkin: 'Transport o',
     td_pick: 'Vyzdvihnutie (transport) o {h} miestneho času',
     ptr_ok: 'Všetko aktuálne',
@@ -4267,6 +4439,29 @@ var I18N = {
     e_noPeriod: 'Nenachádzam obdobie rozpisu. Je to „Individual duty plan“ z IDP v PDF?'
   },
   cs: {
+    wr_countries: 'Země',
+    wr_topRoute: 'Nejčastější trasy',
+    bkr_later: 'Později',
+    bkr_days: 'Poslední záloha je {n} dní stará. Udělej novou.',
+    bkr_never: 'Ještě jsi neudělal žádnou zálohu. Ulož kopii do Souborů nebo iCloudu.',
+    bkr_title: 'Záloha',
+    ftl_peak: 'vrchol {h} h dne {d}',
+    ftl_left: 'Zbývá {h} h',
+    ftl_nowT: 'Od dneška (klouzavá období)',
+    lk_open: 'Odemknout',
+    lk_fail: 'Ověření selhalo. Zkus to znovu.',
+    lk_off: 'Zámek vypnut',
+    lk_on: 'Zámek zapnut',
+    lk_note: 'Při otevření (a po návratu po 1 minutě) vyžaduje Face ID, Touch ID nebo kód iPhonu.',
+    lk_toggle: 'Zamknout aplikaci přes Face ID / kód',
+    lk_title: 'Zabezpečení',
+    wx_tz: '{h} h časový rozdíl',
+    cal_night: 'Připomínka večer předem (čas spánku)',
+    sl_prep: 'Čas na přípravu',
+    sl_hours: 'Hodiny spánku',
+    sl_alarm: 'Čas jít spát · budík {w}',
+    sl_late: 'Je čas spát: budík v {w} ({n} h)',
+    sl_line: 'Na {h} h spánku: do postele v {b} · budík {w}',
     td_pkin: 'Transport za',
     td_pick: 'Vyzvednutí (transport) v {h} místního času',
     ptr_ok: 'Vše aktuální',
@@ -4706,6 +4901,29 @@ var I18N = {
     e_noPeriod: 'Nenacházím období rozpisu. Je to „Individual duty plan“ z IDP v PDF?'
   },
   it: {
+    "wr_countries": "Paesi",
+    "wr_topRoute": "Rotte più frequenti",
+    "bkr_later": "Più tardi",
+    "bkr_days": "Il tuo ultimo backup è di {n} giorni fa. Fanne uno nuovo.",
+    "bkr_never": "Non hai ancora fatto nessun backup. Salva una copia in File o iCloud.",
+    "bkr_title": "Backup",
+    "ftl_peak": "picco {h} h il {d}",
+    "ftl_left": "Ti restano {h} h",
+    "ftl_nowT": "Da oggi (finestre mobili)",
+    "lk_open": "Sblocca",
+    "lk_fail": "Verifica non riuscita. Riprova.",
+    "lk_off": "Blocco disattivato",
+    "lk_on": "Blocco attivo",
+    "lk_note": "All’apertura (e al ritorno dopo 1 minuto) l’app chiede Face ID, Touch ID o il codice dell’iPhone.",
+    "lk_toggle": "Blocca l’app con Face ID / codice",
+    "lk_title": "Sicurezza",
+    "wx_tz": "{h} h di differenza",
+    "cal_night": "Promemoria la sera prima (ora di dormire)",
+    "sl_prep": "Tempo per prepararti",
+    "sl_hours": "Ore di sonno",
+    "sl_alarm": "Ora di dormire · sveglia {w}",
+    "sl_late": "È ora di dormire: sveglia alle {w} ({n} h)",
+    "sl_line": "Per dormire {h} h: a letto alle {b} · sveglia {w}",
     "td_pkin": "Pick-up tra",
     "td_pick": "Pick-up (trasporto) alle {h} locali",
     "ptr_ok": "Tutto aggiornato",
@@ -5250,6 +5468,29 @@ var I18N = {
     "e_noPeriod": "Non trovo il periodo del turno. È l’«Individual duty plan» di IDP in PDF?"
   },
   pt: {
+    "wr_countries": "Países",
+    "wr_topRoute": "Rotas mais repetidas",
+    "bkr_later": "Mais tarde",
+    "bkr_days": "A tua última cópia tem {n} dias. Faz uma nova.",
+    "bkr_never": "Ainda não fizeste nenhuma cópia. Guarda-a em Ficheiros ou iCloud.",
+    "bkr_title": "Cópia de segurança",
+    "ftl_peak": "pico {h} h a {d}",
+    "ftl_left": "Faltam {h} h",
+    "ftl_nowT": "A partir de hoje (janelas móveis)",
+    "lk_open": "Desbloquear",
+    "lk_fail": "Não foi possível verificar. Tenta de novo.",
+    "lk_off": "Bloqueio desativado",
+    "lk_on": "Bloqueio ativado",
+    "lk_note": "Ao abrir a app (e ao voltar após 1 minuto) pede Face ID, Touch ID ou o código do iPhone.",
+    "lk_toggle": "Bloquear a app com Face ID / código",
+    "lk_title": "Segurança",
+    "wx_tz": "{h} h de diferença",
+    "cal_night": "Aviso na noite anterior (hora de deitar)",
+    "sl_prep": "Tempo para te preparares",
+    "sl_hours": "Horas de sono",
+    "sl_alarm": "Hora de deitar · despertador {w}",
+    "sl_late": "Hora de dormir: despertador às {w} ({n} h)",
+    "sl_line": "Para dormir {h} h: cama às {b} · despertador {w}",
     "td_pkin": "Transporte em",
     "td_pick": "Recolha (transporte) às {h} locais",
     "ptr_ok": "Tudo atualizado",
@@ -5794,6 +6035,29 @@ var I18N = {
     "e_noPeriod": "Não encontro o período da escala. É o «Individual duty plan» do IDP em PDF?"
   },
   ro: {
+    "wr_countries": "Țări",
+    "wr_topRoute": "Rute cele mai frecvente",
+    "bkr_later": "Mai târziu",
+    "bkr_days": "Ultima copie e de acum {n} zile. Fă una nouă.",
+    "bkr_never": "Nu ai făcut încă nicio copie. Salveaz-o în Fișiere sau iCloud.",
+    "bkr_title": "Copie de siguranță",
+    "ftl_peak": "vârf {h} h pe {d}",
+    "ftl_left": "Mai ai {h} h",
+    "ftl_nowT": "De azi (ferestre glisante)",
+    "lk_open": "Deblochează",
+    "lk_fail": "Verificarea a eșuat. Încearcă din nou.",
+    "lk_off": "Blocare dezactivată",
+    "lk_on": "Blocare activă",
+    "lk_note": "La deschidere (și la revenire după 1 minut) cere Face ID, Touch ID sau codul iPhone.",
+    "lk_toggle": "Blochează aplicația cu Face ID / cod",
+    "lk_title": "Securitate",
+    "wx_tz": "{h} h diferență de fus",
+    "cal_night": "Memento cu o seară înainte (ora de culcare)",
+    "sl_prep": "Timp de pregătire",
+    "sl_hours": "Ore de somn",
+    "sl_alarm": "Ora de culcare · alarmă {w}",
+    "sl_late": "E timpul să dormi: alarmă la {w} ({n} h)",
+    "sl_line": "Pentru {h} h de somn: la culcare la {b} · alarmă {w}",
     "td_pkin": "Transport în",
     "td_pick": "Preluare (transport) la {h} ora locală",
     "ptr_ok": "Totul la zi",
@@ -8857,7 +9121,7 @@ function buildIcs(months, o){
       // a duty only carries over midnight when the next day starts with its remaining legs
       if(open && !(raw.events[0] && (raw.events[0].type==='flt' || raw.events[0].type==='dh' || raw.events[0].type==='co'))) close();
       for(const e of raw.events){
-        if(e.type==='ci' || e.type==='su'){ close(); open = { start: utcStamp(d.date, e.t1), legs:[], date:d.date, d }; continue; }
+        if(e.type==='ci' || e.type==='su'){ close(); open = { start: utcStamp(d.date, e.t1), legs:[], date:d.date, d, pk: pickupMs(d.date, raw.events, utcAt(d.date, e.t1)) }; continue; }
         if(e.type==='flt' || e.type==='dh'){
           if(!open) open = { start: utcStamp(d.date, e.t1), legs:[], date:d.date, d };
           open.legs.push(e); open.end = utcStamp(d.date, e.t2, +e.t2 < +e.t1 ? 1 : 0); open.hotel = d.hotel || open.hotel;
@@ -8867,7 +9131,8 @@ function buildIcs(months, o){
           const off = /^(O_|OFF|FREI|U$|SU$|U_)/.test(e.code);
           if(off){ if(o.off && !open) ev.push({ allDay:d.date, title:e.code + (kind(d.kind).n?` · ${kind(d.kind).n}`:''), d }); continue; }
           if(open){ open.extra = (open.extra||[]).concat(e.code); continue; }
-          if(e.t1 && e.t2) ev.push({ start: utcStamp(d.date, e.t1), end: utcStamp(d.date, e.t2, +e.t2 <= +e.t1 ? 1 : 0), title: e.label || e.code, loc: e.st, d, gcrew: d.gcrew });
+          if(/^TAXI/.test(e.code)) continue;
+          if(e.t1 && e.t2) ev.push({ pk: pickupMs(d.date, raw.events, utcAt(d.date, e.t1)), start: utcStamp(d.date, e.t1), end: utcStamp(d.date, e.t2, +e.t2 <= +e.t1 ? 1 : 0), title: e.label || e.code, loc: e.st, d, gcrew: d.gcrew });
         }
       }
     }
@@ -8880,6 +9145,7 @@ function buildIcs(months, o){
     const title = legs.length ? (legs.some(l=>l.type==='flt') ? '' : 'DH ') + [legs[0].dep, ...legs.map(l=>l.arr)].join('–') : e.title;
     const desc = [];
     legs.forEach(l => desc.push(`${l.type==='dh'?'DH ':''}${l.flight} ${l.dep} ${t4(l.t1)}–${t4(l.t2)} ${l.arr} (UTC)`));
+    if(e.pk) desc.push('🚐 ' + t('td_pick', {h: localHM(e.pk, (legs[0] && legs[0].dep) || e.loc)}));
     if(e.hotel) desc.push(t('nightIn',{st:e.hotel}));
     if(e.extra) desc.push(e.extra.join(', '));
     if(o.crew && e.crew) e.crew.forEach(l => desc.push(`${l.flight}: ` + l.members.filter(m=>m.name.trim()!==me.trim()).map(m=>m.role+' '+m.name).join(' · ')));
@@ -8891,7 +9157,11 @@ function buildIcs(months, o){
     lines.push('SUMMARY:'+icsEsc(title));
     if(legs[0] || e.loc) lines.push('LOCATION:'+icsEsc(legs[0] ? legs[0].dep : e.loc));
     if(desc.length) lines.push('DESCRIPTION:'+icsEsc(desc.join('\n')));
-    if(o.alarm && !e.allDay) lines.push('BEGIN:VALARM','ACTION:DISPLAY','DESCRIPTION:'+icsEsc(title),'TRIGGER:-PT'+o.alarm+'M','END:VALARM');
+    const stMs = e.start ? Date.parse(e.start.replace(/^(\d{4})(\d{2})(\d{2})T(\d{2})(\d{2})(\d{2})Z$/,'$1-$2-$3T$4:$5:$6Z')) : 0;
+    const before = e.pk ? Math.round((stMs - e.pk)/60000) : 0;
+    if(o.alarm && !e.allDay) lines.push('BEGIN:VALARM','ACTION:DISPLAY','DESCRIPTION:'+icsEsc((e.pk ? '🚐 ' : '') + title),'TRIGGER:-PT'+(o.alarm + before)+'M','END:VALARM');
+    if(o.night && !e.allDay && stMs){ const bed = sleepPlan(stMs, e.pk).bed;
+      lines.push('BEGIN:VALARM','ACTION:DISPLAY','DESCRIPTION:'+icsEsc('😴 ' + t('sl_alarm', {w: localHM(sleepPlan(stMs, e.pk).wake, (legs[0] && legs[0].dep) || e.loc)})),'TRIGGER;VALUE=DATE-TIME:'+new Date(bed - 30*60e3).toISOString().replace(/[-:]/g,'').slice(0,15)+'Z','END:VALARM'); }
     lines.push('END:VEVENT');
   }
   lines.push('END:VCALENDAR');
@@ -8902,6 +9172,7 @@ function renderCal(msg){
   pnl(hdr('cal', t('cal_intro')) + `<div class="form" style="margin-top:0">
     <label>${t('cal_range')}<select id="cal-r"><option value="cur">${t('cal_cur')}</option><option value="all">${t('cal_all')}</option></select></label>
     <label>${t('cal_alarm')}<select id="cal-a"><option value="0">${t('no')}</option><option value="60">1 h</option><option value="90" selected>1:30 h</option><option value="120">2 h</option><option value="180">3 h</option></select></label>
+    <label class="chk"><input type="checkbox" id="cal-n" checked> ${t('cal_night')}</label>
     <label class="chk"><input type="checkbox" id="cal-c" checked> ${t('cal_crew')}</label>
     <label class="chk"><input type="checkbox" id="cal-o"> ${t('cal_off')}</label>
     <div class="wide"><button class="btn" id="cal-go" type="button">${t('cal_make')}</button></div></div><div id="cal-out">${msg||''}</div>`);
@@ -8915,7 +9186,7 @@ async function giveFile(name, text, mime){
 async function runCal(){
   const all = $('cal-r').value==='all';
   const months = all ? Object.keys(state.months).sort().map(k=>state.months[k]) : [state.months[state.current]].filter(Boolean);
-  const o = { alarm: +$('cal-a').value, crew: $('cal-c').checked, off: $('cal-o').checked };
+  const o = { alarm: +$('cal-a').value, crew: $('cal-c').checked, off: $('cal-o').checked, night: $('cal-n').checked };
   const ics = buildIcs(months, o);
   const ro = state.months[state.current];
   const name = all ? 'payroster-roster.ics' : `payroster-${key(ro)}.ics`;
@@ -8960,6 +9231,7 @@ function renderFtl(){
     const p = Math.min(100, i.w.sum/i.lim*100), cls = p>=100?'over':p>=90?'warn':'';
     return `<div class="fr"><div class="fl"><span>${i.lbl}</span><span class="mono">${fmtH(i.w.sum)} / ${i.lim} h${i.w.end?` <span class="note">(${t('ftl_until',{d:+i.w.end.slice(8)})})</span>`:''}</span></div>
       <div class="gtrack"><div class="gseg ${cls}" style="width:${p}%;background:${cls==='over'?'var(--warn)':cls==='warn'?'var(--k-train)':'var(--accent)'}"></div></div></div>`; }).join('')}</div>
+    ${typeof ftlNowHtml === 'function' ? ftlNowHtml() : ''}
     ${anyMissing?`<p class="note">${t('ftl_missing')}</p>`:''}<p class="note">${t('ftl_note')}${s.contract<100?' '+t('ftl_pt',{c:s.contract}):''}</p>`);
 }
 
@@ -9108,7 +9380,8 @@ document.addEventListener('click', async e=>{
   if(id==='bk-exp'){
     const {stale, ...keep} = state;
     const data = JSON.stringify({ app:'payroster', v:1, exported: todayISO(), state: keep });
-    await giveFile(`payroster-copia-${todayISO()}.json`, data, 'application/json');
+    const how = await giveFile(`payroster-copia-${todayISO()}.json`, data, 'application/json');
+    if(how !== 'cancel'){ state.lastBackup = todayISO(); save(); if(typeof renderBkRemind === 'function') renderBkRemind(); }
     $('bk-out').innerHTML = `<p class="msg">${t('bk_done')}</p>`; return; }
   if(id==='bk-ok' && bkPending){ const lang = state.lang; state = Object.assign({ extras:{}, slips:{}, shared:{} }, bkPending); state.lang = state.lang || lang; bkPending = null;
     save(); location.reload(); return; }
@@ -9172,19 +9445,20 @@ function renderToday(){
   const legs = (x.d.legs||[]).map(l => `<span class="${l.type==='dh'?'dhl':''}">${l.type==='dh'?'DH ':''}${esc(l.flight)} ${l.dep}–${l.arr} ${localHM(utcAt(x.date,l.t1), l.dep)}</span>`).join(' · ');
   const when = cur ? t('td_now', {e: localHM(x.end, x.endSt||base)}) : t('td_next', {d: localDay(x.start, x.st), h: localHM(x.start, x.st), st: x.st || base});
   // transport to the airport / training («Pick Up» or TAXI…): its own time and countdown
-  let pk = null;
-  { const ev = (x.d.events||[]).find(e => e.type==='pickup' && e.t1) || (x.d.events||[]).find(e => e.type==='code' && /^TAXI/.test(e.code||'') && e.t1);
-    if(ev){ pk = utcAt(x.date, ev.t1); if(pk > x.start) pk -= 864e5; if(pk >= x.start || x.start - pk > 4*36e5) pk = null; } }
+  const pk = pickupMs(x.date, x.d.events, x.start);
+  const ftlA = typeof ftlAlertHtml === 'function' ? ftlAlertHtml() : '';
   const cnt = [];
   if(!cur && pk && pk > now) cnt.push(`<small>${t('td_pkin')}</small><span data-at="${pk}">${durTxt(pk - now)}</span>`);
   if(!cur) cnt.push(`<small>${t('td_cin')}</small><span data-at="${x.start}">${durTxt(x.start - now)}</span>`);
   el.hidden = false;
   el.innerHTML = `<div class="eyebrow">${cur ? t('td_curT') : t('td_nextT')}</div>
-    <div class="td-main"><div><div class="td-route">${esc(x.route || kind(x.kind).n)}</div><div class="note">${when}</div>${pk ? `<div class="note td-pk">🚐 ${t('td_pick', {h: localHM(pk, x.st || base)})}</div>` : ''}</div>
+    <div class="td-main"><div><div class="td-route">${esc(x.route || kind(x.kind).n)}</div><div class="note">${when}</div>${pk ? `<div class="note td-pk">🚐 ${t('td_pick', {h: localHM(pk, x.st || base)})}</div>` : ''}${cur ? '' : sleepHtml(x, pk, now)}</div>
     ${cnt.length ? `<div class="td-count" id="tdCount">${cnt.join('')}</div>` : ''}</div>
     ${legs ? `<div class="note td-legs">${legs}</div>` : ''}${x.hotel ? `<div class="note">🏨 ${t('nightIn',{st:x.hotel})}</div>` : ''}
-    ${restNow}
+    <div id="tdWx"></div>
+    ${restNow}${ftlA ? `<div class="chips" style="margin-top:8px">${ftlA}</div>` : ''}
     ${(x.d.legs||[]).some(l => l.type==='flt') && (cur || x.start - now < 18*36e5) ? `<button class="btn" type="button" id="td-mm" style="margin-top:10px">✈ ${t('mm_start')}</button>` : ''}`;
+  loadWx(x).catch(() => {});
   clearInterval(todayTimer);
   todayTimer = setInterval(() => { const c = $('tdCount'); if(!c){ clearInterval(todayTimer); return; }
     for(const sp of c.querySelectorAll('[data-at]')){ const left = +sp.dataset.at - Date.now(); if(left <= 0){ renderToday(); return; } sp.textContent = durTxt(left); } }, 30000);
@@ -9244,7 +9518,7 @@ function renderWrap(){
   if(!years.length){ pnl(hdr('wrap') + `<p class="msg">${t('startText')}</p>`); return; }
   const me = (ro0 && ro0.crew) || '';
   let sectors = 0, dh = 0, blockMin = 0, km = 0, nights = 0, duties = 0, off = 0, earliest = null, longest = null;
-  const apCount = {}, hotelCount = {}, crewCount = {}, countries = new Set(), monthsIn = [];
+  const apCount = {}, hotelCount = {}, crewCount = {}, routeCount = {}, countries = new Set(), monthsIn = [];
   for(const k of Object.keys(state.months).filter(k => +k.slice(0,4) === y).sort()){
     monthsIn.push(+k.slice(5));
     const c = PR.compute(state.months[k], state.settings, state.extras);
@@ -9259,7 +9533,7 @@ function renderWrap(){
       for(const l of d.legs){
         if(l.type === 'dh'){ dh++; continue; }
         sectors++; blockMin += legMin(l); km += kmBetween(l.dep, l.arr);
-        apCount[l.arr] = (apCount[l.arr]||0) + 1;
+        apCount[l.arr] = (apCount[l.arr]||0) + 1; { const rk = [l.dep, l.arr].sort().join('–'); routeCount[rk] = (routeCount[rk]||0) + 1; }
         [l.dep, l.arr].forEach(a => AP[a] && countries.add(AP[a].cc));
       }
       if(!d.crewInherited) for(const leg of d.crew||[]) for(const m of leg.members||[]) if(m.name && m.name !== me) crewCount[m.name] = (crewCount[m.name]||0) + 1;
@@ -9283,6 +9557,8 @@ function renderWrap(){
       ${netSum ? card(eur0.format(netSum), t('wr_net', {n: yd.length})) : ''}
     </div>
     ${Object.keys(apCount).length ? `<h3 class="wh">${t('wr_topAp')}</h3><div class="chips">${top(apCount, 8).map(([a,n]) => `<span class="chip">${esc(city(a))} (${a}) <b>${n}</b></span>`).join('')}</div>` : ''}
+    ${Object.keys(routeCount).length ? `<h3 class="wh">${t('wr_topRoute')}</h3><div class="chips">${top(routeCount, 6).map(([a,n]) => `<span class="chip">${a} <b>${n}</b></span>`).join('')}</div>` : ''}
+    ${countries.size ? `<h3 class="wh">${t('wr_countries')}</h3><div class="chips">${[...countries].sort().map(c => `<span class="chip">${String.fromCodePoint(...[...c.toUpperCase()].map(ch => 127397 + ch.charCodeAt(0)))} ${c}</span>`).join('')}</div>` : ''}
     ${Object.keys(hotelCount).length ? `<h3 class="wh">${t('wr_topHotel')}</h3><div class="chips">${top(hotelCount, 5).map(([a,n]) => `<span class="chip">${esc(city(a))} <b>${n}</b></span>`).join('')}</div>` : ''}
     ${Object.keys(crewCount).length ? `<h3 class="wh">${t('wr_topCrew')}</h3><div class="chips">${top(crewCount, 8).map(([a,n]) => `<span class="chip">${esc(nice(a))} <b>${n}</b></span>`).join('')}</div>` : ''}
     <div class="mlist" style="margin-top:12px">
@@ -9830,7 +10106,10 @@ function renderFat(){
   }
   const dd = iso => new Date(iso+'T12:00').toLocaleDateString(LOC, {day:'numeric', month:'short'});
   const hi = weeks.filter(w => w.hi);
-  pnl(hdr('fat', t('fat_intro2')) + (hi.length ? '' : `<p class="msg" style="background:var(--pay-soft);color:var(--pay)">${t('fat_noneHi')}</p>`) +
+  const sc = sleepCfg();
+  const slp = `<div class="form" style="margin:0 0 10px"><label>${t('sl_hours')}<select id="sl-h">${[6,6.5,7,7.5,8,8.5,9].map(v => `<option value="${v}"${v===sc.h?' selected':''}>${String(v).replace('.', ',')} h</option>`).join('')}</select></label>
+    <label>${t('sl_prep')}<select id="sl-p">${[30,45,60,75,90].map(v => `<option value="${v}"${v===sc.prep?' selected':''}>${v} min</option>`).join('')}</select></label></div>`;
+  pnl(hdr('fat', t('fat_intro2')) + slp + (hi.length ? '' : `<p class="msg" style="background:var(--pay-soft);color:var(--pay)">${t('fat_noneHi')}</p>`) +
     `<div class="mlist">${weeks.map(w => `<div class="mrow"><div class="mh nc">${dd(w.a)} – ${dd(w.b)}${w.hi ? `<span class="chip fatlvl-hi">⚠ ${t('fat_hiShort')}</span>` : ''}</div>
       <div class="note">${t('fat_weekS', {h: hhmm(w.hrs), d: w.n})}</div>
       ${w.hi ? `<ul class="fatwhy">${w.why.map(x => `<li>${x}</li>`).join('')}</ul>` : ''}</div>`).join('')}</div>
@@ -10068,11 +10347,200 @@ function Globe3D(box){
   };
 }
 
+// ---- Payroster+ extras: pick-up, sleep time, weather, Face ID lock, FTL "from today", backup reminder ----
+
+// transport before a duty («Pick Up» line, or TAXI/TAXI_LAT before a ground duty), in ms (UTC)
+function pickupMs(date, events, startMs){
+  const ev = (events||[]).find(e => e.type==='pickup' && e.t1) || (events||[]).find(e => e.type==='code' && /^TAXI/.test(e.code||'') && e.t1);
+  if(!ev) return null;
+  let pk = utcAt(date, ev.t1); if(pk > startMs) pk -= 864e5;
+  return (pk >= startMs || startMs - pk > 4*36e5) ? null : pk;
+}
+
+// ---------- 1. sleep time ----------
+const sleepCfg = () => ({ h: +state.settings.sleepH || 8, prep: state.settings.prepMin != null ? +state.settings.prepMin : 60 });
+function sleepPlan(startMs, pk){
+  const c = sleepCfg(), wake = (pk || startMs) - c.prep*60e3, bed = wake - c.h*36e5;
+  return { wake, bed, h: c.h, prep: c.prep };
+}
+function sleepHtml(x, pk, now){
+  const p = sleepPlan(x.start, pk);
+  if(now > p.wake || p.bed - now > 20*36e5) return '';
+  const st = x.st || state.settings.base || 'PMI', late = now > p.bed;
+  return `<div class="note td-sleep${late ? ' late' : ''}">😴 ${t(late ? 'sl_late' : 'sl_line', {h: p.h, b: localHM(p.bed, st), w: localHM(p.wake, st), n: hhmm(Math.max(0, p.wake - now)/36e5)})}</div>`;
+}
+
+// ---------- 3. weather, sunrise / sunset, time difference ----------
+const WX = { 0:'☀️',1:'🌤️',2:'⛅',3:'☁️',45:'🌫️',48:'🌫️',51:'🌦️',53:'🌦️',55:'🌧️',56:'🌧️',57:'🌧️',61:'🌦️',63:'🌧️',65:'🌧️',66:'🌧️',67:'🌧️',71:'🌨️',73:'🌨️',75:'❄️',77:'🌨️',80:'🌦️',81:'🌧️',82:'⛈️',85:'🌨️',86:'❄️',95:'⛈️',96:'⛈️',99:'⛈️' };
+const wxCache = {};
+async function wxFetch(stations, date){
+  const ok = stations.filter(s => AP[s]);
+  if(!ok.length) return {};
+  const d0 = new Date(date+'T12:00:00Z'); d0.setUTCDate(d0.getUTCDate()-1);
+  const d1 = new Date(date+'T12:00:00Z'); d1.setUTCDate(d1.getUTCDate()+2);
+  const url = 'https://api.open-meteo.com/v1/forecast?latitude=' + ok.map(s => AP[s].lat.toFixed(3)).join(',') + '&longitude=' + ok.map(s => AP[s].lon.toFixed(3)).join(',') +
+    '&hourly=temperature_2m,weather_code&daily=sunrise,sunset&timezone=GMT&timeformat=unixtime&start_date=' + d0.toISOString().slice(0,10) + '&end_date=' + d1.toISOString().slice(0,10);
+  const ck = 'pr.wx.' + url;
+  if(wxCache[url] && Date.now() - wxCache[url].at < 36e5) return wxCache[url].v;
+  try{ const c = JSON.parse(sessionStorage.getItem(ck) || 'null'); if(c && Date.now() - c.at < 36e5){ wxCache[url] = c; return c.v; } }catch(e){}
+  const r = await fetch(url); if(!r.ok) throw new Error('wx');
+  let j = await r.json(); if(!Array.isArray(j)) j = [j];
+  const v = {}; ok.forEach((s, i) => v[s] = j[i]);
+  wxCache[url] = { at: Date.now(), v }; try{ sessionStorage.setItem(ck, JSON.stringify(wxCache[url])); }catch(e){}
+  return v;
+}
+function wxAt(w, ms){
+  if(!w || !w.hourly) return null;
+  const T = w.hourly.time, s = ms/1000; let best = 0;
+  for(let i = 0; i < T.length; i++) if(Math.abs(T[i] - s) < Math.abs(T[best] - s)) best = i;
+  if(Math.abs(T[best] - s) > 3*3600) return null;
+  return { temp: Math.round(w.hourly.temperature_2m[best]), ic: WX[w.hourly.weather_code[best]] || '🌡️' };
+}
+function tzDiffH(stA, stB, ms){
+  const off = st => { const p = new Intl.DateTimeFormat('en-US', {timeZone: PR.tzOf(st), timeZoneName:'shortOffset'}).formatToParts(new Date(ms)).find(x => x.type==='timeZoneName'); const m = /GMT([+-]\d+)?(?::(\d+))?/.exec(p ? p.value : ''); return m && m[1] ? +m[1] + (m[2] ? Math.sign(+m[1]) * m[2]/60 : 0) : 0; };
+  try{ return off(stB) - off(stA); }catch(e){ return 0; }
+}
+async function loadWx(x){
+  const el = $('tdWx'); if(!el) return;
+  if(!IS_PWA_BUILD || navigator.onLine === false || x.start - Date.now() > 14*864e5){ el.remove(); return; }
+  const legs = (x.d.legs||[]).filter(l => l.dep && l.arr);
+  const pts = [];
+  if(legs.length){ pts.push({ st: legs[0].dep, ms: utcAt(x.date, legs[0].t1) });
+    legs.forEach(l => { let ms = utcAt(x.date, l.t2); if(+l.t2 < +l.t1) ms += 864e5; pts.push({ st: l.arr, ms }); }); }
+  else if(x.st) pts.push({ st: x.st, ms: x.start });
+  const seen = new Set(), uniq = pts.filter(p => { if(seen.has(p.st)) return false; seen.add(p.st); return true; });
+  const hotel = x.hotel || x.d.hotel;
+  const stations = [...new Set(uniq.map(p => p.st).concat(hotel ? [hotel] : []))];
+  let v; try{ v = await wxFetch(stations, x.date); }catch(e){ el.remove(); return; }
+  if(!$('tdWx')) return;
+  const chips = uniq.map(p => { const w = wxAt(v[p.st], p.ms); return w ? `<span class="chip wxc">${p.st} ${w.ic} ${w.temp}°<small> ${localHM(p.ms, p.st)}</small></span>` : ''; }).join('');
+  let lay = '';
+  if(hotel && v[hotel] && v[hotel].daily){
+    const D = v[hotel].daily, ref = (x.end || x.start) / 1000;
+    let i = D.time.findIndex(tt => tt + 86400 > ref); if(i < 0) i = 0;
+    const base = state.settings.base || 'PMI', dh = tzDiffH(base, hotel, x.start);
+    const sr = D.sunrise[i] ? localHM(D.sunrise[i]*1000, hotel) : '', ss = D.sunset[i] ? localHM(D.sunset[i]*1000, hotel) : '';
+    lay = `<div class="note">🏨 ${esc(hotel)}: 🌅 ${sr} · 🌇 ${ss}${dh ? ' · ' + t('wx_tz', {h: (dh > 0 ? '+' : '') + String(dh).replace('.', ',')}) : ''}</div>`;
+  }
+  el.innerHTML = chips || lay ? `<div class="chips wxrow">${chips}</div>${lay}` : '';
+}
+
+// ---------- 4. Face ID / passcode lock (installed app only) ----------
+const LOCK_KEY = 'pr.lock';
+const lkB64 = buf => btoa(String.fromCharCode(...new Uint8Array(buf))).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'');
+const lkUnB64 = s => Uint8Array.from(atob(s.replace(/-/g,'+').replace(/_/g,'/') + '==='.slice((s.length + 3) % 4)), c => c.charCodeAt(0));
+const lockId = () => { try{ return localStorage.getItem(LOCK_KEY); }catch(e){ return null; } };
+const lkRnd = n => crypto.getRandomValues(new Uint8Array(n));
+async function lockAvailable(){
+  try{ return IS_PWA_BUILD && window.PublicKeyCredential && await PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable(); }catch(e){ return false; }
+}
+async function lockEnable(){
+  const cred = await navigator.credentials.create({ publicKey: {
+    challenge: lkRnd(32), rp: { name: 'Payroster+' },
+    user: { id: lkRnd(16), name: 'payroster', displayName: 'Payroster+' },
+    pubKeyCredParams: [{ type:'public-key', alg:-7 }, { type:'public-key', alg:-257 }],
+    authenticatorSelection: { authenticatorAttachment:'platform', userVerification:'required', residentKey:'discouraged' }, timeout: 60000 } });
+  localStorage.setItem(LOCK_KEY, lkB64(cred.rawId));
+}
+async function lockVerify(){
+  const id = lockId(); if(!id) return true;
+  await navigator.credentials.get({ publicKey: { challenge: lkRnd(32), allowCredentials: [{ type:'public-key', id: lkUnB64(id) }], userVerification:'required', timeout: 60000 } });
+  return true;
+}
+let lockBusy = false;
+async function unlock(silent){
+  if(lockBusy) return; lockBusy = true;
+  const msg = $('lockMsg'); if(msg) msg.textContent = '';
+  try{ await lockVerify(); document.documentElement.classList.remove('locked'); }
+  catch(e){ if(msg && !silent) msg.textContent = t('lk_fail'); }
+  lockBusy = false;
+}
+function showLock(){
+  if(!lockId()) return;
+  document.documentElement.classList.add('locked');
+  let ov = $('lockScr');
+  if(!ov){ ov = document.createElement('div'); ov.id = 'lockScr'; document.body.appendChild(ov); }
+  ov.innerHTML = `<div class="lk-in"><div class="lk-logo">Pay<span>roster</span><sup>+</sup></div><div class="lk-ic">🔒</div>
+    <button class="btn" id="lockGo" type="button">${t('lk_open')}</button><p class="note" id="lockMsg"></p></div>`;
+}
+let hiddenAt = 0;
+document.addEventListener('visibilitychange', () => {
+  if(document.visibilityState === 'hidden') hiddenAt = Date.now();
+  else if(lockId() && hiddenAt && Date.now() - hiddenAt > 60e3){ showLock(); unlock(true); }
+});
+async function renderLockBox(){
+  const el = $('lockBox'); if(!el) return;
+  if(!(await lockAvailable())){ el.hidden = true; return; }
+  el.hidden = false;
+  const on = !!lockId();
+  el.innerHTML = `<h2 style="margin:0 0 6px">${t('lk_title')}</h2>
+    <label class="chk"><input type="checkbox" id="lockChk"${on ? ' checked' : ''}> ${t('lk_toggle')}</label>
+    <p class="note">${t('lk_note')}</p><p class="note" id="lockOut"></p>`;
+}
+
+// ---------- 5. EASA limits from today (rolling windows) ----------
+function ftlNow(){
+  const map = ftlTimeline(), s = state.settings, today = todayISO();
+  const sc = full => s.contract >= 100 ? full : Math.min(full, Math.round(full * s.contract/100 * 1.1));
+  const add = (iso, n) => { const d = new Date(iso+'T12:00:00Z'); d.setUTCDate(d.getUTCDate()+n); return d.toISOString().slice(0,10); };
+  const win = (end, n, f) => { let sum = 0; for(let i = 0; i < n; i++){ const x = map[add(end,-i)]; if(x) sum += x[f]; } return sum; };
+  const defs = [{ k:'ftl_d7', n:7, f:'duty', lim:60 }, { k:'ftl_d28', n:28, f:'duty', lim:sc(190) }, { k:'ftl_b28', n:28, f:'block', lim:sc(100) }];
+  // worst point from today over the next 28 days of the planned roster
+  return defs.map(d => { let worst = { sum: win(today, d.n, d.f), end: today };
+    for(let i = 1; i <= 28; i++){ const e = add(today, i); if(!map[e]) break; const v = win(e, d.n, d.f); if(v > worst.sum) worst = { sum: v, end: e }; }
+    return { ...d, now: win(today, d.n, d.f), worst }; });
+}
+function ftlNowHtml(){
+  let L; try{ L = ftlNow(); }catch(e){ return ''; }
+  const dd = iso => new Date(iso+'T12:00').toLocaleDateString(LOC, {day:'numeric', month:'short'});
+  return `<h3 class="wh">${t('ftl_nowT')}</h3><div class="ftl">${L.map(i => { const p = Math.min(100, i.now/i.lim*100), cls = p >= 100 ? 'over' : p >= 90 ? 'warn' : '';
+    return `<div class="fr"><div class="fl"><span>${t(i.k)}</span><span class="mono">${fmtH(i.now)} / ${i.lim} h</span></div>
+      <div class="gtrack"><div class="gseg" style="width:${p}%;background:${cls==='over'?'var(--warn)':cls==='warn'?'var(--k-train)':'var(--accent)'}"></div></div>
+      <div class="note">${t('ftl_left', {h: fmtH(Math.max(0, i.lim - i.now))})}${i.worst.end !== todayISO() && i.worst.sum > i.now ? ' · ' + t('ftl_peak', {h: fmtH(i.worst.sum), d: dd(i.worst.end)}) : ''}</div></div>`; }).join('')}</div>`;
+}
+function ftlAlertHtml(){
+  let L; try{ L = ftlNow(); }catch(e){ return ''; }
+  const bad = L.filter(i => i.worst.sum >= i.lim * 0.9);
+  return bad.map(i => `<span class="chip c-bez">⚠ ${t(i.k)}: ${fmtH(i.worst.sum)} / ${i.lim} h</span>`).join('');
+}
+
+// ---------- 7. backup reminder ----------
+function renderBkRemind(){
+  const el = $('bkRemind'); if(!el) return;
+  const n = Object.keys(state.months).length, today = todayISO();
+  const last = state.lastBackup, days = last ? Math.round((Date.parse(today) - Date.parse(last)) / 864e5) : null;
+  const show = n > 0 && (days == null || days >= 30) && !(state.bkSnooze && state.bkSnooze > today);
+  el.hidden = !show; if(!show){ el.innerHTML = ''; return; }
+  el.innerHTML = `<div class="eyebrow">${t('bkr_title')}</div><p style="margin:6px 0 10px">${days == null ? t('bkr_never') : t('bkr_days', {n: days})}</p>
+    <div class="row"><button class="btn" type="button" data-tool="backup">${t('bk_export')}</button><button class="btn ghost" type="button" id="bkLater">${t('bkr_later')}</button></div>`;
+}
+
+document.addEventListener('click', async e => {
+  const id = e.target.id;
+  if(id === 'lockGo'){ unlock(); return; }
+  if(id === 'bkLater'){ const d = new Date(); d.setDate(d.getDate() + 7); state.bkSnooze = d.toISOString().slice(0,10); save(); renderBkRemind(); return; }
+});
+document.addEventListener('change', async e => {
+  if(e.target.id === 'lockChk'){
+    const out = $('lockOut');
+    try{
+      if(e.target.checked){ await lockEnable(); if(out) out.textContent = t('lk_on'); }
+      else { await lockVerify(); localStorage.removeItem(LOCK_KEY); if(out) out.textContent = t('lk_off'); }
+    }catch(err){ e.target.checked = !!lockId(); if(out) out.textContent = t('lk_fail'); }
+    return;
+  }
+  if(e.target.id === 'sl-h' || e.target.id === 'sl-p'){
+    state.settings[e.target.id === 'sl-h' ? 'sleepH' : 'prepMin'] = +e.target.value; save(); renderToday(); return;
+  }
+});
+// on start: lock screen first
+if(lockId()) setTimeout(() => { showLock(); setTimeout(() => unlock(true), 300); }, 0);
+
 </script>
 <script>
 const SEED = null;
 const SEED_SETTINGS = null;
-const APP_VERSION = '2026.11.09-1733';
+const APP_VERSION = '2026.11.09-1743';
 const IS_PWA_BUILD = true;
 const LS = 'payroster.v1';
 const KC = { sick:'--warn', flight:'--k-flight', deadhead:'--k-dh', training:'--k-train', standby:'--k-sby', reserve:'--k-sby', ground:'--k-ground', off:'--k-off', empty:'--k-off', other:'--k-ground' };
@@ -10261,7 +10729,7 @@ function render(){
   const s = state.settings;
   { const b = $('privBtn'); if(b && !b.innerHTML){ b.innerHTML = privIcon(); b.title = t(PRIV ? 'priv_show' : 'priv_hide'); b.setAttribute('aria-pressed', PRIV ? 'true' : 'false'); } }
   renderSetup();
-  try{ renderToday(); renderChanges(ro); renderLicAlert(); renderLicTable(); }catch(e){ console.warn(e); }
+  try{ renderToday(); renderChanges(ro); renderLicAlert(); renderLicTable(); renderBkRemind(); renderLockBox(); }catch(e){ console.warn(e); }
   if(ro.base && !s.baseSetByUser) s.base = ro.base;
   const w = $('rankWarn');
   if(s.configured && ro.rankNorm && ro.rankNorm!==s.rank){
