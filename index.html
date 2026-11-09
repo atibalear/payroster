@@ -239,7 +239,16 @@ table.chk tr.bad:not(.hint) td:last-child{color:var(--warn);font-weight:700}
 .td-main{display:flex;justify-content:space-between;align-items:flex-end;gap:12px;margin-top:4px}
 .td-route{font-size:20px;font-weight:700;letter-spacing:-.01em}
 .td-count{font-family:var(--f-mono);font-size:15px;font-weight:700;color:var(--accent);white-space:nowrap}
-.td-count{text-align:right}.td-count small{display:block;font-family:var(--f-sans,inherit);font-size:11px;font-weight:600;letter-spacing:.04em;text-transform:uppercase;color:var(--muted,#667);margin-bottom:2px}
+#ptr{position:fixed;left:50%;top:env(safe-area-inset-top,0px);margin-left:-90px;width:180px;z-index:60;display:flex;gap:8px;align-items:center;justify-content:center;
+ padding:8px 12px;border-radius:999px;background:var(--surface);border:1px solid var(--line);box-shadow:0 4px 16px rgba(0,0,0,.12);font-size:13px;font-weight:600;color:var(--muted);
+ transform:translateY(-60px);opacity:0;pointer-events:none}
+#ptr .ptr-ic{display:inline-block;transition:transform .2s;color:var(--accent);font-weight:700}
+#ptr.ready .ptr-ic{transform:rotate(180deg)}
+#ptr.busy .ptr-ic{animation:ptrspin .8s linear infinite}#ptr.busy .ptr-ic::before{content:''}
+#ptr.done .ptr-ic{color:var(--pay)}
+@keyframes ptrspin{to{transform:rotate(360deg)}}
+html,body{overscroll-behavior-y:contain}
+.td-count{text-align:right}.td-count small{display:block;font-family:inherit;font-size:11px;font-weight:600;letter-spacing:.04em;text-transform:uppercase;color:var(--muted,#667);margin-bottom:2px}
 .td-legs{margin-top:6px;line-height:1.6}
 .chg{border-left:4px solid var(--warn)}
 .chg s{color:var(--muted)}
@@ -1186,6 +1195,11 @@ var I18N = {
   names: { es: 'Español', ca: 'Català', en: 'English', de: 'Deutsch', fr: 'Français', it: 'Italiano', pt: 'Português', ro: 'Română', hu: 'Magyar', sk: 'Slovenčina', cs: 'Čeština' },
   locales: { es: 'es-ES', ca: 'ca-ES', en: 'en-GB', de: 'de-DE', fr: 'fr-FR', it: 'it-IT', pt: 'pt-PT', ro: 'ro-RO', hu: 'hu-HU', sk: 'sk-SK', cs: 'cs-CZ' },
   es: {
+    ptr_ok: 'Todo al día',
+    ptr_upd: 'Instalando nueva versión…',
+    ptr_busy: 'Actualizando…',
+    ptr_release: 'Suelta para actualizar',
+    ptr_pull: 'Desliza para actualizar',
     td_cin: 'Firma en',
     fat_daysAll: 'Carga de cada día de vuelo',
     g3_near: 'Cerca',
@@ -1617,6 +1631,11 @@ var I18N = {
     e_noPeriod: 'No encuentro el periodo del roster. ¿Es el «Individual duty plan» de IDP en PDF?'
   },
   ca: {
+    ptr_ok: 'Tot al dia',
+    ptr_upd: 'Instal·lant nova versió…',
+    ptr_busy: 'Actualitzant…',
+    ptr_release: 'Deixa anar per actualitzar',
+    ptr_pull: 'Llisca per actualitzar',
     td_cin: 'Firma en',
     fat_daysAll: 'Càrrega de cada dia de vol',
     g3_near: 'A prop',
@@ -2049,6 +2068,11 @@ var I18N = {
     e_noPeriod: 'No trobo el període del roster. És l’«Individual duty plan» d’IDP en PDF?'
   },
   en: {
+    ptr_ok: 'Up to date',
+    ptr_upd: 'Installing new version…',
+    ptr_busy: 'Refreshing…',
+    ptr_release: 'Release to refresh',
+    ptr_pull: 'Pull to refresh',
     td_cin: 'Check-in in',
     fat_daysAll: 'Load of each flight day',
     g3_near: 'Close',
@@ -2481,6 +2505,11 @@ var I18N = {
     e_noPeriod: 'I can’t find the roster period. Is this the IDP “Individual duty plan” PDF?'
   },
   de: {
+    ptr_ok: 'Alles aktuell',
+    ptr_upd: 'Neue Version wird installiert…',
+    ptr_busy: 'Aktualisiere…',
+    ptr_release: 'Loslassen zum Aktualisieren',
+    ptr_pull: 'Zum Aktualisieren ziehen',
     td_cin: 'Check-in in',
     fat_daysAll: 'Belastung pro Flugtag',
     g3_near: 'Nah',
@@ -2913,6 +2942,11 @@ var I18N = {
     e_noPeriod: 'Ich finde den Zeitraum des Dienstplans nicht. Ist das der „Individual duty plan“ aus IDP als PDF?'
   },
   fr: {
+    ptr_ok: 'À jour',
+    ptr_upd: 'Installation de la nouvelle version…',
+    ptr_busy: 'Actualisation…',
+    ptr_release: 'Relâcher pour actualiser',
+    ptr_pull: 'Tirer pour actualiser',
     td_cin: 'Check-in dans',
     fat_daysAll: 'Charge de chaque jour de vol',
     g3_near: 'Proche',
@@ -3345,6 +3379,11 @@ var I18N = {
     e_noPeriod: 'Je ne trouve pas la période du planning. Est-ce bien l’« Individual duty plan » d’IDP en PDF ?'
   },
   hu: {
+    ptr_ok: 'Minden naprakész',
+    ptr_upd: 'Új verzió telepítése…',
+    ptr_busy: 'Frissítés…',
+    ptr_release: 'Engedd el a frissítéshez',
+    ptr_pull: 'Húzd le a frissítéshez',
     td_cin: 'Bejelentkezésig',
     fat_daysAll: 'Terhelés repülési naponként',
     g3_near: 'Közeli',
@@ -3777,6 +3816,11 @@ var I18N = {
     e_noPeriod: 'Nem találom a beosztás időszakát. Ez az IDP „Individual duty plan” PDF-je?'
   },
   sk: {
+    ptr_ok: 'Všetko aktuálne',
+    ptr_upd: 'Inštaluje sa nová verzia…',
+    ptr_busy: 'Obnovuje sa…',
+    ptr_release: 'Pusti pre obnovenie',
+    ptr_pull: 'Potiahni pre obnovenie',
     td_cin: 'Check-in o',
     fat_daysAll: 'Záťaž každého letového dňa',
     g3_near: 'Zblízka',
@@ -4209,6 +4253,11 @@ var I18N = {
     e_noPeriod: 'Nenachádzam obdobie rozpisu. Je to „Individual duty plan“ z IDP v PDF?'
   },
   cs: {
+    ptr_ok: 'Vše aktuální',
+    ptr_upd: 'Instaluje se nová verze…',
+    ptr_busy: 'Obnovuje se…',
+    ptr_release: 'Pusť pro obnovení',
+    ptr_pull: 'Táhni pro obnovení',
     td_cin: 'Check-in za',
     fat_daysAll: 'Zátěž každého letového dne',
     g3_near: 'Zblízka',
@@ -4641,6 +4690,11 @@ var I18N = {
     e_noPeriod: 'Nenacházím období rozpisu. Je to „Individual duty plan“ z IDP v PDF?'
   },
   it: {
+    "ptr_ok": "Tutto aggiornato",
+    "ptr_upd": "Installazione nuova versione…",
+    "ptr_busy": "Aggiornamento…",
+    "ptr_release": "Rilascia per aggiornare",
+    "ptr_pull": "Trascina per aggiornare",
     "td_cin": "Check-in tra",
     "fat_daysAll": "Carico di ogni giorno di volo",
     "g3_near": "Vicino",
@@ -5178,6 +5232,11 @@ var I18N = {
     "e_noPeriod": "Non trovo il periodo del turno. È l’«Individual duty plan» di IDP in PDF?"
   },
   pt: {
+    "ptr_ok": "Tudo atualizado",
+    "ptr_upd": "A instalar nova versão…",
+    "ptr_busy": "A atualizar…",
+    "ptr_release": "Solte para atualizar",
+    "ptr_pull": "Puxe para atualizar",
     "td_cin": "Apresentação em",
     "fat_daysAll": "Carga de cada dia de voo",
     "g3_near": "Perto",
@@ -5715,6 +5774,11 @@ var I18N = {
     "e_noPeriod": "Não encontro o período da escala. É o «Individual duty plan» do IDP em PDF?"
   },
   ro: {
+    "ptr_ok": "Totul la zi",
+    "ptr_upd": "Se instalează versiunea nouă…",
+    "ptr_busy": "Se actualizează…",
+    "ptr_release": "Eliberează pentru actualizare",
+    "ptr_pull": "Trage pentru actualizare",
     "td_cin": "Prezentare în",
     "fat_daysAll": "Încărcarea fiecărei zile de zbor",
     "g3_near": "Aproape",
@@ -9979,7 +10043,7 @@ function Globe3D(box){
 <script>
 const SEED = null;
 const SEED_SETTINGS = null;
-const APP_VERSION = '2026.11.09-1727';
+const APP_VERSION = '2026.11.09-1730';
 const IS_PWA_BUILD = true;
 const LS = 'payroster.v1';
 const KC = { sick:'--warn', flight:'--k-flight', deadhead:'--k-dh', training:'--k-train', standby:'--k-sby', reserve:'--k-sby', ground:'--k-ground', off:'--k-off', empty:'--k-off', other:'--k-ground' };
@@ -10884,6 +10948,41 @@ if(IS_PWA_BUILD){
 }
 // open today's row on first view
 (()=>{ const el=$('d-'+todayISO()); if(el) el.open=true; })();
+
+// ---------- pull down to refresh ----------
+// Pull the page down from the top: re-reads everything on screen and, in the installed app, looks for a
+// new version (installs it if there is one, keeping the 3D map files).
+(function(){
+  const box = document.createElement('div'); box.id = 'ptr'; box.innerHTML = '<span class="ptr-ic">↓</span><span class="ptr-tx"></span>';
+  document.body.appendChild(box);
+  const TH = 70; let y0 = null, dy = 0, busy = false;
+  const atTop = el => { if(window.scrollY > 0 || document.scrollingElement.scrollTop > 0) return false;
+    for(let n = el; n && n !== document.body; n = n.parentElement){ if(n.scrollTop > 0) return false; if(n.closest && n.closest('.g3box,.mapbox,svg,input,textarea,select')) return false; } return true; };
+  const show = (h, txt, cls) => { box.style.transform = `translateY(${Math.min(h, 110) - 60}px)`; box.style.opacity = Math.min(1, h / TH);
+    box.querySelector('.ptr-tx').textContent = txt; box.className = cls || ''; box.querySelector('.ptr-ic').textContent = cls === 'done' ? '✓' : cls === 'busy' ? '↻' : '↓'; };
+  const hide = () => { box.style.transition = 'transform .25s, opacity .25s'; show(0, '', ''); box.style.opacity = 0; setTimeout(() => box.style.transition = '', 260); };
+  addEventListener('touchstart', e => { if(busy || e.touches.length !== 1 || !atTop(e.target)) { y0 = null; return; } y0 = e.touches[0].clientY; dy = 0; }, {passive: true});
+  addEventListener('touchmove', e => { if(y0 == null) return; dy = (e.touches[0].clientY - y0) * 0.55;
+    if(dy <= 0){ show(0, '', ''); return; } show(dy, t(dy >= TH ? 'ptr_release' : 'ptr_pull'), dy >= TH ? 'ready' : ''); }, {passive: true});
+  addEventListener('touchend', async () => { if(y0 == null) return; y0 = null;
+    if(dy < TH){ hide(); return; }
+    busy = true; show(TH + 10, t('ptr_busy'), 'busy');
+    try{
+      if(IS_PWA_BUILD && navigator.onLine !== false){
+        let v = null; try{ v = await latestVersion(); }catch(e){}
+        if(v && v !== APP_VERSION){
+          show(TH + 10, t('ptr_upd'), 'busy');
+          try{ const reg = navigator.serviceWorker && await navigator.serviceWorker.getRegistration(); if(reg) await reg.update();
+            if(window.caches) for(const k of await caches.keys()) if(!/assets/.test(k)) await caches.delete(k); }catch(e){}
+          location.replace(location.pathname + '?v=' + Date.now()); return;
+        }
+      }
+      render(); if(typeof refreshTool === 'function') refreshTool(); if(typeof renderToday === 'function') renderToday();
+      show(TH + 10, t('ptr_ok'), 'done');
+    }catch(e){ console.warn(e); }
+    setTimeout(() => { hide(); busy = false; }, 900);
+  });
+})();
 </script>
 
 </body>
