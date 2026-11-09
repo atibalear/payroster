@@ -22,7 +22,7 @@
   --bg:#f3f4f7; --surface:#ffffff; --sunk:#e9ebf1; --ink:#161a2c; --muted:#5d6379; --line:#d8dbe5;
   --accent:#2c4fd6; --accent-soft:#e3e8fb; --pay:#0b7650; --pay-soft:#dcf1e7; --warn:#a85a00; --warn-soft:#fbecd6;
   --k-flight:#2c4fd6; --k-dh:#7d8bd6; --k-train:#c48a00; --k-sby:#8e4fb8; --k-off:#c9ccd7; --k-ground:#3a8a9a;
-  --map-sea:#cfdff0; --map-sea2:#e4eefa; --map-land:#f8f6f0; --map-border:#aeb6c6;
+  --map-sea:#cfdff0; --map-sea2:#e4eefa; --map-sky:#a9cbf0; --map-land:#f8f6f0; --map-border:#aeb6c6;
   --f-display:"Archivo", "Arial Narrow", system-ui, sans-serif;
   --f-body:"IBM Plex Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
   --f-mono:"IBM Plex Mono", ui-monospace, "SF Mono", Menlo, monospace;
@@ -30,11 +30,11 @@
 @media (prefers-color-scheme: dark){ :root:not([data-theme="light"]){
   --bg:#0f1220; --surface:#171b2d; --sunk:#1f2438; --ink:#e8eaf3; --muted:#9aa0b8; --line:#2b3150;
   --accent:#8fa6ff; --accent-soft:#232c55; --pay:#5fd3a2; --pay-soft:#163a2c; --warn:#f0b35e; --warn-soft:#3b2a12;
-  --k-flight:#7f99ff; --k-dh:#5e6aa8; --k-train:#d9a520; --k-sby:#b583d9; --k-off:#3a4060; --k-ground:#5bb3c4; --map-sea:#081226; --map-sea2:#10203f; --map-land:#232a40; --map-border:#435073; color-scheme:dark } }
+  --k-flight:#7f99ff; --k-dh:#5e6aa8; --k-train:#d9a520; --k-sby:#b583d9; --k-off:#3a4060; --k-ground:#5bb3c4; --map-sea:#081226; --map-sea2:#10203f; --map-sky:#1d3a6e; --map-land:#232a40; --map-border:#435073; color-scheme:dark } }
 :root[data-theme="dark"]{
   --bg:#0f1220; --surface:#171b2d; --sunk:#1f2438; --ink:#e8eaf3; --muted:#9aa0b8; --line:#2b3150;
   --accent:#8fa6ff; --accent-soft:#232c55; --pay:#5fd3a2; --pay-soft:#163a2c; --warn:#f0b35e; --warn-soft:#3b2a12;
-  --k-flight:#7f99ff; --k-dh:#5e6aa8; --k-train:#d9a520; --k-sby:#b583d9; --k-off:#3a4060; --k-ground:#5bb3c4; --map-sea:#081226; --map-sea2:#10203f; --map-land:#232a40; --map-border:#435073; color-scheme:dark }
+  --k-flight:#7f99ff; --k-dh:#5e6aa8; --k-train:#d9a520; --k-sby:#b583d9; --k-off:#3a4060; --k-ground:#5bb3c4; --map-sea:#081226; --map-sea2:#10203f; --map-sky:#1d3a6e; --map-land:#232a40; --map-border:#435073; color-scheme:dark }
 
 *{box-sizing:border-box}
 html,body{background:var(--bg)}
@@ -57,6 +57,12 @@ body.viewer .tabbar{display:none}
 .tile{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:7px;min-height:86px;padding:12px 6px;border-radius:14px;border:1px solid var(--line);background:var(--surface);color:var(--ink);font:600 12.5px/1.25 var(--f-body);text-align:center;cursor:pointer}
 .tile svg{width:26px;height:26px;fill:none;stroke:var(--accent);stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
 .tile.on{border-color:var(--accent);background:var(--accent-soft)}
+.herowrap{position:relative}
+.herowrap .hero .eyebrow:first-child{padding-right:46px}
+.privbtn{position:absolute;top:12px;right:12px;z-index:2;width:40px;height:40px;display:grid;place-items:center;padding:0;border:1px solid var(--line);border-radius:999px;background:var(--surface);color:var(--muted);cursor:pointer}
+.privbtn svg{width:21px;height:21px;fill:none;stroke:currentColor;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round}
+body.priv .privbtn{color:var(--warn)}
+
 .brand .plus{color:var(--pay);font-size:.8em;margin-left:1px;vertical-align:super;line-height:0}
 .licalert{border-left:4px solid var(--warn);padding-block:12px}
 .licalert .chip{cursor:pointer}
@@ -252,7 +258,10 @@ table.chk tr.bad:not(.hint) td:last-child{color:var(--warn);font-weight:700}
 .m-ap{fill:var(--surface);stroke:var(--accent);stroke-width:2px;vector-effect:non-scaling-stroke} .m-apo{fill:var(--accent);opacity:.18}
 .m-lbl{fill:var(--ink);font-family:var(--f-mono);font-weight:700;paint-order:stroke;stroke:var(--map-land);stroke-width:3px;stroke-linejoin:round;vector-effect:non-scaling-stroke}
 .mm-box{position:relative}
-.mm-zoom{position:absolute;right:8px;bottom:8px;border:1px solid var(--line);background:color-mix(in srgb, var(--surface) 88%, transparent);color:var(--ink);border-radius:999px;padding:6px 12px;font:600 12.5px var(--f-body);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px)}
+.mm-btns{position:absolute;right:8px;bottom:8px;display:flex;gap:6px;z-index:2}
+.mm-box.tilt{background:linear-gradient(180deg, var(--map-sky) 0%, var(--map-sea) 46%);perspective:760px;overflow:hidden}
+.mm-box.tilt .mapsvg{transform:rotateX(42deg) scale(1.32);transform-origin:50% 62%;border-radius:0}
+.mm-zoom{border:1px solid var(--line);background:color-mix(in srgb, var(--surface) 88%, transparent);color:var(--ink);border-radius:999px;padding:6px 12px;font:600 12.5px var(--f-body);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px)}
 .mapbtn{font-size:13px;padding:6px 10px;justify-self:start}
 .mm-head{font-size:14px;margin-bottom:4px}
 .mm-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(105px,1fr));gap:8px;margin:8px 0}
@@ -316,7 +325,7 @@ input[type=date]::-webkit-date-and-time-value{text-align:left}
   <div class="panel licalert" id="licAlert" hidden data-tab="roster"></div>
   <section class="panel today" id="today" hidden data-tab="roster"></section>
   <div class="panel chg" id="chgCard" hidden data-tab="roster"></div>
-  <section class="hero" id="hero" data-tab="roster"></section>
+  <div class="herowrap" data-tab="roster"><button class="privbtn" id="privBtn" type="button" aria-pressed="false"></button><section class="hero" id="hero"></section></div>
 
   <section data-tab="roster">
     <div class="strip" id="strip"></div>
@@ -1138,6 +1147,8 @@ var I18N = {
   names: { es: 'Español', ca: 'Català', en: 'English', de: 'Deutsch', fr: 'Français', it: 'Italiano', pt: 'Português', ro: 'Română', hu: 'Magyar', sk: 'Slovenčina', cs: 'Čeština' },
   locales: { es: 'es-ES', ca: 'ca-ES', en: 'en-GB', de: 'de-DE', fr: 'fr-FR', it: 'it-IT', pt: 'pt-PT', ro: 'ro-RO', hu: 'hu-HU', sk: 'sk-SK', cs: 'cs-CZ' },
   es: {
+    priv_show: 'Mostrar importes',
+    priv_hide: 'Ocultar importes',
     mm_route: 'Ruta completa',
     mm_follow: 'Seguir avión',
     sl_note: 'Cuando subas la nómina, la comisión real sustituye a la calculada aquí.',
@@ -1540,6 +1551,8 @@ var I18N = {
     e_noPeriod: 'No encuentro el periodo del roster. ¿Es el «Individual duty plan» de IDP en PDF?'
   },
   ca: {
+    priv_show: 'Mostrar imports',
+    priv_hide: 'Amagar imports',
     mm_route: 'Ruta completa',
     mm_follow: 'Seguir l’avió',
     sl_note: 'Quan pugis la nòmina, la comissió real substitueix la calculada aquí.',
@@ -1942,6 +1955,8 @@ var I18N = {
     e_noPeriod: 'No trobo el període del roster. És l’«Individual duty plan» d’IDP en PDF?'
   },
   en: {
+    priv_show: 'Show amounts',
+    priv_hide: 'Hide amounts',
     mm_route: 'Whole route',
     mm_follow: 'Follow plane',
     sl_note: 'When you upload the payslip, the real commission replaces the one calculated here.',
@@ -2344,6 +2359,8 @@ var I18N = {
     e_noPeriod: 'I can’t find the roster period. Is this the IDP “Individual duty plan” PDF?'
   },
   de: {
+    priv_show: 'Beträge anzeigen',
+    priv_hide: 'Beträge ausblenden',
     mm_route: 'Ganze Strecke',
     mm_follow: 'Flugzeug folgen',
     sl_note: 'Wenn du die Abrechnung hochlädst, ersetzt die echte Provision die hier berechnete.',
@@ -2746,6 +2763,8 @@ var I18N = {
     e_noPeriod: 'Ich finde den Zeitraum des Dienstplans nicht. Ist das der „Individual duty plan“ aus IDP als PDF?'
   },
   fr: {
+    priv_show: 'Afficher les montants',
+    priv_hide: 'Masquer les montants',
     mm_route: 'Route entière',
     mm_follow: 'Suivre l’avion',
     sl_note: 'Quand tu importes la fiche, la vraie commission remplace celle calculée ici.',
@@ -3148,6 +3167,8 @@ var I18N = {
     e_noPeriod: 'Je ne trouve pas la période du planning. Est-ce bien l’« Individual duty plan » d’IDP en PDF ?'
   },
   hu: {
+    priv_show: 'Összegek mutatása',
+    priv_hide: 'Összegek elrejtése',
     mm_route: 'Teljes útvonal',
     mm_follow: 'Gép követése',
     sl_note: 'Ha feltöltöd a bérjegyzéket, a valódi jutalék felülírja az itt számoltat.',
@@ -3550,6 +3571,8 @@ var I18N = {
     e_noPeriod: 'Nem találom a beosztás időszakát. Ez az IDP „Individual duty plan” PDF-je?'
   },
   sk: {
+    priv_show: 'Zobraziť sumy',
+    priv_hide: 'Skryť sumy',
     mm_route: 'Celá trasa',
     mm_follow: 'Sledovať lietadlo',
     sl_note: 'Keď nahráš pásku, skutočná provízia nahradí tú vypočítanú tu.',
@@ -3952,6 +3975,8 @@ var I18N = {
     e_noPeriod: 'Nenachádzam obdobie rozpisu. Je to „Individual duty plan“ z IDP v PDF?'
   },
   cs: {
+    priv_show: 'Zobrazit částky',
+    priv_hide: 'Skrýt částky',
     mm_route: 'Celá trasa',
     mm_follow: 'Sledovat letadlo',
     sl_note: 'Když nahraješ pásku, skutečná provize nahradí tu vypočítanou zde.',
@@ -4354,6 +4379,8 @@ var I18N = {
     e_noPeriod: 'Nenacházím období rozpisu. Je to „Individual duty plan“ z IDP v PDF?'
   },
   it: {
+    "priv_show": "Mostra importi",
+    "priv_hide": "Nascondi importi",
     "mm_route": "Rotta intera",
     "mm_follow": "Segui l’aereo",
     "sl_note": "Quando carichi la busta paga, la provvigione reale sostituisce quella calcolata qui.",
@@ -4862,6 +4889,8 @@ var I18N = {
     "e_noPeriod": "Non trovo il periodo del turno. È l’«Individual duty plan» di IDP in PDF?"
   },
   pt: {
+    "priv_show": "Mostrar valores",
+    "priv_hide": "Ocultar valores",
     "mm_route": "Rota completa",
     "mm_follow": "Seguir o avião",
     "sl_note": "Quando carregares o recibo, a comissão real substitui a calculada aqui.",
@@ -5370,6 +5399,8 @@ var I18N = {
     "e_noPeriod": "Não encontro o período da escala. É o «Individual duty plan» do IDP em PDF?"
   },
   ro: {
+    "priv_show": "Arată sumele",
+    "priv_hide": "Ascunde sumele",
     "mm_route": "Ruta întreagă",
     "mm_follow": "Urmărește avionul",
     "sl_note": "Când încarci fluturașul, comisionul real îl înlocuiește pe cel calculat aici.",
@@ -8973,13 +9004,13 @@ const MAP = (() => {
   // airliner seen from above (nose up), in a 100×100 box centred on 0,0
   const AC = `<symbol id="ac" viewBox="-50 -50 100 100" overflow="visible">
     <g transform="translate(2.5 3)" fill="#000" opacity=".28"><path d="M0-46c2.6 0 4.3 3 4.3 8v22.5L46 6.5v5L4.3 1.5V30l11 8v4.5L1.3 39H-1.3l-14 3.5V38l11-8V1.5L-46 11.5v-5l41.7-22V-38c0-5 1.7-8 4.3-8z"/></g>
-    <path d="M0-46c2.6 0 4.3 3 4.3 8v22.5L46 6.5v5L4.3 1.5V30l11 8v4.5L1.3 39H-1.3l-14 3.5V38l11-8V1.5L-46 11.5v-5l41.7-22V-38c0-5 1.7-8 4.3-8z" fill="url(#acg)" stroke="#1b2333" stroke-width=".9"/>
+    <path d="M0-46c2.6 0 4.3 3 4.3 8v22.5L46 6.5v5L4.3 1.5V30l11 8v4.5L1.3 39H-1.3l-14 3.5V38l11-8V1.5L-46 11.5v-5l41.7-22V-38c0-5 1.7-8 4.3-8z" fill="url(#acg)" stroke="#3a1f00" stroke-width="1.4"/>
     <rect x="13" y="-4.5" width="5" height="12" rx="2.3" fill="url(#eng)" stroke="#1b2333" stroke-width=".6"/>
     <rect x="-18" y="-4.5" width="5" height="12" rx="2.3" fill="url(#eng)" stroke="#1b2333" stroke-width=".6"/>
-    <path d="M-1.6-40h3.2v66h-3.2z" fill="#fff" opacity=".35"/>
+    <path d="M-1.6-40h3.2v66h-3.2z" fill="#fff" opacity=".5"/>
     <path d="M-2.6-41.5c.8-1.6 4.4-1.6 5.2 0l-.6 2h-4z" fill="#22344f"/>
   </symbol>
-  <linearGradient id="acg" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#d9dee8"/><stop offset=".5" stop-color="#ffffff"/><stop offset="1" stop-color="#c9d0dc"/></linearGradient>
+  <linearGradient id="acg" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#ff9a1f"/><stop offset=".5" stop-color="#ffd84a"/><stop offset="1" stop-color="#ff8a14"/></linearGradient>
   <linearGradient id="eng" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#8d97a8"/><stop offset=".5" stop-color="#e9edf3"/><stop offset="1" stop-color="#7d8798"/></linearGradient>
   <radialGradient id="seag" cx=".5" cy=".4" r=".8"><stop offset="0" stop-color="var(--map-sea2)"/><stop offset="1" stop-color="var(--map-sea)"/></radialGradient>`;
   function bounds(legs, opt){
@@ -9018,7 +9049,8 @@ const MAP = (() => {
     if(opt.plane){ const [x, y] = P(opt.plane.lon, opt.plane.lat), sz = k * 13;
       plane = `<g id="mm-plane" transform="translate(${x.toFixed(3)},${y.toFixed(3)}) rotate(${(opt.plane.hdg||0).toFixed(1)})"><use href="#ac" x="${(-sz/2).toFixed(3)}" y="${(-sz/2).toFixed(3)}" width="${sz.toFixed(3)}" height="${sz.toFixed(3)}"/></g>`; }
     return `<svg class="mapsvg"${opt.id ? ` id="${opt.id}"` : ''} viewBox="${x0.toFixed(3)} ${y0.toFixed(3)} ${(x1-x0).toFixed(3)} ${(y1-y0).toFixed(3)}" role="img" aria-label="map"><defs>${AC}</defs>
-      <rect x="-40" y="-120" width="110" height="120" fill="url(#seag)"/><path d="${grat}" class="m-grat"/><path d="${pathAll}" class="m-land"/>${lines}${dots}${plane}</svg>`;
+      <filter id="relief" x="-5%" y="-5%" width="110%" height="110%"><feDropShadow dx="0" dy="${(k*0.35).toFixed(3)}" stdDeviation="${(k*0.35).toFixed(3)}" flood-color="#000" flood-opacity=".45"/></filter>
+      <rect x="-40" y="-120" width="110" height="120" fill="url(#seag)"/><path d="${grat}" class="m-grat"/><path d="${pathAll}" class="m-land" filter="url(#relief)"/>${lines}${dots}${plane}</svg>`;
   }
   // move the plane on an svg made by svg() without redrawing the map
   function place(el, legs, opt){
@@ -9166,7 +9198,8 @@ function renderMoving(){
       ${st(Math.round(done) + ' %', t('mm_done'))}
       ${st(land ? esc(land) : t('mm_sea'), t('mm_over'))}`;
   const fix = src === 'gps' ? t('mm_fix', {s: Math.round((now - f.at) / 1000), a: Math.round(f.acc || 0)}) : '';
-  const key = [L.flight, L.dep, L.start, !!mm.follow, !!mm.sim].join('|');
+  if(mm.tilt == null) mm.tilt = true;
+  const key = [L.flight, L.dep, L.start, !!mm.follow, !!mm.sim, !!mm.tilt].join('|');
   const el = $('mm-map');
   if(el && mm._key === key){
     // only move the plane and refresh the numbers: the map itself stays
@@ -9176,8 +9209,9 @@ function renderMoving(){
     mm._key = key;
     pnl(hdr('map') + `<div class="mm-head"><b>${esc(L.flight)}</b> ${L.dep} → ${L.arr} · ${t4(L.t1)}–${t4(L.t2)} UTC · ${Math.round(total)} km</div>
       <div class="row" style="align-items:center;gap:8px;margin:4px 0"><span id="mm-badge">${badge}</span>${legSel}</div>
-      <div class="mapbox mm-box">${MAP.svg(one, mopt)}
-        <button class="mm-zoom" id="mm-follow" type="button">${mm.follow ? '🗺 ' + t('mm_route') : '🎯 ' + t('mm_follow')}</button></div>
+      <div class="mapbox mm-box${mm.tilt ? ' tilt' : ''}">${MAP.svg(one, mopt)}
+        <div class="mm-btns"><button class="mm-zoom" id="mm-tilt" type="button">${mm.tilt ? '2D' : '3D'}</button>
+        <button class="mm-zoom" id="mm-follow" type="button">${mm.follow ? '🗺 ' + t('mm_route') : '🎯 ' + t('mm_follow')}</button></div></div>
       <div id="mm-why">${why}</div>
       <div class="mm-grid" id="mm-stats">${stats}</div>
       <p class="note" id="mm-fix">${fix}</p>
@@ -9197,6 +9231,7 @@ document.addEventListener('click', e => {
   if(id === 'mm-stop'){ clearInterval(mmTimer); stopMoving(); return; }
   if(id === 'mm-sim' && mm){ mm.sim = mm.sim ? 0 : Date.now(); renderMoving(); return; }
   if(id === 'mm-follow' && mm){ mm.follow = !mm.follow; renderMoving(); return; }
+  if(id === 'mm-tilt' && mm){ mm.tilt = !mm.tilt; renderMoving(); return; }
   const md = e.target.closest('[data-mapday]'); if(md){ mapDay = md.dataset.mapday; toolOpen = null; openTool('map'); return; }
 });
 
@@ -9377,7 +9412,7 @@ document.addEventListener('click', async e => {
 <script>
 const SEED = null;
 const SEED_SETTINGS = null;
-const APP_VERSION = '2026.11.09-1101';
+const APP_VERSION = '2026.11.09-1108';
 const IS_PWA_BUILD = true;
 const LS = 'payroster.v1';
 const KC = { flight:'--k-flight', deadhead:'--k-dh', training:'--k-train', standby:'--k-sby', reserve:'--k-sby', ground:'--k-ground', off:'--k-off', empty:'--k-off', other:'--k-ground' };
@@ -9389,6 +9424,7 @@ function setLang(l){
   // 'always' so Spanish shows 3.044,40 like the payslip (CLDR would print 3044,40)
   eur = new Intl.NumberFormat(LOC,{style:'currency',currency:'EUR',useGrouping:'always'});
   eur0 = new Intl.NumberFormat(LOC,{style:'currency',currency:'EUR',maximumFractionDigits:0,useGrouping:'always'});
+  eur = privMask(eur); eur0 = privMask(eur0);
   n2 = new Intl.NumberFormat(LOC,{minimumFractionDigits:2,maximumFractionDigits:2,useGrouping:'always'});
   document.documentElement.lang = lang;
   document.querySelectorAll('[data-i18n]').forEach(el=>el.innerHTML=t(el.dataset.i18n));
@@ -9413,6 +9449,7 @@ let state = load();
 save();   // keep months re-read by a newer parser
 let _tab0 = 'roster'; try{ _tab0 = sessionStorage.getItem('pr.tab') || 'roster'; }catch(e){}
 setTab(_tab0);
+document.body.classList.toggle('priv', PRIV);
 setLang(state.lang || detectLang());
 function load(){
   let s=null; try{ s = JSON.parse(localStorage.getItem(LS)||'null'); }catch(e){}
@@ -9445,6 +9482,21 @@ function load(){
 function rawPages(raw){ return raw.map(p=>({items:p.map(([x,y,str])=>({x,y,str}))})); }
 // Save the months read from one roster PDF. A multi-month PDF keeps its text once (state.raws) and
 // each month points to it; `only` re-reads just that month (other months may come from newer PDFs).
+// privacy: hide every amount of money (people nearby). Remembered on this device.
+var PRIV = false; try{ PRIV = localStorage.getItem('pr.priv') === '1'; }catch(e){}
+function privMask(f){
+  const real = f.format.bind(f);
+  return { format: v => PRIV ? '••••• €' : real(v), resolvedOptions: () => f.resolvedOptions(), formatToParts: v => f.formatToParts(v) };
+}
+function setPriv(on){
+  PRIV = on; try{ localStorage.setItem('pr.priv', on ? '1' : '0'); }catch(e){}
+  document.body.classList.toggle('priv', on);
+  const b = $('privBtn'); if(b){ b.innerHTML = privIcon(); b.setAttribute('aria-pressed', on ? 'true' : 'false'); b.title = t(on ? 'priv_show' : 'priv_hide'); }
+  render(); if(typeof refreshTool === 'function') refreshTool();
+}
+const privIcon = () => PRIV
+  ? '<svg viewBox="0 0 24 24"><path d="M3 3l18 18"/><path d="M10.6 5.1A10 10 0 0 1 12 5c5.5 0 9 5.5 9 7 0 .7-.8 2.2-2.2 3.7M6.5 6.6C4.3 8 3 10.7 3 12c0 1.5 3.5 7 9 7 1.8 0 3.4-.6 4.7-1.4"/><path d="M9.9 9.9a3 3 0 0 0 4.2 4.2"/></svg>'
+  : '<svg viewBox="0 0 24 24"><path d="M3 12c0-1.5 3.5-7 9-7s9 5.5 9 7-3.5 7-9 7-9-5.5-9-7z"/><circle cx="12" cy="12" r="3"/></svg>';
 function storeRosters(s, list, raw, only){
   let id = null;
   if(list.length > 1){ id = 'r' + list[0].year + String(list[0].month).padStart(2,'0') + '-' + list.length + '-' + Date.now().toString(36); s.raws[id] = raw; }
@@ -9518,6 +9570,7 @@ function render(){
   const ro = state.months[state.current];
   if(!ro){ renderSetup(); $('mLabel').textContent=t('noData'); $('hero').innerHTML=`<div class="panel"><div class="eyebrow">${t('startHere')}</div><p style="margin:8px 0 0">${t('startText')}</p></div>`; ['strip','legend','days','slip'].forEach(i=>$(i).innerHTML=''); renderForm(); renderStored(); return; }
   const s = state.settings;
+  { const b = $('privBtn'); if(b && !b.innerHTML){ b.innerHTML = privIcon(); b.title = t(PRIV ? 'priv_show' : 'priv_hide'); b.setAttribute('aria-pressed', PRIV ? 'true' : 'false'); } }
   renderSetup();
   try{ renderToday(); renderChanges(ro); renderLicAlert(); }catch(e){ console.warn(e); }
   if(ro.base && !s.baseSetByUser) s.base = ro.base;
@@ -9842,6 +9895,7 @@ function renderStored(){
 
 // ---- events ----
 document.addEventListener('click', e=>{
+  if(e.target.closest && e.target.closest('#privBtn')){ setPriv(!PRIV); return; }
   const go = e.target.closest('[data-go]');
   if(go){ const el = $('d-'+go.dataset.go) || $('v-'+go.dataset.go); if(el){ el.open = true; el.scrollIntoView({behavior: matchMedia('(prefers-reduced-motion: reduce)').matches?'auto':'smooth', block:'center'}); } return; }
   const del = e.target.closest('[data-del]');
