@@ -58,6 +58,9 @@ body.viewer .tabbar{display:none}
 .tile svg{width:26px;height:26px;fill:none;stroke:var(--accent);stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
 .tile.on{border-color:var(--accent);background:var(--accent-soft)}
 .brand .plus{color:var(--pay);font-size:.8em;margin-left:1px;vertical-align:super;line-height:0}
+.licalert{border-left:4px solid var(--warn);padding-block:12px}
+.licalert .chip{cursor:pointer}
+.lic-del{padding:2px 10px;font-size:16px;line-height:1}
 .restorebox{margin-top:14px;padding:12px;border-radius:10px;background:var(--sunk)}
 .mono{font-family:var(--f-mono);font-variant-numeric:tabular-nums}
 .num{font-variant-numeric:tabular-nums}
@@ -305,6 +308,7 @@ input[type=date]::-webkit-date-and-time-value{text-align:left}
   <div id="rankWarn" hidden></div>
   <section class="panel" id="setup" hidden></section>
 
+  <div class="panel licalert" id="licAlert" hidden data-tab="roster"></div>
   <section class="panel today" id="today" hidden data-tab="roster"></section>
   <div class="panel chg" id="chgCard" hidden data-tab="roster"></div>
   <section class="hero" id="hero" data-tab="roster"></section>
@@ -825,6 +829,9 @@ var PR = (function () {
         early = ex.sim.early ? s.earlyCheckin : 0;
         buy = ex.sim.buy || null;
       }
+      // art. 24.5.2 b: FDP is paid as scheduled at check-in, unless the actual one is more than 30 min longer
+      const delay = Math.max(0, +ex.delay || 0), delayPaid = !ex.sim && F > 0 && delay > 30 ? delay / 60 : 0;
+      F += delayPaid;
       const extraFix = (buy === 'full' ? 9 * pct : buy === 'half' ? 4.5 * pct : 0) + (ex.omDefer ? 4.5 * pct : 0);
       const sales = +ex.sales || 0;
       // trainer / competence team days: the monthly allowance covers the first day;
@@ -843,7 +850,7 @@ var PR = (function () {
       const codeEv = d.events.find(e => e.type === 'code' && !/^TAXI/.test(e.code));
       return {
         date: d.date, day: d.day, kind, codes, absence, F, A, H: F + A, startLoc, endLoc, away, dieta, dietaType, early,
-        extraFix: r2(extraFix), sales, isTrain, isCTday, trainNo, ctNo, trainPay, buy, autoBuy, buyWhy, buyManual: !!ex.buy, omDefer: !!ex.omDefer,
+        extraFix: r2(extraFix), sales, delay, delayPaid, isTrain, isCTday, trainNo, ctNo, trainPay, buy, autoBuy, buyWhy, buyManual: !!ex.buy, omDefer: !!ex.omDefer,
         legs, route, ci: ciEv ? ciEv.t1 : (codeEv ? codeEv.t1 : null),
         co: coEv ? coEv.t1 : (legs.length ? legs[legs.length - 1].t2 : (codeEv ? codeEv.t2 : null)),
         label: codeEv ? codeEv.code : (legs.length ? '' : (codes[0] || '')), hotel: d.hotel, events: d.events,
@@ -1126,6 +1133,56 @@ var I18N = {
   names: { es: 'Español', ca: 'Català', en: 'English', de: 'Deutsch', fr: 'Français', it: 'Italiano', pt: 'Português', ro: 'Română', hu: 'Magyar', sk: 'Slovenčina', cs: 'Čeština' },
   locales: { es: 'es-ES', ca: 'ca-ES', en: 'en-GB', de: 'de-DE', fr: 'fr-FR', it: 'it-IT', pt: 'pt-PT', ro: 'ro-RO', hu: 'hu-HU', sk: 'sk-SK', cs: 'cs-CZ' },
   es: {
+    sl_note: 'Cuando subas la nómina, la comisión real sustituye a la calculada aquí.',
+    sl_slipWins: 'La nómina ya trae la comisión de este mes ({v}) y es la que manda.',
+    sl_sumR: 'Ventas en {m}: {s} × {r} % = comisión {c}. Se usa en la casilla de comisión de la nómina.',
+    sl_sum: 'Ventas apuntadas en {m}: {s}. Pon el % de comisión para calcularla; sin %, la app usa la cantidad como comisión.',
+    sl_rate: 'Comisión',
+    sl_intro: 'Apunta lo que vendéis a bordo en cada vuelo y ve la comisión del mes antes de que llegue la nómina.',
+    fat_repNote: 'Completa las líneas con __ y envíalo por el canal oficial de Eurowings para fatigue reports.',
+    fat_note: 'Si te sientes fatigado, díselo al comandante y repórtalo según el procedimiento de Eurowings (OM-A). El texto que prepara la app es solo un borrador.',
+    fat_none: 'Ningún día con carga destacada este mes.',
+    fat_report: 'Preparar fatigue report',
+    fat_long: 'servicio largo (11 h o más)',
+    fat_short: 'descanso corto antes',
+    fat_late: 'termina tarde (después de las 23:00)',
+    fat_night: 'servicio de noche (02:00–06:00)',
+    fat_early: 'firma temprana (antes de las 06:00)',
+    fat_daysT: 'Días con más carga',
+    fat_week: '{h} h de servicio · {e} firmas tempranas · {n} noches · {s} descansos cortos · {c} días seguidos',
+    fat_hi: 'carga alta',
+    fat_mid: 'carga media',
+    fat_lo: 'carga baja',
+    fat_intro: 'Cómo de cargado va tu roster, semana a semana: firmas tempranas, noches, descansos cortos y servicios largos. Es una orientación, no una evaluación médica.',
+    dl_notPaid: 'Hasta 30 min se paga el FDP programado: este retraso no cambia la nómina.',
+    dl_paid: 'Más de 30 min sobre lo programado: se pagan {h} h más de FDP (art. 24.5.2 b).',
+    dl_label: 'Retraso en la llegada',
+    lic_note: 'El calendario avisa 30 y 7 días antes de cada fecha.',
+    lic_icsSum: 'Caduca: {n}',
+    lic_ics: 'Añadir al calendario con avisos',
+    lic_otherPh: 'Nombre',
+    lic_other: 'Otro…',
+    lic_add: 'Añadir',
+    lic_empty: 'Todavía no has añadido nada. Elige abajo un curso o documento.',
+    lic_intro: 'Apunta cuándo caduca cada curso o documento. La app te avisa en la pestaña Roster a partir de 60 días antes.',
+    lic_noDate: 'sin fecha',
+    lic_inDays: 'en {n} días',
+    lic_expired: 'caducado',
+    lic_alertT: 'Caducan pronto',
+    lic_id: 'DNI / NIE',
+    lic_pass: 'Pasaporte',
+    lic_tri: 'Cualificación de instructor',
+    lic_cca: 'Attestation TCP',
+    lic_med: 'Reconocimiento médico',
+    lic_fa: 'Primeros auxilios',
+    lic_sec: 'Seguridad (Security)',
+    lic_dg: 'Mercancías peligrosas (DG)',
+    lic_crm: 'CRM',
+    lic_sep: 'SEP / Recurrent training',
+    src_log: 'de tus ventas apuntadas',
+    tool_sales: 'Ventas a bordo',
+    tool_fat: 'Fatiga',
+    tool_lic: 'Caducidades',
     mm_after: 'Llegada a {a} según el horario.',
     mm_before: 'Salida programada a las {h} (local), dentro de {m}. El avión empezará a moverse a esa hora, o antes si hay GPS en directo.',
     mm_tips: 'Para que el GPS funcione en vuelo: Ajustes → Privacidad → Localización activada y «Ubicación exacta» para Safari/Payroster; deja la pantalla encendida con la app abierta y el móvil junto a la ventanilla. Dentro del avión a veces tarda varios minutos o no llega señal.',
@@ -1476,6 +1533,56 @@ var I18N = {
     e_noPeriod: 'No encuentro el periodo del roster. ¿Es el «Individual duty plan» de IDP en PDF?'
   },
   ca: {
+    sl_note: 'Quan pugis la nòmina, la comissió real substitueix la calculada aquí.',
+    sl_slipWins: 'La nòmina ja porta la comissió d’aquest mes ({v}) i és la que compta.',
+    sl_sumR: 'Vendes a {m}: {s} × {r} % = comissió {c}. Es fa servir a la casella de comissió de la nòmina.',
+    sl_sum: 'Vendes apuntades a {m}: {s}. Posa el % de comissió per calcular-la; sense %, l’app fa servir l’import com a comissió.',
+    sl_rate: 'Comissió',
+    sl_intro: 'Apunta el que veneu a bord a cada vol i mira la comissió del mes abans que arribi la nòmina.',
+    fat_repNote: 'Completa les línies amb __ i envia-ho pel canal oficial d’Eurowings per a fatigue reports.',
+    fat_note: 'Si et sents fatigat, digues-ho al comandant i reporta-ho segons el procediment d’Eurowings (OM-A). El text de l’app és només un esborrany.',
+    fat_none: 'Cap dia amb càrrega destacada aquest mes.',
+    fat_report: 'Preparar fatigue report',
+    fat_long: 'servei llarg (11 h o més)',
+    fat_short: 'descans curt abans',
+    fat_late: 'acaba tard (després de les 23:00)',
+    fat_night: 'servei de nit (02:00–06:00)',
+    fat_early: 'firma d’hora (abans de les 06:00)',
+    fat_daysT: 'Dies amb més càrrega',
+    fat_week: '{h} h de servei · {e} firmes d’hora · {n} nits · {s} descansos curts · {c} dies seguits',
+    fat_hi: 'càrrega alta',
+    fat_mid: 'càrrega mitjana',
+    fat_lo: 'càrrega baixa',
+    fat_intro: 'Com de carregat va el teu roster, setmana a setmana: firmes d’hora, nits, descansos curts i serveis llargs. És una orientació, no una avaluació mèdica.',
+    dl_notPaid: 'Fins a 30 min es paga l’FDP programat: aquest retard no canvia la nòmina.',
+    dl_paid: 'Més de 30 min sobre el programat: es paguen {h} h més d’FDP (art. 24.5.2 b).',
+    dl_label: 'Retard a l’arribada',
+    lic_note: 'El calendari avisa 30 i 7 dies abans de cada data.',
+    lic_icsSum: 'Caduca: {n}',
+    lic_ics: 'Afegir al calendari amb avisos',
+    lic_otherPh: 'Nom',
+    lic_other: 'Un altre…',
+    lic_add: 'Afegir',
+    lic_empty: 'Encara no hi has afegit res. Tria a sota un curs o document.',
+    lic_intro: 'Apunta quan caduca cada curs o document. L’app t’avisa a la pestanya Roster a partir de 60 dies abans.',
+    lic_noDate: 'sense data',
+    lic_inDays: 'd’aquí a {n} dies',
+    lic_expired: 'caducat',
+    lic_alertT: 'Caduquen aviat',
+    lic_id: 'DNI / NIE',
+    lic_pass: 'Passaport',
+    lic_tri: 'Qualificació d’instructor',
+    lic_cca: 'Attestation TCP',
+    lic_med: 'Reconeixement mèdic',
+    lic_fa: 'Primers auxilis',
+    lic_sec: 'Seguretat (Security)',
+    lic_dg: 'Mercaderies perilloses (DG)',
+    lic_crm: 'CRM',
+    lic_sep: 'SEP / Recurrent training',
+    src_log: 'de les vendes apuntades',
+    tool_sales: 'Vendes a bord',
+    tool_fat: 'Fatiga',
+    tool_lic: 'Caducitats',
     mm_after: 'Arribada a {a} segons l’horari.',
     mm_before: 'Sortida programada a les {h} (local), d’aquí a {m}. L’avió començarà a moure’s a aquesta hora, o abans si hi ha GPS en directe.',
     mm_tips: 'Perquè el GPS funcioni en vol: Configuració → Privacitat → Localització activada i «Ubicació exacta» per a Safari/Payroster; deixa la pantalla encesa amb l’app oberta i el mòbil a la finestreta. Dins l’avió de vegades triga uns minuts o no arriba senyal.',
@@ -1826,6 +1933,56 @@ var I18N = {
     e_noPeriod: 'No trobo el període del roster. És l’«Individual duty plan» d’IDP en PDF?'
   },
   en: {
+    sl_note: 'When you upload the payslip, the real commission replaces the one calculated here.',
+    sl_slipWins: 'The payslip already shows this month’s commission ({v}) and that one counts.',
+    sl_sumR: 'Sales in {m}: {s} × {r} % = commission {c}. Used in the payslip’s commission box.',
+    sl_sum: 'Sales logged in {m}: {s}. Enter the commission % to calculate it; without a %, the app uses the amount as the commission.',
+    sl_rate: 'Commission',
+    sl_intro: 'Log what you sell on board on each flight and see the month’s commission before the payslip arrives.',
+    fat_repNote: 'Fill in the __ lines and send it through Eurowings’ official fatigue report channel.',
+    fat_note: 'If you feel fatigued, tell the commander and report it following the Eurowings procedure (OM-A). The app’s text is only a draft.',
+    fat_none: 'No particularly heavy days this month.',
+    fat_report: 'Draft fatigue report',
+    fat_long: 'long duty (11 h or more)',
+    fat_short: 'short rest before',
+    fat_late: 'late finish (after 23:00)',
+    fat_night: 'night duty (02:00–06:00)',
+    fat_early: 'early start (before 06:00)',
+    fat_daysT: 'Heaviest days',
+    fat_week: '{h} h duty · {e} early starts · {n} nights · {s} short rests · {c} days in a row',
+    fat_hi: 'high load',
+    fat_mid: 'medium load',
+    fat_lo: 'low load',
+    fat_intro: 'How heavy your roster is, week by week: early starts, nights, short rests and long duties. A guide, not a medical assessment.',
+    dl_notPaid: 'Up to 30 min the scheduled FDP is paid: this delay doesn’t change the payslip.',
+    dl_paid: 'More than 30 min over schedule: {h} h more FDP is paid (art. 24.5.2 b).',
+    dl_label: 'Arrival delay',
+    lic_note: 'The calendar alerts you 30 and 7 days before each date.',
+    lic_icsSum: 'Expires: {n}',
+    lic_ics: 'Add to calendar with alerts',
+    lic_otherPh: 'Name',
+    lic_other: 'Other…',
+    lic_add: 'Add',
+    lic_empty: 'Nothing added yet. Pick a course or document below.',
+    lic_intro: 'Note when each course or document expires. The app warns you on the Roster tab from 60 days before.',
+    lic_noDate: 'no date',
+    lic_inDays: 'in {n} days',
+    lic_expired: 'expired',
+    lic_alertT: 'Expiring soon',
+    lic_id: 'ID card / NIE',
+    lic_pass: 'Passport',
+    lic_tri: 'Instructor qualification',
+    lic_cca: 'Cabin crew attestation',
+    lic_med: 'Medical',
+    lic_fa: 'First aid',
+    lic_sec: 'Security',
+    lic_dg: 'Dangerous goods (DG)',
+    lic_crm: 'CRM',
+    lic_sep: 'SEP / Recurrent training',
+    src_log: 'from your logged sales',
+    tool_sales: 'On-board sales',
+    tool_fat: 'Fatigue',
+    tool_lic: 'Expiry dates',
     mm_after: 'Arrived at {a} by the schedule.',
     mm_before: 'Scheduled departure at {h} (local), in {m}. The plane starts moving then, or earlier with live GPS.',
     mm_tips: 'For GPS in flight: Settings → Privacy → Location Services on, with “Precise Location” for Safari/Payroster; keep the screen on with the app open and the phone by the window. Inside the aircraft it can take several minutes or not get a signal at all.',
@@ -2176,6 +2333,56 @@ var I18N = {
     e_noPeriod: 'I can’t find the roster period. Is this the IDP “Individual duty plan” PDF?'
   },
   de: {
+    sl_note: 'Wenn du die Abrechnung hochlädst, ersetzt die echte Provision die hier berechnete.',
+    sl_slipWins: 'Die Abrechnung zeigt schon die Provision dieses Monats ({v}), und die zählt.',
+    sl_sumR: 'Verkäufe im {m}: {s} × {r} % = Provision {c}. Wird im Provisionsfeld der Abrechnung verwendet.',
+    sl_sum: 'Erfasste Verkäufe im {m}: {s}. Gib den Provisionssatz in % an; ohne % nimmt die App den Betrag als Provision.',
+    sl_rate: 'Provision',
+    sl_intro: 'Erfasse, was ihr an Bord verkauft, und sieh die Monatsprovision vor der Abrechnung.',
+    fat_repNote: 'Fülle die Zeilen mit __ aus und sende ihn über den offiziellen Eurowings-Kanal für Fatigue Reports.',
+    fat_note: 'Wenn du müde bist, sag es dem Kommandanten und melde es nach dem Eurowings-Verfahren (OM-A). Der Text der App ist nur ein Entwurf.',
+    fat_none: 'Diesen Monat keine besonders belastenden Tage.',
+    fat_report: 'Fatigue Report vorbereiten',
+    fat_long: 'langer Dienst (11 h oder mehr)',
+    fat_short: 'kurze Ruhezeit davor',
+    fat_late: 'spätes Ende (nach 23:00)',
+    fat_night: 'Nachtdienst (02:00–06:00)',
+    fat_early: 'früher Check-in (vor 06:00)',
+    fat_daysT: 'Belastendste Tage',
+    fat_week: '{h} h Dienst · {e} frühe Check-ins · {n} Nächte · {s} kurze Ruhezeiten · {c} Tage am Stück',
+    fat_hi: 'hohe Belastung',
+    fat_mid: 'mittlere Belastung',
+    fat_lo: 'geringe Belastung',
+    fat_intro: 'Wie belastend dein Dienstplan ist, Woche für Woche: frühe Check-ins, Nächte, kurze Ruhezeiten und lange Dienste. Eine Orientierung, keine medizinische Bewertung.',
+    dl_notPaid: 'Bis 30 min wird die geplante FDP bezahlt: diese Verspätung ändert die Abrechnung nicht.',
+    dl_paid: 'Mehr als 30 min über Plan: {h} h FDP mehr werden bezahlt (Art. 24.5.2 b).',
+    dl_label: 'Verspätung bei Ankunft',
+    lic_note: 'Der Kalender erinnert 30 und 7 Tage vor jedem Datum.',
+    lic_icsSum: 'Läuft ab: {n}',
+    lic_ics: 'Mit Erinnerungen in den Kalender',
+    lic_otherPh: 'Name',
+    lic_other: 'Anderes…',
+    lic_add: 'Hinzufügen',
+    lic_empty: 'Noch nichts eingetragen. Wähle unten einen Kurs oder ein Dokument.',
+    lic_intro: 'Trage ein, wann jeder Kurs oder jedes Dokument abläuft. Die App warnt dich im Tab Dienstplan ab 60 Tagen vorher.',
+    lic_noDate: 'kein Datum',
+    lic_inDays: 'in {n} Tagen',
+    lic_expired: 'abgelaufen',
+    lic_alertT: 'Läuft bald ab',
+    lic_id: 'Ausweis / NIE',
+    lic_pass: 'Reisepass',
+    lic_tri: 'Trainer-Qualifikation',
+    lic_cca: 'Cabin Crew Attestation',
+    lic_med: 'Medical',
+    lic_fa: 'Erste Hilfe',
+    lic_sec: 'Security',
+    lic_dg: 'Gefahrgut (DG)',
+    lic_crm: 'CRM',
+    lic_sep: 'SEP / Recurrent Training',
+    src_log: 'aus deinen erfassten Verkäufen',
+    tool_sales: 'Bordverkauf',
+    tool_fat: 'Ermüdung',
+    tool_lic: 'Gültigkeiten',
     mm_after: 'Laut Flugplan in {a} angekommen.',
     mm_before: 'Planmäßiger Abflug um {h} (Ortszeit), in {m}. Das Flugzeug bewegt sich ab dann, mit Live-GPS auch früher.',
     mm_tips: 'Für GPS im Flug: Einstellungen → Datenschutz → Ortungsdienste an und „Genauer Standort“ für Safari/Payroster; Bildschirm an lassen, App offen, Handy am Fenster. Im Flugzeug kann es einige Minuten dauern oder gar kein Signal geben.',
@@ -2526,6 +2733,56 @@ var I18N = {
     e_noPeriod: 'Ich finde den Zeitraum des Dienstplans nicht. Ist das der „Individual duty plan“ aus IDP als PDF?'
   },
   fr: {
+    sl_note: 'Quand tu importes la fiche, la vraie commission remplace celle calculée ici.',
+    sl_slipWins: 'La fiche indique déjà la commission de ce mois ({v}) et c’est elle qui compte.',
+    sl_sumR: 'Ventes en {m} : {s} × {r} % = commission {c}. Utilisée dans la case commission de la fiche.',
+    sl_sum: 'Ventes saisies en {m} : {s}. Indique le % de commission pour la calculer ; sans %, l’app prend le montant comme commission.',
+    sl_rate: 'Commission',
+    sl_intro: 'Note ce que vous vendez à bord à chaque vol et vois la commission du mois avant la fiche de paie.',
+    fat_repNote: 'Complète les lignes __ et envoie-le par le canal officiel Eurowings des fatigue reports.',
+    fat_note: 'Si tu te sens fatigué, dis-le au commandant et signale-le selon la procédure Eurowings (OM-A). Le texte de l’app n’est qu’un brouillon.',
+    fat_none: 'Aucun jour particulièrement chargé ce mois-ci.',
+    fat_report: 'Préparer un fatigue report',
+    fat_long: 'service long (11 h ou plus)',
+    fat_short: 'repos court avant',
+    fat_late: 'fin tardive (après 23:00)',
+    fat_night: 'service de nuit (02:00–06:00)',
+    fat_early: 'présentation tôt (avant 06:00)',
+    fat_daysT: 'Jours les plus chargés',
+    fat_week: '{h} h de service · {e} présentations tôt · {n} nuits · {s} repos courts · {c} jours d’affilée',
+    fat_hi: 'charge élevée',
+    fat_mid: 'charge moyenne',
+    fat_lo: 'charge faible',
+    fat_intro: 'La charge de ton planning, semaine par semaine : présentations tôt, nuits, repos courts et services longs. Une indication, pas une évaluation médicale.',
+    dl_notPaid: 'Jusqu’à 30 min, le FDP prévu est payé : ce retard ne change pas la fiche de paie.',
+    dl_paid: 'Plus de 30 min au-delà du prévu : {h} h de FDP en plus sont payées (art. 24.5.2 b).',
+    dl_label: 'Retard à l’arrivée',
+    lic_note: 'Le calendrier t’alerte 30 et 7 jours avant chaque date.',
+    lic_icsSum: 'Expire : {n}',
+    lic_ics: 'Ajouter au calendrier avec alertes',
+    lic_otherPh: 'Nom',
+    lic_other: 'Autre…',
+    lic_add: 'Ajouter',
+    lic_empty: 'Rien d’ajouté pour l’instant. Choisis un cours ou un document ci-dessous.',
+    lic_intro: 'Note quand expire chaque cours ou document. L’app t’avertit dans l’onglet Planning à partir de 60 jours avant.',
+    lic_noDate: 'pas de date',
+    lic_inDays: 'dans {n} jours',
+    lic_expired: 'expiré',
+    lic_alertT: 'Expire bientôt',
+    lic_id: 'Carte d’identité / NIE',
+    lic_pass: 'Passeport',
+    lic_tri: 'Qualification d’instructeur',
+    lic_cca: 'Attestation PNC',
+    lic_med: 'Visite médicale',
+    lic_fa: 'Premiers secours',
+    lic_sec: 'Sûreté (Security)',
+    lic_dg: 'Marchandises dangereuses (DG)',
+    lic_crm: 'CRM',
+    lic_sep: 'SEP / Recurrent training',
+    src_log: 'de tes ventes saisies',
+    tool_sales: 'Ventes à bord',
+    tool_fat: 'Fatigue',
+    tool_lic: 'Échéances',
     mm_after: 'Arrivé à {a} selon l’horaire.',
     mm_before: 'Départ prévu à {h} (locale), dans {m}. L’avion commence à bouger à cette heure, ou avant avec le GPS en direct.',
     mm_tips: 'Pour le GPS en vol : Réglages → Confidentialité → Service de localisation activé et « Position exacte » pour Safari/Payroster ; garde l’écran allumé avec l’app ouverte et le téléphone près du hublot. Dans l’avion, cela peut prendre quelques minutes ou ne pas capter.',
@@ -2876,6 +3133,56 @@ var I18N = {
     e_noPeriod: 'Je ne trouve pas la période du planning. Est-ce bien l’« Individual duty plan » d’IDP en PDF ?'
   },
   hu: {
+    sl_note: 'Ha feltöltöd a bérjegyzéket, a valódi jutalék felülírja az itt számoltat.',
+    sl_slipWins: 'A bérjegyzéken már szerepel e havi jutalék ({v}), és az számít.',
+    sl_sumR: 'Eladás ({m}): {s} × {r} % = jutalék {c}. Ezt használja a bérjegyzék jutalék mezője.',
+    sl_sum: 'Rögzített eladás ({m}): {s}. Add meg a jutalék %-át a számításhoz; % nélkül az app az összeget veszi jutaléknak.',
+    sl_rate: 'Jutalék',
+    sl_intro: 'Rögzítsd, mennyit adtok el a fedélzeten járatonként, és lásd a havi jutalékot a bérjegyzék előtt.',
+    fat_repNote: 'Töltsd ki a __ sorokat, és küldd el az Eurowings hivatalos fatigue report csatornáján.',
+    fat_note: 'Ha fáradt vagy, szólj a kapitánynak, és jelentsd az Eurowings eljárása szerint (OM-A). Az app szövege csak vázlat.',
+    fat_none: 'Ebben a hónapban nincs kiemelten megterhelő nap.',
+    fat_report: 'Fatigue report előkészítése',
+    fat_long: 'hosszú szolgálat (11 h vagy több)',
+    fat_short: 'rövid pihenő előtte',
+    fat_late: 'késői befejezés (23:00 után)',
+    fat_night: 'éjszakai szolgálat (02:00–06:00)',
+    fat_early: 'korai jelentkezés (06:00 előtt)',
+    fat_daysT: 'Legmegterhelőbb napok',
+    fat_week: '{h} h szolgálat · {e} korai jelentkezés · {n} éjszaka · {s} rövid pihenő · {c} nap egymás után',
+    fat_hi: 'magas terhelés',
+    fat_mid: 'közepes terhelés',
+    fat_lo: 'alacsony terhelés',
+    fat_intro: 'Mennyire megterhelő a beosztásod hétről hétre: korai jelentkezések, éjszakák, rövid pihenők és hosszú szolgálatok. Tájékoztató jellegű, nem orvosi értékelés.',
+    dl_notPaid: '30 percig a tervezett FDP-t fizetik: ez a késés nem változtat a bérjegyzéken.',
+    dl_paid: 'Több mint 30 perc a tervezetthez képest: {h} h-val több FDP jár (24.5.2 b cikk).',
+    dl_label: 'Késés érkezéskor',
+    lic_note: 'A naptár 30 és 7 nappal előtte figyelmeztet.',
+    lic_icsSum: 'Lejár: {n}',
+    lic_ics: 'Naptárba emlékeztetőkkel',
+    lic_otherPh: 'Név',
+    lic_other: 'Egyéb…',
+    lic_add: 'Hozzáadás',
+    lic_empty: 'Még nem adtál hozzá semmit. Válassz lent egy tanfolyamot vagy iratot.',
+    lic_intro: 'Írd be, mikor jár le az egyes tanfolyamok és iratok érvényessége. Az app 60 nappal előtte figyelmeztet a Beosztás fülön.',
+    lic_noDate: 'nincs dátum',
+    lic_inDays: '{n} nap múlva',
+    lic_expired: 'lejárt',
+    lic_alertT: 'Hamarosan lejár',
+    lic_id: 'Személyi / NIE',
+    lic_pass: 'Útlevél',
+    lic_tri: 'Oktatói jogosítás',
+    lic_cca: 'Légiutas-kísérő tanúsítvány',
+    lic_med: 'Orvosi alkalmasság',
+    lic_fa: 'Elsősegély',
+    lic_sec: 'Security',
+    lic_dg: 'Veszélyes áru (DG)',
+    lic_crm: 'CRM',
+    lic_sep: 'SEP / Recurrent training',
+    src_log: 'a rögzített eladásaidból',
+    tool_sales: 'Fedélzeti eladás',
+    tool_fat: 'Fáradtság',
+    tool_lic: 'Lejáratok',
     mm_after: 'Menetrend szerint megérkezett: {a}.',
     mm_before: 'Tervezett indulás {h}-kor (helyi idő), {m} múlva. A gép ekkor indul el a térképen, élő GPS-szel előbb is.',
     mm_tips: 'GPS repülés közben: Beállítások → Adatvédelem → Helymeghatározás bekapcsolva, és „Pontos hely” a Safarinak/Payrosternek; hagyd bekapcsolva a kijelzőt nyitott appal, a telefont az ablaknál. A gépben néhány percig is tarthat, vagy egyáltalán nincs jel.',
@@ -3226,6 +3533,56 @@ var I18N = {
     e_noPeriod: 'Nem találom a beosztás időszakát. Ez az IDP „Individual duty plan” PDF-je?'
   },
   sk: {
+    sl_note: 'Keď nahráš pásku, skutočná provízia nahradí tú vypočítanú tu.',
+    sl_slipWins: 'Výplatná páska už obsahuje províziu za tento mesiac ({v}) a tá platí.',
+    sl_sumR: 'Predaje ({m}): {s} × {r} % = provízia {c}. Použije sa v políčku provízie vo výplate.',
+    sl_sum: 'Zapísané predaje ({m}): {s}. Zadaj % provízie na výpočet; bez % aplikácia berie sumu ako províziu.',
+    sl_rate: 'Provízia',
+    sl_intro: 'Zapisuj, čo predáte na palube v každom lete, a uvidíš mesačnú províziu pred výplatou.',
+    fat_repNote: 'Doplň riadky s __ a pošli ho oficiálnym kanálom Eurowings pre fatigue reports.',
+    fat_note: 'Ak si unavený/á, povedz to kapitánovi a nahlás to podľa postupu Eurowings (OM-A). Text z aplikácie je len návrh.',
+    fat_none: 'Tento mesiac žiadny výrazne náročný deň.',
+    fat_report: 'Pripraviť fatigue report',
+    fat_long: 'dlhá služba (11 h a viac)',
+    fat_short: 'krátky odpočinok predtým',
+    fat_late: 'neskorý koniec (po 23:00)',
+    fat_night: 'nočná služba (02:00–06:00)',
+    fat_early: 'skorý nástup (pred 06:00)',
+    fat_daysT: 'Najnáročnejšie dni',
+    fat_week: '{h} h služby · {e} skorých nástupov · {n} nocí · {s} krátkych odpočinkov · {c} dní po sebe',
+    fat_hi: 'vysoká záťaž',
+    fat_mid: 'stredná záťaž',
+    fat_lo: 'nízka záťaž',
+    fat_intro: 'Aký náročný je tvoj rozpis, týždeň po týždni: skoré nástupy, noci, krátke odpočinky a dlhé služby. Je to orientácia, nie lekárske hodnotenie.',
+    dl_notPaid: 'Do 30 min sa platí plánované FDP: toto meškanie výplatu nemení.',
+    dl_paid: 'Viac ako 30 min nad plán: platí sa o {h} h FDP viac (čl. 24.5.2 b).',
+    dl_label: 'Meškanie pri prílete',
+    lic_note: 'Kalendár pripomenie 30 a 7 dní pred každým dátumom.',
+    lic_icsSum: 'Vyprší: {n}',
+    lic_ics: 'Pridať do kalendára s pripomienkami',
+    lic_otherPh: 'Názov',
+    lic_other: 'Iné…',
+    lic_add: 'Pridať',
+    lic_empty: 'Zatiaľ si nič nepridal/a. Vyber nižšie kurz alebo doklad.',
+    lic_intro: 'Zapíš, kedy vyprší každý kurz alebo doklad. Aplikácia ťa upozorní na karte Rozpis 60 dní vopred.',
+    lic_noDate: 'bez dátumu',
+    lic_inDays: 'o {n} dní',
+    lic_expired: 'vypršané',
+    lic_alertT: 'Čoskoro vyprší',
+    lic_id: 'Občiansky / NIE',
+    lic_pass: 'Pas',
+    lic_tri: 'Inštruktorská kvalifikácia',
+    lic_cca: 'Osvedčenie palubného sprievodcu',
+    lic_med: 'Lekárska prehliadka',
+    lic_fa: 'Prvá pomoc',
+    lic_sec: 'Security',
+    lic_dg: 'Nebezpečný tovar (DG)',
+    lic_crm: 'CRM',
+    lic_sep: 'SEP / Recurrent training',
+    src_log: 'z tvojich zapísaných predajov',
+    tool_sales: 'Predaj na palube',
+    tool_fat: 'Únava',
+    tool_lic: 'Platnosti',
     mm_after: 'Podľa letového poriadku pristál v {a}.',
     mm_before: 'Plánovaný odlet o {h} (miestny čas), o {m}. Lietadlo sa začne hýbať vtedy, so živým GPS aj skôr.',
     mm_tips: 'Pre GPS počas letu: Nastavenia → Súkromie → Polohové služby zapnuté a „Presná poloha“ pre Safari/Payroster; nechaj displej zapnutý s otvorenou appkou a telefón pri okne. V lietadle to môže trvať niekoľko minút alebo signál nepríde.',
@@ -3576,6 +3933,56 @@ var I18N = {
     e_noPeriod: 'Nenachádzam obdobie rozpisu. Je to „Individual duty plan“ z IDP v PDF?'
   },
   cs: {
+    sl_note: 'Když nahraješ pásku, skutečná provize nahradí tu vypočítanou zde.',
+    sl_slipWins: 'Výplatní páska už obsahuje provizi za tento měsíc ({v}) a ta platí.',
+    sl_sumR: 'Prodeje ({m}): {s} × {r} % = provize {c}. Použije se v políčku provize ve výplatě.',
+    sl_sum: 'Zapsané prodeje ({m}): {s}. Zadej % provize pro výpočet; bez % aplikace bere částku jako provizi.',
+    sl_rate: 'Provize',
+    sl_intro: 'Zapisuj, co prodáte na palubě v každém letu, a uvidíš měsíční provizi před výplatou.',
+    fat_repNote: 'Doplň řádky s __ a pošli ho oficiálním kanálem Eurowings pro fatigue reports.',
+    fat_note: 'Pokud jsi unavený/á, řekni to kapitánovi a nahlas to podle postupu Eurowings (OM-A). Text z aplikace je jen návrh.',
+    fat_none: 'Tento měsíc žádný výrazně náročný den.',
+    fat_report: 'Připravit fatigue report',
+    fat_long: 'dlouhá služba (11 h a víc)',
+    fat_short: 'krátký odpočinek předtím',
+    fat_late: 'pozdní konec (po 23:00)',
+    fat_night: 'noční služba (02:00–06:00)',
+    fat_early: 'brzký nástup (před 06:00)',
+    fat_daysT: 'Nejnáročnější dny',
+    fat_week: '{h} h služby · {e} brzkých nástupů · {n} nocí · {s} krátkých odpočinků · {c} dní po sobě',
+    fat_hi: 'vysoká zátěž',
+    fat_mid: 'střední zátěž',
+    fat_lo: 'nízká zátěž',
+    fat_intro: 'Jak náročný je tvůj rozpis, týden po týdnu: brzké nástupy, noci, krátké odpočinky a dlouhé služby. Je to orientace, ne lékařské hodnocení.',
+    dl_notPaid: 'Do 30 min se platí plánované FDP: toto zpoždění výplatu nemění.',
+    dl_paid: 'Víc než 30 min nad plán: platí se o {h} h FDP víc (čl. 24.5.2 b).',
+    dl_label: 'Zpoždění při příletu',
+    lic_note: 'Kalendář připomene 30 a 7 dní před každým datem.',
+    lic_icsSum: 'Vyprší: {n}',
+    lic_ics: 'Přidat do kalendáře s připomínkami',
+    lic_otherPh: 'Název',
+    lic_other: 'Jiné…',
+    lic_add: 'Přidat',
+    lic_empty: 'Zatím jsi nic nepřidal/a. Vyber níže kurz nebo doklad.',
+    lic_intro: 'Zapiš, kdy vyprší každý kurz nebo doklad. Aplikace tě upozorní na kartě Rozpis 60 dní předem.',
+    lic_noDate: 'bez data',
+    lic_inDays: 'za {n} dní',
+    lic_expired: 'vypršelo',
+    lic_alertT: 'Brzy vyprší',
+    lic_id: 'Občanka / NIE',
+    lic_pass: 'Pas',
+    lic_tri: 'Instruktorská kvalifikace',
+    lic_cca: 'Osvědčení palubního průvodčího',
+    lic_med: 'Lékařská prohlídka',
+    lic_fa: 'První pomoc',
+    lic_sec: 'Security',
+    lic_dg: 'Nebezpečné zboží (DG)',
+    lic_crm: 'CRM',
+    lic_sep: 'SEP / Recurrent training',
+    src_log: 'z tvých zapsaných prodejů',
+    tool_sales: 'Prodej na palubě',
+    tool_fat: 'Únava',
+    tool_lic: 'Platnosti',
     mm_after: 'Podle letového řádu přistál v {a}.',
     mm_before: 'Plánovaný odlet v {h} (místní čas), za {m}. Letadlo se začne pohybovat tehdy, s živým GPS i dřív.',
     mm_tips: 'Pro GPS během letu: Nastavení → Soukromí → Polohové služby zapnuté a „Přesná poloha“ pro Safari/Payroster; nech displej zapnutý s otevřenou appkou a telefon u okna. V letadle to může trvat několik minut nebo signál nepřijde.',
@@ -3926,6 +4333,56 @@ var I18N = {
     e_noPeriod: 'Nenacházím období rozpisu. Je to „Individual duty plan“ z IDP v PDF?'
   },
   it: {
+    "sl_note": "Quando carichi la busta paga, la provvigione reale sostituisce quella calcolata qui.",
+    "sl_slipWins": "La busta paga riporta già la provvigione di questo mese ({v}) ed è quella che conta.",
+    "sl_sumR": "Vendite a {m}: {s} × {r} % = provvigione {c}. Usata nella casella provvigione della busta paga.",
+    "sl_sum": "Vendite registrate a {m}: {s}. Inserisci la % di provvigione per calcolarla; senza %, l’app usa l’importo come provvigione.",
+    "sl_rate": "Provvigione",
+    "sl_intro": "Segna quanto vendete a bordo in ogni volo e vedi la provvigione del mese prima della busta paga.",
+    "fat_repNote": "Completa le righe __ e invialo tramite il canale ufficiale Eurowings per i fatigue report.",
+    "fat_note": "Se ti senti affaticato, dillo al comandante e segnalalo secondo la procedura Eurowings (OM-A). Il testo dell’app è solo una bozza.",
+    "fat_none": "Nessun giorno particolarmente pesante questo mese.",
+    "fat_report": "Prepara fatigue report",
+    "fat_long": "servizio lungo (11 h o più)",
+    "fat_short": "riposo breve prima",
+    "fat_late": "fine tardi (dopo le 23:00)",
+    "fat_night": "servizio notturno (02:00–06:00)",
+    "fat_early": "presentazione presto (prima delle 06:00)",
+    "fat_daysT": "Giorni più pesanti",
+    "fat_week": "{h} h di servizio · {e} presentazioni presto · {n} notti · {s} riposi brevi · {c} giorni di fila",
+    "fat_hi": "carico alto",
+    "fat_mid": "carico medio",
+    "fat_lo": "carico basso",
+    "fat_intro": "Quanto è pesante il tuo roster, settimana per settimana: presentazioni presto, notti, riposi brevi e servizi lunghi. È un’indicazione, non una valutazione medica.",
+    "dl_notPaid": "Fino a 30 min si paga l’FDP programmato: questo ritardo non cambia la busta paga.",
+    "dl_paid": "Oltre 30 min sul programmato: si pagano {h} h in più di FDP (art. 24.5.2 b).",
+    "dl_label": "Ritardo all’arrivo",
+    "lic_note": "Il calendario avvisa 30 e 7 giorni prima di ogni data.",
+    "lic_icsSum": "Scade: {n}",
+    "lic_ics": "Aggiungi al calendario con avvisi",
+    "lic_otherPh": "Nome",
+    "lic_other": "Altro…",
+    "lic_add": "Aggiungi",
+    "lic_empty": "Non hai ancora aggiunto nulla. Scegli sotto un corso o documento.",
+    "lic_intro": "Segna quando scade ogni corso o documento. L’app ti avvisa nella scheda Roster da 60 giorni prima.",
+    "lic_noDate": "senza data",
+    "lic_inDays": "tra {n} giorni",
+    "lic_expired": "scaduto",
+    "lic_alertT": "Scadono presto",
+    "lic_id": "Carta d’identità / NIE",
+    "lic_pass": "Passaporto",
+    "lic_tri": "Abilitazione istruttore",
+    "lic_cca": "Attestato assistente di volo",
+    "lic_med": "Visita medica",
+    "lic_fa": "Primo soccorso",
+    "lic_sec": "Security",
+    "lic_dg": "Merci pericolose (DG)",
+    "lic_crm": "CRM",
+    "lic_sep": "SEP / Recurrent training",
+    "src_log": "dalle vendite registrate",
+    "tool_sales": "Vendite a bordo",
+    "tool_fat": "Fatica",
+    "tool_lic": "Scadenze",
     "mm_after": "Arrivato a {a} secondo l’orario.",
     "mm_before": "Partenza prevista alle {h} (locale), tra {m}. L’aereo inizia a muoversi a quell’ora, o prima con il GPS in diretta.",
     "mm_tips": "Per il GPS in volo: Impostazioni → Privacy → Localizzazione attiva e «Posizione esatta» per Safari/Payroster; lascia lo schermo acceso con l’app aperta e il telefono vicino al finestrino. In aereo può volerci qualche minuto o non arrivare segnale.",
@@ -4382,6 +4839,56 @@ var I18N = {
     "e_noPeriod": "Non trovo il periodo del turno. È l’«Individual duty plan» di IDP in PDF?"
   },
   pt: {
+    "sl_note": "Quando carregares o recibo, a comissão real substitui a calculada aqui.",
+    "sl_slipWins": "O recibo já traz a comissão deste mês ({v}) e é essa que conta.",
+    "sl_sumR": "Vendas em {m}: {s} × {r} % = comissão {c}. Usada na casa da comissão do recibo.",
+    "sl_sum": "Vendas registadas em {m}: {s}. Põe a % de comissão para a calcular; sem %, a app usa o valor como comissão.",
+    "sl_rate": "Comissão",
+    "sl_intro": "Regista o que vendem a bordo em cada voo e vê a comissão do mês antes do recibo.",
+    "fat_repNote": "Completa as linhas __ e envia pelo canal oficial da Eurowings para fatigue reports.",
+    "fat_note": "Se te sentes fatigado, diz ao comandante e reporta segundo o procedimento da Eurowings (OM-A). O texto da app é só um rascunho.",
+    "fat_none": "Nenhum dia com carga especial este mês.",
+    "fat_report": "Preparar fatigue report",
+    "fat_long": "serviço longo (11 h ou mais)",
+    "fat_short": "descanso curto antes",
+    "fat_late": "termina tarde (depois das 23:00)",
+    "fat_night": "serviço noturno (02:00–06:00)",
+    "fat_early": "apresentação cedo (antes das 06:00)",
+    "fat_daysT": "Dias com mais carga",
+    "fat_week": "{h} h de serviço · {e} apresentações cedo · {n} noites · {s} descansos curtos · {c} dias seguidos",
+    "fat_hi": "carga alta",
+    "fat_mid": "carga média",
+    "fat_lo": "carga baixa",
+    "fat_intro": "A carga da tua escala, semana a semana: apresentações cedo, noites, descansos curtos e serviços longos. É uma orientação, não uma avaliação médica.",
+    "dl_notPaid": "Até 30 min paga-se o FDP previsto: este atraso não muda o recibo.",
+    "dl_paid": "Mais de 30 min acima do previsto: pagam-se mais {h} h de FDP (art. 24.5.2 b).",
+    "dl_label": "Atraso na chegada",
+    "lic_note": "O calendário avisa 30 e 7 dias antes de cada data.",
+    "lic_icsSum": "Expira: {n}",
+    "lic_ics": "Adicionar ao calendário com alertas",
+    "lic_otherPh": "Nome",
+    "lic_other": "Outro…",
+    "lic_add": "Adicionar",
+    "lic_empty": "Ainda não adicionaste nada. Escolhe abaixo um curso ou documento.",
+    "lic_intro": "Regista quando expira cada curso ou documento. A app avisa-te no separador Escala a partir de 60 dias antes.",
+    "lic_noDate": "sem data",
+    "lic_inDays": "daqui a {n} dias",
+    "lic_expired": "expirado",
+    "lic_alertT": "Expiram em breve",
+    "lic_id": "Cartão de cidadão / NIE",
+    "lic_pass": "Passaporte",
+    "lic_tri": "Qualificação de instrutor",
+    "lic_cca": "Certificado de tripulante",
+    "lic_med": "Exame médico",
+    "lic_fa": "Primeiros socorros",
+    "lic_sec": "Segurança (Security)",
+    "lic_dg": "Mercadorias perigosas (DG)",
+    "lic_crm": "CRM",
+    "lic_sep": "SEP / Recurrent training",
+    "src_log": "das vendas registadas",
+    "tool_sales": "Vendas a bordo",
+    "tool_fat": "Fadiga",
+    "tool_lic": "Validades",
     "mm_after": "Chegada a {a} segundo o horário.",
     "mm_before": "Partida prevista às {h} (local), dentro de {m}. O avião começa a mover-se a essa hora, ou antes com GPS em direto.",
     "mm_tips": "Para o GPS em voo: Definições → Privacidade → Localização ativada e «Localização exata» para Safari/Payroster; deixa o ecrã ligado com a app aberta e o telemóvel junto à janela. Dentro do avião pode demorar uns minutos ou não haver sinal.",
@@ -4838,6 +5345,56 @@ var I18N = {
     "e_noPeriod": "Não encontro o período da escala. É o «Individual duty plan» do IDP em PDF?"
   },
   ro: {
+    "sl_note": "Când încarci fluturașul, comisionul real îl înlocuiește pe cel calculat aici.",
+    "sl_slipWins": "Fluturașul are deja comisionul lunii ({v}) și acela contează.",
+    "sl_sumR": "Vânzări în {m}: {s} × {r} % = comision {c}. Folosit în căsuța de comision a fluturașului.",
+    "sl_sum": "Vânzări notate în {m}: {s}. Pune % de comision ca să-l calculezi; fără %, aplicația folosește suma ca comision.",
+    "sl_rate": "Comision",
+    "sl_intro": "Notează ce vindeți la bord la fiecare zbor și vezi comisionul lunii înainte de fluturaș.",
+    "fat_repNote": "Completează rândurile cu __ și trimite-l pe canalul oficial Eurowings pentru fatigue reports.",
+    "fat_note": "Dacă ești obosit, spune-i comandantului și raportează după procedura Eurowings (OM-A). Textul aplicației e doar o ciornă.",
+    "fat_none": "Nicio zi deosebit de grea luna asta.",
+    "fat_report": "Pregătește fatigue report",
+    "fat_long": "serviciu lung (11 h sau mai mult)",
+    "fat_short": "odihnă scurtă înainte",
+    "fat_late": "terminat târziu (după 23:00)",
+    "fat_night": "serviciu de noapte (02:00–06:00)",
+    "fat_early": "prezentare devreme (înainte de 06:00)",
+    "fat_daysT": "Zilele cele mai grele",
+    "fat_week": "{h} h serviciu · {e} prezentări devreme · {n} nopți · {s} odihne scurte · {c} zile la rând",
+    "fat_hi": "încărcare mare",
+    "fat_mid": "încărcare medie",
+    "fat_lo": "încărcare mică",
+    "fat_intro": "Cât de încărcat e rosterul tău, săptămână cu săptămână: prezentări devreme, nopți, odihne scurte și servicii lungi. E orientativ, nu o evaluare medicală.",
+    "dl_notPaid": "Până la 30 min se plătește FDP-ul programat: întârzierea nu schimbă fluturașul.",
+    "dl_paid": "Peste 30 min față de program: se plătesc încă {h} h FDP (art. 24.5.2 b).",
+    "dl_label": "Întârziere la sosire",
+    "lic_note": "Calendarul te anunță cu 30 și 7 zile înainte de fiecare dată.",
+    "lic_icsSum": "Expiră: {n}",
+    "lic_ics": "Adaugă în calendar cu alerte",
+    "lic_otherPh": "Nume",
+    "lic_other": "Altul…",
+    "lic_add": "Adaugă",
+    "lic_empty": "Încă n-ai adăugat nimic. Alege mai jos un curs sau document.",
+    "lic_intro": "Notează când expiră fiecare curs sau document. Aplicația te avertizează în fila Roster cu 60 de zile înainte.",
+    "lic_noDate": "fără dată",
+    "lic_inDays": "în {n} zile",
+    "lic_expired": "expirat",
+    "lic_alertT": "Expiră curând",
+    "lic_id": "Buletin / NIE",
+    "lic_pass": "Pașaport",
+    "lic_tri": "Calificare de instructor",
+    "lic_cca": "Atestat însoțitor de bord",
+    "lic_med": "Examen medical",
+    "lic_fa": "Prim ajutor",
+    "lic_sec": "Securitate (Security)",
+    "lic_dg": "Mărfuri periculoase (DG)",
+    "lic_crm": "CRM",
+    "lic_sep": "SEP / Recurrent training",
+    "src_log": "din vânzările notate",
+    "tool_sales": "Vânzări la bord",
+    "tool_fat": "Oboseală",
+    "tool_lic": "Valabilități",
     "mm_after": "Sosit la {a} conform orarului.",
     "mm_before": "Plecare programată la {h} (local), peste {m}. Avionul începe să se miște atunci, sau mai devreme cu GPS live.",
     "mm_tips": "Pentru GPS în zbor: Setări → Confidențialitate → Localizare activată și „Localizare exactă” pentru Safari/Payroster; lasă ecranul aprins cu aplicația deschisă și telefonul lângă hublou. În avion poate dura câteva minute sau să nu prindă semnal.",
@@ -7603,7 +8160,7 @@ var qrcode = function() {
 // ---- Payroster tools: payslip check, what-if, calendar, FTL, days off, year summary, backup ----
 // Shares the page's globals (state, t, eur, n2, hhmm, PR, monthName, key, prevKey, save, render…).
 
-const TOOLS = ['map','check','sim','cal','ftl','vac','year','wrap','cmp','fam','backup'];
+const TOOLS = ['map','check','sim','cal','ftl','fat','vac','lic','sales','year','wrap','cmp','fam','backup'];
 let toolOpen = null, simDate = null;
 
 const TOOL_ICON = {
@@ -7617,7 +8174,10 @@ const TOOL_ICON = {
   wrap:'<path d="m12 3.5 2.6 5.3 5.9.9-4.3 4.1 1 5.8-5.2-2.7-5.2 2.7 1-5.8-4.3-4.1 5.9-.9z"/>',
   cmp:'<circle cx="8.5" cy="8" r="3"/><circle cx="16" cy="9" r="2.5"/><path d="M3 19c.6-3.2 2.8-5 5.5-5s4.9 1.8 5.5 5M14.5 14.2c2.5-.3 4.8 1.2 5.5 4.3"/>',
   fam:'<path d="M12 20s-7.5-4.4-7.5-10A4.2 4.2 0 0 1 12 7.6 4.2 4.2 0 0 1 19.5 10c0 5.6-7.5 10-7.5 10z"/>',
-  backup:'<path d="M7 18.5a4.5 4.5 0 0 1-.6-9A6 6 0 0 1 18 8.6a4 4 0 0 1-.5 9.9H7z"/><path d="m12 11v5M9.8 13.2 12 11l2.2 2.2"/>'
+  lic:'<rect x="4" y="5" width="16" height="14" rx="2.5"/><circle cx="9" cy="11" r="2"/><path d="M6.5 16c.5-1.5 1.4-2.2 2.5-2.2s2 .7 2.5 2.2M14 10h3.5M14 13.5h3.5"/>',
+  fat:'<path d="M20 14.5A8 8 0 1 1 9.5 4a6.5 6.5 0 0 0 10.5 10.5z"/>',
+  sales:'<path d="M5 7h14l-1.4 9.2a2 2 0 0 1-2 1.8H8.4a2 2 0 0 1-2-1.8z"/><path d="M9 7V5.5a3 3 0 0 1 6 0V7"/>',
+  backup:'<path d=""M7 18.5a4.5 4.5 0 0 1-.6-9A6 6 0 0 1 18 8.6a4 4 0 0 1-.5 9.9H7z"/><path d="m12 11v5M9.8 13.2 12 11l2.2 2.2"/>'
 };
 function renderToolbar(){
   const bar = $('toolbar'); if(!bar) return;
@@ -7639,7 +8199,7 @@ function openTool(k){
   p.scrollIntoView({block:'nearest'});
 }
 function refreshTool(){ if(toolOpen) TOOL_FN()[toolOpen](); }
-const TOOL_FN = () => ({check:renderCheck, sim:renderSim, cal:renderCal, ftl:renderFtl, vac:renderVac, year:renderYear, wrap:renderWrap, map:renderMap, cmp:renderCmp, fam:renderFam, backup:renderBackup});
+const TOOL_FN = () => ({check:renderCheck, sim:renderSim, cal:renderCal, ftl:renderFtl, vac:renderVac, year:renderYear, wrap:renderWrap, map:renderMap, lic:renderLic, fat:renderFat, sales:renderSales, cmp:renderCmp, fam:renderFam, backup:renderBackup});
 const pnl = html => { $('toolPanel').innerHTML = html; };
 const hdr = (k, sub) => `<div class="eyebrow">${t('tool_'+k)}</div>${sub?`<p class="note" style="margin:6px 0 12px">${sub}</p>`:''}`;
 const fmtH = h => hhmm(Math.max(0,h||0));
@@ -8115,6 +8675,9 @@ function renderToday(){
   const next = duties.find(x => x.start > now);
   if(!cur && !next){ el.hidden = true; return; }
   const x = cur || next, base = state.settings.base || 'PMI';
+  // between duties: show the minimum rest after the last one
+  const prev = !cur ? duties.filter(d => d.end && d.end <= now).pop() : null;
+  const restNow = prev && now - prev.end < 36*36e5 ? restHtml(prev.d) : (cur ? restHtml(cur.d) : '');
   const legs = (x.d.legs||[]).map(l => `<span class="${l.type==='dh'?'dhl':''}">${l.type==='dh'?'DH ':''}${esc(l.flight)} ${l.dep}–${l.arr} ${localHM(utcAt(x.date,l.t1), l.dep)}</span>`).join(' · ');
   const when = cur ? t('td_now', {e: localHM(x.end, x.endSt||base)}) : t('td_next', {d: localDay(x.start, x.st), h: localHM(x.start, x.st), st: x.st || base});
   el.hidden = false;
@@ -8122,6 +8685,7 @@ function renderToday(){
     <div class="td-main"><div><div class="td-route">${esc(x.route || kind(x.kind).n)}</div><div class="note">${when}</div></div>
     ${cur ? '' : `<div class="td-count" id="tdCount" data-at="${x.start}">${durTxt(x.start - now)}</div>`}</div>
     ${legs ? `<div class="note td-legs">${legs}</div>` : ''}${x.hotel ? `<div class="note">🏨 ${t('nightIn',{st:x.hotel})}</div>` : ''}
+    ${restNow}
     ${(x.d.legs||[]).some(l => l.type==='flt') && (cur || x.start - now < 18*36e5) ? `<button class="btn" type="button" id="td-mm" style="margin-top:10px">✈ ${t('mm_start')}</button>` : ''}`;
   clearInterval(todayTimer);
   todayTimer = setInterval(() => { const c = $('tdCount'); if(!c){ clearInterval(todayTimer); return; }
@@ -8557,11 +9121,184 @@ document.addEventListener('click', e => {
   const md = e.target.closest('[data-mapday]'); if(md){ mapDay = md.dataset.mapday; toolOpen = null; openTool('map'); return; }
 });
 
+// ---- Payroster+: licences & expiry dates, delays (actual FDP), fatigue, on-board sales log ----
+
+// ---------- 1. licences and expiry dates ----------
+const LIC_PRESETS = ['lic_sep','lic_crm','lic_dg','lic_sec','lic_fa','lic_med','lic_cca','lic_tri','lic_pass','lic_id'];
+function licList(){ return (state.lic = state.lic || []); }
+function licDays(iso){ return Math.round((Date.parse(iso+'T12:00') - Date.parse(todayISO()+'T12:00')) / 864e5); }
+function licName(x){ return x.key ? t(x.key) : x.name; }
+function licAlertsHtml(){
+  const soon = licList().filter(x => x.exp && licDays(x.exp) <= 60).sort((a,b) => a.exp.localeCompare(b.exp));
+  if(!soon.length) return '';
+  return `<div class="chips">${soon.map(x => { const d = licDays(x.exp);
+    return `<span class="chip ${d < 0 ? 'c-sick' : d <= 30 ? 'c-bez' : ''}" data-tool="lic">${d < 0 ? '⛔' : '⚠'} ${esc(licName(x))}: ${d < 0 ? t('lic_expired') : t('lic_inDays', {n: d})}</span>`; }).join('')}</div>`;
+}
+function renderLicAlert(){
+  const el = $('licAlert'); if(!el) return;
+  const h = licAlertsHtml(); el.hidden = !h; el.innerHTML = h ? `<div class="eyebrow">${t('lic_alertT')}</div>${h}` : '';
+}
+function renderLic(){
+  const L = licList();
+  const used = new Set(L.map(x => x.key).filter(Boolean));
+  const rows = L.slice().sort((a,b) => (a.exp||'9').localeCompare(b.exp||'9')).map(x => { const d = x.exp ? licDays(x.exp) : null;
+    const cls = d == null ? '' : d < 0 ? 'neg' : d <= 30 ? 'neg' : d <= 60 ? '' : 'pos';
+    return `<div class="mrow"><div class="mh nc">${esc(licName(x))}<button class="btn ghost lic-del" type="button" data-licdel="${x.id}" aria-label="×">×</button></div>
+      <div class="row" style="align-items:center;gap:10px"><input type="date" data-licexp="${x.id}" value="${esc(x.exp||'')}">
+      <span class="note ${cls}">${d == null ? t('lic_noDate') : d < 0 ? t('lic_expired') : t('lic_inDays', {n: d})}</span></div></div>`; }).join('');
+  pnl(hdr('lic', t('lic_intro')) + `<div class="mlist">${rows || `<p class="note">${t('lic_empty')}</p>`}</div>
+    <div class="row" style="margin-top:12px;align-items:flex-end">
+      <label class="note">${t('lic_add')}<select id="lic-pre"><option value="">—</option>${LIC_PRESETS.filter(k => !used.has(k)).map(k => `<option value="${k}">${t(k)}</option>`).join('')}<option value="_">${t('lic_other')}</option></select></label>
+      <input type="text" id="lic-name" placeholder="${t('lic_otherPh')}" hidden>
+      <button class="btn" id="lic-addb" type="button">+</button></div>
+    <div class="row" style="margin-top:12px"><button class="btn ghost" id="lic-ics" type="button">📅 ${t('lic_ics')}</button></div>
+    <p class="note">${t('lic_note')}</p>`);
+}
+function licIcs(){
+  const pad = n => String(n).padStart(2,'0'), now = new Date(), stamp = `${now.getUTCFullYear()}${pad(now.getUTCMonth()+1)}${pad(now.getUTCDate())}T000000Z`;
+  const ev = licList().filter(x => x.exp).map(x => { const d = x.exp.replace(/-/g,''), n = licName(x).replace(/[,;]/g,' ');
+    return ['BEGIN:VEVENT', `UID:lic-${x.id}@payroster`, `DTSTAMP:${stamp}`, `DTSTART;VALUE=DATE:${d}`, `SUMMARY:${t('lic_icsSum',{n})}`,
+      'BEGIN:VALARM','ACTION:DISPLAY',`DESCRIPTION:${n}`,'TRIGGER:-P30D','END:VALARM','BEGIN:VALARM','ACTION:DISPLAY',`DESCRIPTION:${n}`,'TRIGGER:-P7D','END:VALARM','END:VEVENT'].join('\r\n'); });
+  return ['BEGIN:VCALENDAR','VERSION:2.0','PRODID:-//Payroster//lic//EN', ...ev, 'END:VCALENDAR'].join('\r\n');
+}
+
+// ---------- 2. delay: actual FDP more than 30 min over the scheduled one ----------
+function delayHtml(d){
+  if(!d.legs.length) return '';
+  const v = d.delay || '';
+  let res = '';
+  if(d.delay > 30) res = `<span class="pos">${t('dl_paid', {h: hhmm(d.delayPaid)})}</span>`;
+  else if(d.delay > 0) res = `<span class="note">${t('dl_notPaid')}</span>`;
+  return `<div class="fdpl"><label class="row" style="align-items:center;gap:8px;margin:0">${t('dl_label')}
+    <input type="number" inputmode="numeric" min="0" step="5" data-delay="${d.date}" value="${v}" placeholder="0" style="width:80px"> min</label>
+    ${res ? `<div>${res}</div>` : ''}</div>`;
+}
+
+// ---------- 5. fatigue ----------
+// per day: early start (check-in before 06:00 local), duty touching the night (02:00–05:59 local),
+// late finish (after 23:00), short rest (< 12 h at base / 10 h away), long duty (FDP ≥ 11 h)
+function fatigueDays(){
+  const duties = allDuties(), base = state.settings.base || 'PMI', out = {};
+  duties.forEach((x, i) => {
+    const hL = ms => { const p = new Intl.DateTimeFormat('en-GB', {timeZone: PR.tzOf(x.st || base), hour:'2-digit', minute:'2-digit', hourCycle:'h23'}).format(new Date(ms)).split(':'); return +p[0] + p[1]/60; };
+    const f = { early: false, night: false, late: false, short: false, long: false, pts: 0 };
+    const s = hL(x.start), e = x.end ? hL(x.end) : null, len = x.end ? (x.end - x.start) / 36e5 : 0;
+    f.early = s < 6 && s >= 2;
+    f.night = s < 2 || (x.end && (len > 0 && (s > e || e > 2 && e <= 6 && len > 3)));
+    f.late = e != null && (e >= 23 || e < 2);
+    f.long = len >= 11;
+    const prev = duties[i-1];
+    if(prev && prev.end){ const home = (prev.endSt || base) === base && !prev.hotel; f.short = (x.start - prev.end) < Math.max(prev.end - prev.start, (home ? 12 : 10) * 36e5) + 30*60e3; }
+    f.pts = (f.early ? 2 : 0) + (f.night ? 3 : 0) + (f.late ? 1 : 0) + (f.short ? 2 : 0) + (f.long ? 2 : 0);
+    out[x.date] = { ...f, x, len };
+  });
+  return out;
+}
+function renderFat(){
+  const ro = state.months[state.current]; if(!ro){ pnl(hdr('fat') + `<p class="msg">${t('startText')}</p>`); return; }
+  const F = fatigueDays(), c = PR.compute(ro, state.settings, state.extras);
+  // rolling 7 days ending on each day of the month
+  const weeks = [];
+  for(let i = 0; i < c.days.length; i += 7){
+    const ds = c.days.slice(i, i+7), fs = ds.map(d => F[d.date]).filter(Boolean);
+    const pts = fs.reduce((a, f) => a + f.pts, 0), early = fs.filter(f => f.early).length, night = fs.filter(f => f.night).length, short = fs.filter(f => f.short).length;
+    const hrs = fs.reduce((a, f) => a + f.len, 0);
+    let consec = 0, run = 0; for(const d of ds){ if(F[d.date]) { run++; consec = Math.max(consec, run); } else run = 0; }
+    const lvl = pts >= 12 || night >= 3 || hrs > 50 ? 'hi' : pts >= 6 || early >= 3 ? 'mid' : 'lo';
+    weeks.push({ a: ds[0].date, b: ds[ds.length-1].date, pts, early, night, short, hrs, consec, lvl });
+  }
+  const dd = iso => new Date(iso+'T12:00').toLocaleDateString(LOC, {day:'numeric', month:'short'});
+  const flagDays = c.days.filter(d => F[d.date] && F[d.date].pts >= 2);
+  pnl(hdr('fat', t('fat_intro')) + `<div class="mlist">${weeks.map(w => `<div class="mrow"><div class="mh nc">${dd(w.a)} – ${dd(w.b)}
+      <span class="chip ${w.lvl==='hi'?'c-sick':w.lvl==='mid'?'c-bez':'c-vac'}">${t('fat_'+w.lvl)}</span></div>
+      <div class="note">${t('fat_week', {h: hhmm(w.hrs), e: w.early, n: w.night, s: w.short, c: w.consec})}</div></div>`).join('')}</div>
+    <h3 class="wh">${t('fat_daysT')}</h3>
+    <div class="mlist">${flagDays.map(d => { const f = F[d.date];
+      const tags = ['early','night','late','short','long'].filter(k => f[k]).map(k => `<span class="chip">${t('fat_'+k)}</span>`).join('');
+      return `<div class="mrow"><div class="mh">${new Date(d.date+'T12:00').toLocaleDateString(LOC,{weekday:'short', day:'numeric'})} · ${esc(d.route||d.label||'')}</div><div class="chips">${tags}</div>
+        <button class="btn ghost" type="button" data-fatrep="${d.date}" style="margin-top:6px;font-size:13px">✍ ${t('fat_report')}</button></div>`; }).join('') || `<p class="note">${t('fat_none')}</p>`}</div>
+    <div id="fat-out"></div>
+    <p class="note">${t('fat_note')}</p>`);
+}
+function fatigueReport(date, L){
+  return withLang(L, () => {
+    const F = fatigueDays()[date], x = F.x, d = x.d, base = state.settings.base || 'PMI';
+    const ro = state.months[date.slice(0,7)] || {}, parts = String(ro.crew||'').split(',').map(s => s.trim()), name = parts.length > 1 ? parts[1]+' '+parts[0] : (parts[0]||'');
+    const flights = (d.legs||[]).map(l => `${l.flight} ${l.dep}-${l.arr}`).join(', ');
+    const reasons = ['early','night','late','short','long'].filter(k => F[k]).map(k => '- ' + t('fat_'+k)).join('\n');
+    const M = L === 'es' ? {
+      s: `Fatigue report – ${date} – ${name}`,
+      b: `Fecha: ${date}\nServicio: ${flights || d.route}\nFirma: ${localHM(x.start, x.st)} local (${x.st || base}) · Fin: ${x.end ? localHM(x.end, x.endSt || base) : '—'} local\nDuración del servicio: ${hhmm(F.len)} h\n\nFactores del roster:\n${reasons}\n\nHoras de sueño en las 24 h anteriores: __\nNivel de fatiga (Samn-Perelli 1–7): __\nCómo me afectó en el servicio: __\n\n${name}` }
+    : {
+      s: `Fatigue report – ${date} – ${name}`,
+      b: `Date: ${date}\nDuty: ${flights || d.route}\nReport: ${localHM(x.start, x.st)} local (${x.st || base}) · End: ${x.end ? localHM(x.end, x.endSt || base) : '—'} local\nDuty length: ${hhmm(F.len)} h\n\nRoster factors:\n${reasons}\n\nSleep in the previous 24 h: __\nFatigue level (Samn-Perelli 1–7): __\nHow it affected the duty: __\n\n${name}` };
+    return M;
+  });
+}
+
+// ---------- 6. on-board sales log ----------
+function salesOfMonth(k){ const log = (state.salesLog||{})[k] || {}; return Object.values(log).reduce((a, v) => a + (+v||0), 0); }
+function applySalesLog(k){
+  const rate = +state.settings.salesRate || 0, sum = salesOfMonth(k);
+  const ex = state.extras[k] = state.extras[k] || {};
+  if(ex.salesSlip) return;                       // the payslip wins
+  if(ex.sales != null && !ex.salesLog) return;   // typed by hand wins too
+  if(sum > 0){ ex.sales = PR.r2(rate ? sum * rate / 100 : sum); ex.salesLog = true; }
+  else if(ex.salesLog){ ex.sales = null; ex.salesLog = false; }
+}
+function salesSumTxt(ro){
+  const k = key(ro), rate = state.settings.salesRate || '', sum = salesOfMonth(k), ex = state.extras[k] || {}, comm = rate ? sum * rate / 100 : sum;
+  return (rate ? t('sl_sumR', {s: eur.format(sum), r: rate, c: eur.format(comm), m: monthName(ro.year, ro.month)}) : t('sl_sum', {s: eur.format(sum), m: monthName(ro.year, ro.month)}))
+    + (ex.salesSlip ? ' ' + t('sl_slipWins', {v: eur.format(ex.sales)}) : '');
+}
+function renderSales(){
+  const ro = state.months[state.current]; if(!ro){ pnl(hdr('sales') + `<p class="msg">${t('startText')}</p>`); return; }
+  const k = key(ro), log = (state.salesLog||{})[k] || {}, rate = state.settings.salesRate || '';
+  const c = PR.compute(ro, state.settings, state.extras), sum = salesOfMonth(k), ex = state.extras[k] || {};
+  const rows = c.days.filter(d => d.legs.some(l => l.type==='flt')).map(d => `<div class="mrow" style="display:flex;justify-content:space-between;align-items:center;gap:10px">
+      <div style="min-width:0"><div class="mh nc" style="display:block">${new Date(d.date+'T12:00').toLocaleDateString(LOC,{weekday:'short', day:'numeric'})}</div><div class="note">${esc(d.route)}</div></div>
+      <input type="text" inputmode="decimal" data-sale="${d.date}" value="${log[d.date] ?? ''}" placeholder="0,00" style="width:110px;text-align:right"></div>`).join('');
+  pnl(hdr('sales', t('sl_intro')) + `<label class="note">${t('sl_rate')} <input type="text" inputmode="decimal" id="sl-rate" value="${rate}" placeholder="—" style="width:80px"> %</label>
+    <p class="msg" id="sl-sum">${salesSumTxt(ro)}</p>
+    <div class="mlist">${rows}</div><p class="note">${t('sl_note')}</p>`);
+}
+
+// events
+document.addEventListener('change', e => {
+  const el = e.target;
+  if(el.dataset.licexp){ const x = licList().find(y => y.id === el.dataset.licexp); if(x){ x.exp = el.value || ''; save(); renderLic(); renderLicAlert(); } return; }
+  if(el.id === 'lic-pre'){ $('lic-name').hidden = el.value !== '_'; return; }
+  if(el.dataset.delay){ const k = el.dataset.delay; state.extras[k] = state.extras[k] || {}; const v = parseInt(el.value, 10);
+    if(v > 0) state.extras[k].delay = v; else delete state.extras[k].delay; save(); render(); return; }
+  if(el.dataset.sale){ const d = el.dataset.sale, k = d.slice(0,7), v = String(el.value).trim();
+    state.salesLog = state.salesLog || {}; const log = state.salesLog[k] = state.salesLog[k] || {};
+    if(v === '') delete log[d]; else log[d] = parseFloat(/,/.test(v) ? v.replace(/\./g,'').replace(',','.') : v) || 0;
+    applySalesLog(k); save(); render(); const ro = state.months[k]; if(ro && $('sl-sum')) $('sl-sum').innerHTML = salesSumTxt(ro); return; }
+  if(el.id === 'sl-rate'){ const v = String(el.value).trim().replace(',','.'); state.settings.salesRate = v ? (parseFloat(v) || '') : '';
+    applySalesLog(state.current); save(); render(); renderSales(); return; }
+});
+document.addEventListener('click', async e => {
+  const id = e.target.id, el = e.target;
+  if(id === 'lic-addb'){ const pre = $('lic-pre').value; if(!pre) return;
+    const x = { id: Date.now().toString(36), exp: '' };
+    if(pre === '_'){ const n = $('lic-name').value.trim(); if(!n) return; x.name = n; } else x.key = pre;
+    licList().push(x); save(); renderLic(); return; }
+  if(el.dataset && el.dataset.licdel){ state.lic = licList().filter(x => x.id !== el.dataset.licdel); save(); renderLic(); renderLicAlert(); return; }
+  if(id === 'lic-ics'){ await giveFile('payroster-caducidades.ics', licIcs(), 'text/calendar'); return; }
+  const fr = el.closest && el.closest('[data-fatrep]');
+  if(fr){ const date = fr.dataset.fatrep, L = (lang === 'es' || lang === 'ca') ? 'es' : 'en', r = fatigueReport(date, L);
+    $('fat-out').innerHTML = `<div class="mailbox"><label class="note">${t('mail_subj')}<input type="text" id="mail-s" value="${esc(r.s)}"></label>
+      <textarea id="mail-b" rows="16">${esc(r.b)}</textarea>
+      <div class="row"><button class="btn" id="mail-copy" type="button">${t('mail_copy')}</button><button class="btn ghost" id="mail-open" type="button">${t('mail_open')}</button></div>
+      <p class="note">${t('fat_repNote')}</p></div>`;
+    $('fat-out').scrollIntoView({block:'nearest'}); return; }
+});
+
 </script>
 <script>
 const SEED = null;
 const SEED_SETTINGS = null;
-const APP_VERSION = '2026.11.09-1027';
+const APP_VERSION = '2026.11.09-1053';
 const IS_PWA_BUILD = true;
 const LS = 'payroster.v1';
 const KC = { flight:'--k-flight', deadhead:'--k-dh', training:'--k-train', standby:'--k-sby', reserve:'--k-sby', ground:'--k-ground', off:'--k-off', empty:'--k-off', other:'--k-ground' };
@@ -8672,13 +9409,14 @@ function salesFromSlips(s){
     }
     for(const [mk, v] of Object.entries(by)){
       const ex = s.extras[mk] = s.extras[mk] || {};
-      if(ex.sales == null || ex.salesSlip) { ex.sales = v; ex.salesSlip = true; }
+      if(ex.sales == null || ex.salesSlip || ex.salesLog) { ex.sales = v; ex.salesSlip = true; ex.salesLog = false; }
     }
   }
 }
 function salesInput(k, mName){
   const ex = state.extras[k]||{}, has = ex.sales!=null && ex.sales!=='', est = +state.settings.salesEstimate||0;
   const src = has && ex.salesSlip ? `<span class="src s-slip">✓ ${t('src_slip')}</span>`
+    : has && ex.salesLog ? `<span class="src s-slip">✓ ${t('src_log')}</span>`
     : has ? `<span class="src s-man">✎ ${t('src_manual')}</span>`
     : `<span class="src s-none">${est ? t('src_est',{v:eur.format(est)}) : t('src_none')}</span>`;
   return `<label class="salesm"><span>${t('salesMonth',{m:mName})}${src}</span><input type="text" inputmode="decimal" id="ms-${k}" data-msales="${k}" value="${has ? (ex.salesSlip ? n2.format(ex.sales) : ex.sales) : ''}" placeholder="0,00"></label>`;
@@ -8702,7 +9440,7 @@ function render(){
   if(!ro){ renderSetup(); $('mLabel').textContent=t('noData'); $('hero').innerHTML=`<div class="panel"><div class="eyebrow">${t('startHere')}</div><p style="margin:8px 0 0">${t('startText')}</p></div>`; ['strip','legend','days','slip'].forEach(i=>$(i).innerHTML=''); renderForm(); renderStored(); return; }
   const s = state.settings;
   renderSetup();
-  try{ renderToday(); renderChanges(ro); }catch(e){ console.warn(e); }
+  try{ renderToday(); renderChanges(ro); renderLicAlert(); }catch(e){ console.warn(e); }
   if(ro.base && !s.baseSetByUser) s.base = ro.base;
   const w = $('rankWarn');
   if(s.configured && ro.rankNorm && ro.rankNorm!==s.rank){
@@ -8833,7 +9571,7 @@ function renderDays(c, ro){
       </summary>
       <div class="detail">
         ${legs}
-        ${d.legs.length ? `<button class="btn ghost mapbtn" type="button" data-mapday="${d.date}">🗺 ${t('map_btn')}</button>` : ''}${fdpHtml(d, c.days[di+1])}${d.ci && (d.events||[]).some(e=>e.type==='ci') ? restHtml(d) : ''}
+        ${d.legs.length ? `<button class="btn ghost mapbtn" type="button" data-mapday="${d.date}">🗺 ${t('map_btn')}</button>` : ''}${fdpHtml(d, c.days[di+1])}${delayHtml(d)}${d.ci && (d.events||[]).some(e=>e.type==='ci') ? restHtml(d) : ''}
         ${crewHtml(d, state.months[state.current] && state.months[state.current].crew)}
         <dl class="brk">
           ${d.H?`<dt>${t('payHours',{f:hhmm(d.F),a:hhmm(d.A)})}${d.absence?t('absenceCredit'):''} · ${tier} · ${n2.format(d.hourRate)} €/h</dt><dd>${eur.format(d.hourPay)}</dd>`:''}
@@ -9048,7 +9786,7 @@ document.addEventListener('change', e=>{
   if(el.dataset.moneoff){ const k = el.dataset.moneoff; const v = String(el.value).trim();
     state.extras[k] = state.extras[k]||{}; state.extras[k].oneOff = v==='' ? null : (parseFloat(/,/.test(v) ? v.replace(/\./g,'').replace(',','.') : v)||0); save(); render(); return; }
   if(el.dataset.msales){ const k = el.dataset.msales; const v = String(el.value).trim();
-    state.extras[k] = state.extras[k]||{}; state.extras[k].sales = v==='' ? null : (parseFloat(/,/.test(v) ? v.replace(/\./g,'').replace(',','.') : v)||0); state.extras[k].salesSlip = false; save(); render(); return; }
+    state.extras[k] = state.extras[k]||{}; state.extras[k].sales = v==='' ? null : (parseFloat(/,/.test(v) ? v.replace(/\./g,'').replace(',','.') : v)||0); state.extras[k].salesSlip = false; state.extras[k].salesLog = false; save(); render(); return; }
   const box = el.closest('.extras');
   if(box && el.dataset.f){
     const d = box.dataset.date; const ex = state.extras[d] = state.extras[d]||{};
