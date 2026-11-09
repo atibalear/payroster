@@ -22,7 +22,7 @@
   --bg:#f3f4f7; --surface:#ffffff; --sunk:#e9ebf1; --ink:#161a2c; --muted:#5d6379; --line:#d8dbe5;
   --accent:#2c4fd6; --accent-soft:#e3e8fb; --pay:#0b7650; --pay-soft:#dcf1e7; --warn:#a85a00; --warn-soft:#fbecd6;
   --k-flight:#2c4fd6; --k-dh:#7d8bd6; --k-train:#c48a00; --k-sby:#8e4fb8; --k-off:#c9ccd7; --k-ground:#3a8a9a;
-  --map-sea:#cfdff0; --map-sea2:#e4eefa; --map-sky:#a9cbf0; --map-land:#f8f6f0; --map-border:#aeb6c6;
+  --map-sea:#cfdff0; --map-sea2:#e4eefa; --map-sky:#a9cbf0; --ac-hi:#b9f2d8; --ac-edge:#0d4a36; --map-land:#f8f6f0; --map-border:#aeb6c6;
   --f-display:"Archivo", "Arial Narrow", system-ui, sans-serif;
   --f-body:"IBM Plex Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
   --f-mono:"IBM Plex Mono", ui-monospace, "SF Mono", Menlo, monospace;
@@ -30,11 +30,11 @@
 @media (prefers-color-scheme: dark){ :root:not([data-theme="light"]){
   --bg:#0f1220; --surface:#171b2d; --sunk:#1f2438; --ink:#e8eaf3; --muted:#9aa0b8; --line:#2b3150;
   --accent:#8fa6ff; --accent-soft:#232c55; --pay:#5fd3a2; --pay-soft:#163a2c; --warn:#f0b35e; --warn-soft:#3b2a12;
-  --k-flight:#7f99ff; --k-dh:#5e6aa8; --k-train:#d9a520; --k-sby:#b583d9; --k-off:#3a4060; --k-ground:#5bb3c4; --map-sea:#081226; --map-sea2:#10203f; --map-sky:#1d3a6e; --map-land:#232a40; --map-border:#435073; color-scheme:dark } }
+  --k-flight:#7f99ff; --k-dh:#5e6aa8; --k-train:#d9a520; --k-sby:#b583d9; --k-off:#3a4060; --k-ground:#5bb3c4; --map-sea:#081226; --map-sea2:#10203f; --map-sky:#1d3a6e; --ac-hi:#d6fff0; --ac-edge:#06281d; --map-land:#232a40; --map-border:#435073; color-scheme:dark } }
 :root[data-theme="dark"]{
   --bg:#0f1220; --surface:#171b2d; --sunk:#1f2438; --ink:#e8eaf3; --muted:#9aa0b8; --line:#2b3150;
   --accent:#8fa6ff; --accent-soft:#232c55; --pay:#5fd3a2; --pay-soft:#163a2c; --warn:#f0b35e; --warn-soft:#3b2a12;
-  --k-flight:#7f99ff; --k-dh:#5e6aa8; --k-train:#d9a520; --k-sby:#b583d9; --k-off:#3a4060; --k-ground:#5bb3c4; --map-sea:#081226; --map-sea2:#10203f; --map-sky:#1d3a6e; --map-land:#232a40; --map-border:#435073; color-scheme:dark }
+  --k-flight:#7f99ff; --k-dh:#5e6aa8; --k-train:#d9a520; --k-sby:#b583d9; --k-off:#3a4060; --k-ground:#5bb3c4; --map-sea:#081226; --map-sea2:#10203f; --map-sky:#1d3a6e; --ac-hi:#d6fff0; --ac-edge:#06281d; --map-land:#232a40; --map-border:#435073; color-scheme:dark }
 
 *{box-sizing:border-box}
 html,body{background:var(--bg)}
@@ -9004,13 +9004,13 @@ const MAP = (() => {
   // airliner seen from above (nose up), in a 100×100 box centred on 0,0
   const AC = `<symbol id="ac" viewBox="-50 -50 100 100" overflow="visible">
     <g transform="translate(2.5 3)" fill="#000" opacity=".28"><path d="M0-46c2.6 0 4.3 3 4.3 8v22.5L46 6.5v5L4.3 1.5V30l11 8v4.5L1.3 39H-1.3l-14 3.5V38l11-8V1.5L-46 11.5v-5l41.7-22V-38c0-5 1.7-8 4.3-8z"/></g>
-    <path d="M0-46c2.6 0 4.3 3 4.3 8v22.5L46 6.5v5L4.3 1.5V30l11 8v4.5L1.3 39H-1.3l-14 3.5V38l11-8V1.5L-46 11.5v-5l41.7-22V-38c0-5 1.7-8 4.3-8z" fill="url(#acg)" stroke="#3a1f00" stroke-width="1.4"/>
+    <path d="M0-46c2.6 0 4.3 3 4.3 8v22.5L46 6.5v5L4.3 1.5V30l11 8v4.5L1.3 39H-1.3l-14 3.5V38l11-8V1.5L-46 11.5v-5l41.7-22V-38c0-5 1.7-8 4.3-8z" fill="url(#acg)" stroke="var(--ac-edge)" stroke-width="1.4"/>
     <rect x="13" y="-4.5" width="5" height="12" rx="2.3" fill="url(#eng)" stroke="#1b2333" stroke-width=".6"/>
     <rect x="-18" y="-4.5" width="5" height="12" rx="2.3" fill="url(#eng)" stroke="#1b2333" stroke-width=".6"/>
     <path d="M-1.6-40h3.2v66h-3.2z" fill="#fff" opacity=".5"/>
     <path d="M-2.6-41.5c.8-1.6 4.4-1.6 5.2 0l-.6 2h-4z" fill="#22344f"/>
   </symbol>
-  <linearGradient id="acg" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#ff9a1f"/><stop offset=".5" stop-color="#ffd84a"/><stop offset="1" stop-color="#ff8a14"/></linearGradient>
+  <linearGradient id="acg" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="var(--pay)"/><stop offset=".5" stop-color="var(--ac-hi)"/><stop offset="1" stop-color="var(--pay)"/></linearGradient>
   <linearGradient id="eng" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#8d97a8"/><stop offset=".5" stop-color="#e9edf3"/><stop offset="1" stop-color="#7d8798"/></linearGradient>
   <radialGradient id="seag" cx=".5" cy=".4" r=".8"><stop offset="0" stop-color="var(--map-sea2)"/><stop offset="1" stop-color="var(--map-sea)"/></radialGradient>`;
   function bounds(legs, opt){
@@ -9210,8 +9210,7 @@ function renderMoving(){
     pnl(hdr('map') + `<div class="mm-head"><b>${esc(L.flight)}</b> ${L.dep} → ${L.arr} · ${t4(L.t1)}–${t4(L.t2)} UTC · ${Math.round(total)} km</div>
       <div class="row" style="align-items:center;gap:8px;margin:4px 0"><span id="mm-badge">${badge}</span>${legSel}</div>
       <div class="mapbox mm-box${mm.tilt ? ' tilt' : ''}">${MAP.svg(one, mopt)}
-        <div class="mm-btns"><button class="mm-zoom" id="mm-tilt" type="button">${mm.tilt ? '2D' : '3D'}</button>
-        <button class="mm-zoom" id="mm-follow" type="button">${mm.follow ? '🗺 ' + t('mm_route') : '🎯 ' + t('mm_follow')}</button></div></div>
+        <div class="mm-btns"><button class="mm-zoom" id="mm-follow" type="button">${mm.follow ? '🗺 ' + t('mm_route') : '🎯 ' + t('mm_follow')}</button></div></div>
       <div id="mm-why">${why}</div>
       <div class="mm-grid" id="mm-stats">${stats}</div>
       <p class="note" id="mm-fix">${fix}</p>
@@ -9231,7 +9230,6 @@ document.addEventListener('click', e => {
   if(id === 'mm-stop'){ clearInterval(mmTimer); stopMoving(); return; }
   if(id === 'mm-sim' && mm){ mm.sim = mm.sim ? 0 : Date.now(); renderMoving(); return; }
   if(id === 'mm-follow' && mm){ mm.follow = !mm.follow; renderMoving(); return; }
-  if(id === 'mm-tilt' && mm){ mm.tilt = !mm.tilt; renderMoving(); return; }
   const md = e.target.closest('[data-mapday]'); if(md){ mapDay = md.dataset.mapday; toolOpen = null; openTool('map'); return; }
 });
 
@@ -9412,7 +9410,7 @@ document.addEventListener('click', async e => {
 <script>
 const SEED = null;
 const SEED_SETTINGS = null;
-const APP_VERSION = '2026.11.09-1108';
+const APP_VERSION = '2026.11.09-1112';
 const IS_PWA_BUILD = true;
 const LS = 'payroster.v1';
 const KC = { flight:'--k-flight', deadhead:'--k-dh', training:'--k-train', standby:'--k-sby', reserve:'--k-sby', ground:'--k-ground', off:'--k-off', empty:'--k-off', other:'--k-ground' };
