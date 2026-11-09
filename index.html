@@ -9,8 +9,8 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Payroster">
 <link rel="manifest" href="manifest.webmanifest">
-<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
-<link rel="icon" href="icons/icon-192.png">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon2.png">
+<link rel="icon" href="icons/icon2-192.png">
 <style>:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0}img{max-width:100%}[hidden]{display:none!important}</style>
 <title>Payroster</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -41,7 +41,22 @@ html,body{background:var(--bg)}
 body{color:var(--ink);font-family:var(--f-body);font-size:15px;line-height:1.45;
   padding-left:max(16px, env(safe-area-inset-left, 0px));padding-right:max(16px, env(safe-area-inset-right, 0px));padding-block:0 40px}
 body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top, 0px);z-index:10;background:var(--bg)}
-.wrap{max-width:760px;margin:0 auto;display:flex;flex-direction:column;gap:18px}
+.wrap{max-width:760px;margin:0 auto;display:flex;flex-direction:column;gap:18px;padding-bottom:calc(84px + env(safe-area-inset-bottom, 0px))}
+body:not([data-tab="tools"]):not([data-tab="more"]) [data-tab]:not([data-tab="roster"]),
+body[data-tab="tools"] [data-tab]:not([data-tab="tools"]),
+body[data-tab="more"] [data-tab]:not([data-tab="more"]){display:none!important}
+.tabbar{position:fixed;left:0;right:0;bottom:0;z-index:20;display:flex;justify-content:center;gap:4px;
+  padding:6px max(12px, env(safe-area-inset-right, 0px)) calc(6px + env(safe-area-inset-bottom, 0px)) max(12px, env(safe-area-inset-left, 0px));
+  background:color-mix(in srgb, var(--surface) 88%, transparent);backdrop-filter:saturate(1.4) blur(14px);-webkit-backdrop-filter:saturate(1.4) blur(14px);border-top:1px solid var(--line)}
+.tabbar button{flex:1;max-width:170px;display:flex;flex-direction:column;align-items:center;gap:3px;background:none;border:0;color:var(--muted);font:600 11.5px var(--f-body);padding:6px 4px;border-radius:10px;cursor:pointer}
+.tabbar svg{width:24px;height:24px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.tabbar button.on{color:var(--accent)}
+.tabbar button.on svg{stroke-width:2.2}
+body.viewer .tabbar{display:none}
+.toolgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(98px,1fr));gap:10px}
+.tile{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:7px;min-height:86px;padding:12px 6px;border-radius:14px;border:1px solid var(--line);background:var(--surface);color:var(--ink);font:600 12.5px/1.25 var(--f-body);text-align:center;cursor:pointer}
+.tile svg{width:26px;height:26px;fill:none;stroke:var(--accent);stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
+.tile.on{border-color:var(--accent);background:var(--accent-soft)}
 .mono{font-family:var(--f-mono);font-variant-numeric:tabular-nums}
 .num{font-variant-numeric:tabular-nums}
 button,select,input{font:inherit;color:inherit}
@@ -288,16 +303,16 @@ input[type=date]::-webkit-date-and-time-value{text-align:left}
   <div id="rankWarn" hidden></div>
   <section class="panel" id="setup" hidden></section>
 
-  <section class="panel today" id="today" hidden></section>
-  <div class="panel chg" id="chgCard" hidden></div>
-  <section class="hero" id="hero"></section>
+  <section class="panel today" id="today" hidden data-tab="roster"></section>
+  <div class="panel chg" id="chgCard" hidden data-tab="roster"></div>
+  <section class="hero" id="hero" data-tab="roster"></section>
 
-  <section>
+  <section data-tab="roster">
     <div class="strip" id="strip"></div>
     <div class="legend" id="legend"></div>
   </section>
 
-  <section>
+  <section data-tab="roster">
     <div class="h2row"><h2 data-i18n="dayByDay"></h2><button class="btn ghost" id="shareBtn" type="button" data-i18n="share_btn"></button></div>
     <div class="panel share" id="sharePanel" hidden></div>
     <p class="note" data-i18n="dayByDayNote"></p>
@@ -306,34 +321,41 @@ input[type=date]::-webkit-date-and-time-value{text-align:left}
     <div class="days" id="days"></div>
   </section>
 
-  <section>
+  <section data-tab="tools">
     <h2 data-i18n="toolsT"></h2>
-    <div class="toolbar" id="toolbar"></div>
+    <div class="toolgrid" id="toolbar"></div>
     <div class="panel" id="toolPanel" hidden style="margin-top:10px"></div>
   </section>
 
-  <section class="panel">
+  <section class="panel" data-tab="roster">
     <h2 style="margin-top:0" id="slipH"></h2>
     <p class="note" id="slipNote"></p>
     <div class="tablewrap"><table class="slip" id="slip"></table></div>
   </section>
 
-  <details class="box panel" id="setBox">
+  <h2 data-tab="more" data-i18n="tab_more"></h2>
+  <details class="box panel" id="setBox" data-tab="more" open>
     <summary data-i18n="contractData"></summary>
     <div class="form" id="form"></div>
   </details>
 
-  <details class="box panel">
+  <details class="box panel" data-tab="more">
     <summary data-i18n="storedMonths"></summary>
     <div id="stored" style="margin-top:12px;display:grid;gap:8px"></div>
     <div id="sharedList" style="margin-top:12px;display:grid;gap:8px"></div>
     <p class="note" style="margin-top:12px" data-i18n="storedNote"></p>
   </details>
 
-  <p class="note" data-i18n="footer"></p>
-  <p class="note" data-i18n="footer2"></p>
-  <div class="row note" id="verRow" hidden><span id="verTxt"></span><button class="btn ghost" id="updCheck" type="button" data-i18n="upd_check"></button><span id="updRes"></span></div>
+  <p class="note" data-tab="more" data-i18n="footer"></p>
+  <p class="note" data-tab="more" data-i18n="footer2"></p>
+  <div class="row note" id="verRow" hidden data-tab="more"><span id="verTxt"></span><button class="btn ghost" id="updCheck" type="button" data-i18n="upd_check"></button><span id="updRes"></span></div>
 </div>
+
+<nav class="tabbar" id="tabbar">
+  <button type="button" data-tabgo="roster"><svg viewBox="0 0 24 24"><rect x="3.5" y="5" width="17" height="15" rx="2.5"/><path d="M3.5 10h17M8 3v4M16 3v4"/></svg><span data-i18n="tab_roster"></span></button>
+  <button type="button" data-tabgo="tools"><svg viewBox="0 0 24 24"><rect x="4" y="4" width="6.5" height="6.5" rx="1.6"/><rect x="13.5" y="4" width="6.5" height="6.5" rx="1.6"/><rect x="4" y="13.5" width="6.5" height="6.5" rx="1.6"/><rect x="13.5" y="13.5" width="6.5" height="6.5" rx="1.6"/></svg><span data-i18n="toolsT"></span></button>
+  <button type="button" data-tabgo="more"><svg viewBox="0 0 24 24"><path d="M4 7h10M18 7h2M4 17h2M10 17h10"/><circle cx="16" cy="7" r="2.2"/><circle cx="8" cy="17" r="2.2"/></svg><span data-i18n="tab_more"></span></button>
+</nav>
 
 <script>
 // airports (IATA → lat, lon, time zone, city, country), from github.com/mwgg/Airports (MIT)
@@ -1102,6 +1124,8 @@ var I18N = {
   names: { es: 'Español', ca: 'Català', en: 'English', de: 'Deutsch', fr: 'Français', it: 'Italiano', pt: 'Português', ro: 'Română', hu: 'Magyar', sk: 'Slovenčina', cs: 'Čeština' },
   locales: { es: 'es-ES', ca: 'ca-ES', en: 'en-GB', de: 'de-DE', fr: 'fr-FR', it: 'it-IT', pt: 'pt-PT', ro: 'ro-RO', hu: 'hu-HU', sk: 'sk-SK', cs: 'cs-CZ' },
   es: {
+    tab_more: 'Mis datos',
+    tab_roster: 'Roster',
     mm_stop: 'Parar moving map',
     mm_fix: 'Última posición hace {s} s · precisión ±{a} m',
     mm_sea: 'mar',
@@ -1438,6 +1462,8 @@ var I18N = {
     e_noPeriod: 'No encuentro el periodo del roster. ¿Es el «Individual duty plan» de IDP en PDF?'
   },
   ca: {
+    tab_more: 'Les meves dades',
+    tab_roster: 'Roster',
     mm_stop: 'Aturar moving map',
     mm_fix: 'Última posició fa {s} s · precisió ±{a} m',
     mm_sea: 'mar',
@@ -1774,6 +1800,8 @@ var I18N = {
     e_noPeriod: 'No trobo el període del roster. És l’«Individual duty plan» d’IDP en PDF?'
   },
   en: {
+    tab_more: 'My details',
+    tab_roster: 'Roster',
     mm_stop: 'Stop moving map',
     mm_fix: 'Last fix {s} s ago · accuracy ±{a} m',
     mm_sea: 'sea',
@@ -2110,6 +2138,8 @@ var I18N = {
     e_noPeriod: 'I can’t find the roster period. Is this the IDP “Individual duty plan” PDF?'
   },
   de: {
+    tab_more: 'Meine Daten',
+    tab_roster: 'Dienstplan',
     mm_stop: 'Moving Map beenden',
     mm_fix: 'Letzte Position vor {s} s · Genauigkeit ±{a} m',
     mm_sea: 'Meer',
@@ -2446,6 +2476,8 @@ var I18N = {
     e_noPeriod: 'Ich finde den Zeitraum des Dienstplans nicht. Ist das der „Individual duty plan“ aus IDP als PDF?'
   },
   fr: {
+    tab_more: 'Mes données',
+    tab_roster: 'Planning',
     mm_stop: 'Arrêter la moving map',
     mm_fix: 'Dernière position il y a {s} s · précision ±{a} m',
     mm_sea: 'mer',
@@ -2782,6 +2814,8 @@ var I18N = {
     e_noPeriod: 'Je ne trouve pas la période du planning. Est-ce bien l’« Individual duty plan » d’IDP en PDF ?'
   },
   hu: {
+    tab_more: 'Adataim',
+    tab_roster: 'Beosztás',
     mm_stop: 'Moving map leállítása',
     mm_fix: 'Utolsó pozíció {s} mp-e · pontosság ±{a} m',
     mm_sea: 'tenger',
@@ -3118,6 +3152,8 @@ var I18N = {
     e_noPeriod: 'Nem találom a beosztás időszakát. Ez az IDP „Individual duty plan” PDF-je?'
   },
   sk: {
+    tab_more: 'Moje údaje',
+    tab_roster: 'Rozpis',
     mm_stop: 'Zastaviť moving map',
     mm_fix: 'Posledná poloha pred {s} s · presnosť ±{a} m',
     mm_sea: 'more',
@@ -3454,6 +3490,8 @@ var I18N = {
     e_noPeriod: 'Nenachádzam obdobie rozpisu. Je to „Individual duty plan“ z IDP v PDF?'
   },
   cs: {
+    tab_more: 'Moje údaje',
+    tab_roster: 'Rozpis',
     mm_stop: 'Zastavit moving map',
     mm_fix: 'Poslední poloha před {s} s · přesnost ±{a} m',
     mm_sea: 'moře',
@@ -3790,6 +3828,8 @@ var I18N = {
     e_noPeriod: 'Nenacházím období rozpisu. Je to „Individual duty plan“ z IDP v PDF?'
   },
   it: {
+    "tab_more": "I miei dati",
+    "tab_roster": "Roster",
     "mm_stop": "Ferma moving map",
     "mm_fix": "Ultima posizione {s} s fa · precisione ±{a} m",
     "mm_sea": "mare",
@@ -4232,6 +4272,8 @@ var I18N = {
     "e_noPeriod": "Non trovo il periodo del turno. È l’«Individual duty plan» di IDP in PDF?"
   },
   pt: {
+    "tab_more": "Os meus dados",
+    "tab_roster": "Escala",
     "mm_stop": "Parar moving map",
     "mm_fix": "Última posição há {s} s · precisão ±{a} m",
     "mm_sea": "mar",
@@ -4674,6 +4716,8 @@ var I18N = {
     "e_noPeriod": "Não encontro o período da escala. É o «Individual duty plan» do IDP em PDF?"
   },
   ro: {
+    "tab_more": "Datele mele",
+    "tab_roster": "Roster",
     "mm_stop": "Oprește moving map",
     "mm_fix": "Ultima poziție acum {s} s · precizie ±{a} m",
     "mm_sea": "mare",
@@ -7428,11 +7472,30 @@ var qrcode = function() {
 const TOOLS = ['map','check','sim','cal','ftl','vac','year','wrap','cmp','fam','backup'];
 let toolOpen = null, simDate = null;
 
+const TOOL_ICON = {
+  map:'<path d="M9 4 3.5 6v14L9 18l6 2 5.5-2V4L15 6 9 4z"/><path d="M9 4v14M15 6v14"/>',
+  check:'<path d="M7 3.5h8l3.5 3.5v13.5h-11.5z"/><path d="M14.5 3.5V7h4"/><path d="m9.5 13.5 2 2 4-4.5"/>',
+  sim:'<path d="M4 18 9.5 12l3.5 3.5L20 8"/><path d="M15 8h5v5"/>',
+  cal:'<rect x="3.5" y="5" width="17" height="15" rx="2.5"/><path d="M3.5 10h17M8 3v4M16 3v4"/><path d="M12 13v4M10 15h4"/>',
+  ftl:'<circle cx="12" cy="13" r="7.5"/><path d="M12 9v4l2.5 2.5M9.5 2.5h5"/>',
+  vac:'<path d="M12 21v-9"/><path d="M4 11a8 8 0 0 1 16 0z"/><path d="M8 21h8"/>',
+  year:'<path d="M4 20h16"/><rect x="5.5" y="11" width="3" height="7" rx=".8"/><rect x="10.5" y="7" width="3" height="11" rx=".8"/><rect x="15.5" y="4" width="3" height="14" rx=".8"/>',
+  wrap:'<path d="m12 3.5 2.6 5.3 5.9.9-4.3 4.1 1 5.8-5.2-2.7-5.2 2.7 1-5.8-4.3-4.1 5.9-.9z"/>',
+  cmp:'<circle cx="8.5" cy="8" r="3"/><circle cx="16" cy="9" r="2.5"/><path d="M3 19c.6-3.2 2.8-5 5.5-5s4.9 1.8 5.5 5M14.5 14.2c2.5-.3 4.8 1.2 5.5 4.3"/>',
+  fam:'<path d="M12 20s-7.5-4.4-7.5-10A4.2 4.2 0 0 1 12 7.6 4.2 4.2 0 0 1 19.5 10c0 5.6-7.5 10-7.5 10z"/>',
+  backup:'<path d="M7 18.5a4.5 4.5 0 0 1-.6-9A6 6 0 0 1 18 8.6a4 4 0 0 1-.5 9.9H7z"/><path d="m12 11v5M9.8 13.2 12 11l2.2 2.2"/>'
+};
 function renderToolbar(){
   const bar = $('toolbar'); if(!bar) return;
-  bar.innerHTML = TOOLS.map(k => `<button class="btn ghost${toolOpen===k?' on':''}" type="button" data-tool="${k}">${t('tool_'+k)}</button>`).join('');
+  bar.innerHTML = TOOLS.map(k => `<button class="tile${toolOpen===k?' on':''}" type="button" data-tool="${k}"><svg viewBox="0 0 24 24">${TOOL_ICON[k]||''}</svg>${t('tool_'+k)}</button>`).join('');
+}
+function setTab(tab){
+  document.body.dataset.tab = tab;
+  document.querySelectorAll('[data-tabgo]').forEach(b => b.classList.toggle('on', b.dataset.tabgo === tab));
+  try{ sessionStorage.setItem('pr.tab', tab); }catch(e){}
 }
 function openTool(k){
+  setTab('tools');
   toolOpen = (toolOpen===k && k!=='sim') ? null : k;
   renderToolbar();
   const p = $('toolPanel');
@@ -7831,6 +7894,7 @@ document.addEventListener('change', async e=>{
 });
 document.addEventListener('click', async e=>{
   const tb = e.target.closest('[data-tool]'); if(tb){ openTool(tb.dataset.tool); return; }
+  const tg = e.target.closest('[data-tabgo]'); if(tg){ setTab(tg.dataset.tabgo); window.scrollTo(0,0); return; }
   const sd = e.target.closest('[data-sim]'); if(sd){ simDate = sd.dataset.sim; toolOpen = null; openTool('sim'); return; }
   const id = e.target.id;
   if(id==='sim-go'){ runSim(); return; }
@@ -7918,7 +7982,8 @@ function renderToday(){
   el.innerHTML = `<div class="eyebrow">${cur ? t('td_curT') : t('td_nextT')}</div>
     <div class="td-main"><div><div class="td-route">${esc(x.route || kind(x.kind).n)}</div><div class="note">${when}</div></div>
     ${cur ? '' : `<div class="td-count" id="tdCount" data-at="${x.start}">${durTxt(x.start - now)}</div>`}</div>
-    ${legs ? `<div class="note td-legs">${legs}</div>` : ''}${x.hotel ? `<div class="note">🏨 ${t('nightIn',{st:x.hotel})}</div>` : ''}`;
+    ${legs ? `<div class="note td-legs">${legs}</div>` : ''}${x.hotel ? `<div class="note">🏨 ${t('nightIn',{st:x.hotel})}</div>` : ''}
+    ${(x.d.legs||[]).some(l => l.type==='flt') && (cur || x.start - now < 18*36e5) ? `<button class="btn" type="button" id="td-mm" style="margin-top:10px">✈ ${t('mm_start')}</button>` : ''}`;
   clearInterval(todayTimer);
   todayTimer = setInterval(() => { const c = $('tdCount'); if(!c){ clearInterval(todayTimer); return; }
     const left = +c.dataset.at - Date.now(); if(left <= 0) renderToday(); else c.textContent = durTxt(left); }, 30000);
@@ -8304,6 +8369,7 @@ document.addEventListener('change', e => { if(e.target.id === 'map-d'){ mapDay =
 document.addEventListener('click', e => {
   const id = e.target.id;
   if(id === 'mm-go'){ startMoving(); return; }
+  if(id === 'td-mm'){ toolOpen = null; openTool('map'); if(!mm) startMoving(); $('toolPanel').scrollIntoView({block:'start'}); return; }
   if(id === 'mm-stop'){ stopMoving(); return; }
   const md = e.target.closest('[data-mapday]'); if(md){ mapDay = md.dataset.mapday; toolOpen = null; openTool('map'); return; }
 });
@@ -8312,7 +8378,7 @@ document.addEventListener('click', e => {
 <script>
 const SEED = null;
 const SEED_SETTINGS = null;
-const APP_VERSION = '2026.11.09-0644';
+const APP_VERSION = '2026.11.09-0828';
 const IS_PWA_BUILD = true;
 const LS = 'payroster.v1';
 const KC = { flight:'--k-flight', deadhead:'--k-dh', training:'--k-train', standby:'--k-sby', reserve:'--k-sby', ground:'--k-ground', off:'--k-off', empty:'--k-off', other:'--k-ground' };
@@ -8346,6 +8412,8 @@ const esc = s => String(s==null?'':s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':
 
 let state = load();
 save();   // keep months re-read by a newer parser
+let _tab0 = 'roster'; try{ _tab0 = sessionStorage.getItem('pr.tab') || 'roster'; }catch(e){}
+setTab(_tab0);
 setLang(state.lang || detectLang());
 function load(){
   let s=null; try{ s = JSON.parse(localStorage.getItem(LS)||'null'); }catch(e){}
