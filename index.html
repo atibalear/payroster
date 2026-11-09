@@ -237,9 +237,29 @@ table.chk tr.bad:not(.hint) td:last-child{color:var(--warn);font-weight:700}
 .fdpl + .fdpl{margin-top:6px}
 .fdp-warn{color:var(--warn);font-weight:700}
 .today{border-left:4px solid var(--accent)}
-.td-main{display:flex;justify-content:space-between;align-items:flex-end;gap:12px;margin-top:4px}
-.td-route{font-size:20px;font-weight:700;letter-spacing:-.01em}
-.td-count{font-family:var(--f-mono);font-size:15px;font-weight:700;color:var(--accent);white-space:nowrap}
+.td-route{font-size:22px;font-weight:800;letter-spacing:-.01em;line-height:1.15;margin-top:2px;overflow-wrap:anywhere}
+.td-head{display:flex;justify-content:space-between;align-items:center;gap:8px}
+.td-base{font-size:12px;font-weight:600;color:var(--muted);background:var(--sunk);padding:3px 9px;border-radius:999px}
+.td-tl{display:grid;grid-template-columns:repeat(auto-fit,minmax(118px,1fr));gap:8px;margin-top:14px}
+.td-st{background:var(--sunk);border-radius:14px;padding:9px 12px 8px;min-width:0;display:grid;grid-template-columns:1fr auto;align-items:baseline;gap:0 8px}.td-st .lb{grid-column:1/-1}
+.td-st .lb{font-size:11px;font-weight:600;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.td-st .tm{font-family:var(--f-mono);font-size:20px;font-weight:700;margin-top:2px}
+.td-st .in{font-size:11px;color:var(--accent);font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.td-st.next{background:var(--accent);color:#fff}.td-st.next .lb,.td-st.next .in{color:rgba(255,255,255,.88)}
+.td-st.past{opacity:.45}.td-st.warn{box-shadow:inset 0 0 0 2px var(--warn)}
+.td-fl{margin-top:14px;border-top:1px solid var(--line)}
+.td-leg{display:grid;grid-template-columns:68px 1fr auto;gap:10px;align-items:center;padding:9px 0;border-bottom:1px solid var(--line)}
+.td-leg.past{opacity:.45}
+.td-leg .fn{font-family:var(--f-mono);font-size:12px;color:var(--muted)}
+.td-leg .rt{font-size:15px;min-width:0}.td-leg .rt small{display:block;font-family:var(--f-mono);font-size:12px;color:var(--muted);margin-top:1px}
+.td-leg .wx{font-size:14px;white-space:nowrap;text-align:right}
+.td-hotel{margin-top:10px;font-size:14px;display:flex;flex-wrap:wrap;justify-content:space-between;gap:4px 12px}.td-hotel .sun{color:var(--muted)}
+.td-rest{margin-top:12px;background:var(--sunk);border-radius:12px;padding:0 12px}
+.td-rest summary{display:flex;justify-content:space-between;gap:8px;padding:10px 0;cursor:pointer;font-size:14px;list-style:none}
+.td-rest summary::-webkit-details-marker{display:none}
+.td-rest summary .ok{color:var(--pay);font-weight:700}.td-rest summary .bad{color:var(--warn);font-weight:700}
+.td-rest .fdpl{margin:0 0 10px;background:none;padding:0}
+.td-mmb{width:100%;margin-top:14px}
 #ptr{position:fixed;left:50%;top:env(safe-area-inset-top,0px);margin-left:-90px;width:180px;z-index:60;display:flex;gap:8px;align-items:center;justify-content:center;
  padding:8px 12px;border-radius:999px;background:var(--surface);border:1px solid var(--line);box-shadow:0 4px 16px rgba(0,0,0,.12);font-size:13px;font-weight:600;color:var(--muted);
  transform:translateY(-60px);opacity:0;pointer-events:none}
@@ -257,8 +277,7 @@ html.locked #lockScr{display:flex;position:fixed;inset:0;z-index:999;background:
 #lockScr .lk-in{text-align:center;display:grid;gap:14px;justify-items:center}
 #lockScr .lk-logo{font-family:var(--f-display,inherit);font-size:30px;font-weight:800;color:var(--ink)}#lockScr .lk-logo span{color:var(--accent)}#lockScr .lk-logo sup{color:var(--pay)}
 #lockScr .lk-ic{font-size:44px}
-.td-count{text-align:right;display:flex;flex-direction:column;gap:2px}.td-count span{display:block;margin-bottom:4px}.td-pk{font-weight:600}.td-count small{display:block;font-family:inherit;font-size:11px;font-weight:600;letter-spacing:.04em;text-transform:uppercase;color:var(--muted,#667);margin-bottom:2px}
-.td-legs{margin-top:6px;line-height:1.6}
+
 .chg{border-left:4px solid var(--warn)}
 .chg s{color:var(--muted)}
 .neg{color:var(--warn);font-weight:700} .pos{color:var(--pay);font-weight:700}
@@ -1206,6 +1225,15 @@ var I18N = {
   names: { es: 'Español', ca: 'Català', en: 'English', de: 'Deutsch', fr: 'Français', it: 'Italiano', pt: 'Português', ro: 'Română', hu: 'Magyar', sk: 'Slovenčina', cs: 'Čeština' },
   locales: { es: 'es-ES', ca: 'ca-ES', en: 'en-GB', de: 'de-DE', fr: 'fr-FR', it: 'it-IT', pt: 'pt-PT', ro: 'ro-RO', hu: 'hu-HU', sk: 'sk-SK', cs: 'cs-CZ' },
   es: {
+    td_until: 'hasta las {h}',
+    td_sectors: '{n} tramos',
+    td_restAfter: 'Descanso mínimo después',
+    td_rest: 'Descanso: {g} h (mín. {n} h)',
+    td_pk: 'Transporte',
+    td_alarm: 'Alarma',
+    td_bed: 'Dormir',
+    td_co: 'Fin',
+    td_ci: 'Firma',
     wr_countries: 'Países',
     wr_topRoute: 'Rutas más repetidas',
     bkr_later: 'Más tarde',
@@ -1667,6 +1695,15 @@ var I18N = {
     e_noPeriod: 'No encuentro el periodo del roster. ¿Es el «Individual duty plan» de IDP en PDF?'
   },
   ca: {
+    td_until: 'fins a les {h}',
+    td_sectors: '{n} trams',
+    td_restAfter: 'Descans mínim després',
+    td_rest: 'Descans: {g} h (mín. {n} h)',
+    td_pk: 'Transport',
+    td_alarm: 'Alarma',
+    td_bed: 'Dormir',
+    td_co: 'Fi',
+    td_ci: 'Firma',
     wr_countries: 'Països',
     wr_topRoute: 'Rutes més repetides',
     bkr_later: 'Més tard',
@@ -2129,6 +2166,15 @@ var I18N = {
     e_noPeriod: 'No trobo el període del roster. És l’«Individual duty plan» d’IDP en PDF?'
   },
   en: {
+    td_until: 'until {h}',
+    td_sectors: '{n} sectors',
+    td_restAfter: 'Minimum rest afterwards',
+    td_rest: 'Rest: {g} h (min {n} h)',
+    td_pk: 'Pick-up',
+    td_alarm: 'Alarm',
+    td_bed: 'Bed',
+    td_co: 'Off duty',
+    td_ci: 'Check-in',
     wr_countries: 'Countries',
     wr_topRoute: 'Most flown routes',
     bkr_later: 'Later',
@@ -2591,6 +2637,15 @@ var I18N = {
     e_noPeriod: 'I can’t find the roster period. Is this the IDP “Individual duty plan” PDF?'
   },
   de: {
+    td_until: 'bis {h}',
+    td_sectors: '{n} Sektoren',
+    td_restAfter: 'Mindestruhe danach',
+    td_rest: 'Ruhezeit: {g} h (min. {n} h)',
+    td_pk: 'Abholung',
+    td_alarm: 'Wecker',
+    td_bed: 'Schlafen',
+    td_co: 'Dienstende',
+    td_ci: 'Check-in',
     wr_countries: 'Länder',
     wr_topRoute: 'Häufigste Strecken',
     bkr_later: 'Später',
@@ -3053,6 +3108,15 @@ var I18N = {
     e_noPeriod: 'Ich finde den Zeitraum des Dienstplans nicht. Ist das der „Individual duty plan“ aus IDP als PDF?'
   },
   fr: {
+    td_until: 'jusqu’à {h}',
+    td_sectors: '{n} étapes',
+    td_restAfter: 'Repos minimum ensuite',
+    td_rest: 'Repos : {g} h (min. {n} h)',
+    td_pk: 'Transport',
+    td_alarm: 'Réveil',
+    td_bed: 'Coucher',
+    td_co: 'Fin',
+    td_ci: 'Check-in',
     wr_countries: 'Pays',
     wr_topRoute: 'Routes les plus fréquentes',
     bkr_later: 'Plus tard',
@@ -3515,6 +3579,15 @@ var I18N = {
     e_noPeriod: 'Je ne trouve pas la période du planning. Est-ce bien l’« Individual duty plan » d’IDP en PDF ?'
   },
   hu: {
+    td_until: '{h}-ig',
+    td_sectors: '{n} szektor',
+    td_restAfter: 'Minimális pihenő utána',
+    td_rest: 'Pihenő: {g} óra (min. {n} óra)',
+    td_pk: 'Transzfer',
+    td_alarm: 'Ébresztő',
+    td_bed: 'Alvás',
+    td_co: 'Vége',
+    td_ci: 'Bejelentkezés',
     wr_countries: 'Országok',
     wr_topRoute: 'Leggyakoribb útvonalak',
     bkr_later: 'Később',
@@ -3977,6 +4050,15 @@ var I18N = {
     e_noPeriod: 'Nem találom a beosztás időszakát. Ez az IDP „Individual duty plan” PDF-je?'
   },
   sk: {
+    td_until: 'do {h}',
+    td_sectors: '{n} úsekov',
+    td_restAfter: 'Minimálny odpočinok potom',
+    td_rest: 'Odpočinok: {g} h (min. {n} h)',
+    td_pk: 'Transport',
+    td_alarm: 'Budík',
+    td_bed: 'Spánok',
+    td_co: 'Koniec',
+    td_ci: 'Check-in',
     wr_countries: 'Krajiny',
     wr_topRoute: 'Najčastejšie trasy',
     bkr_later: 'Neskôr',
@@ -4439,6 +4521,15 @@ var I18N = {
     e_noPeriod: 'Nenachádzam obdobie rozpisu. Je to „Individual duty plan“ z IDP v PDF?'
   },
   cs: {
+    td_until: 'do {h}',
+    td_sectors: '{n} úseků',
+    td_restAfter: 'Minimální odpočinek potom',
+    td_rest: 'Odpočinek: {g} h (min. {n} h)',
+    td_pk: 'Transport',
+    td_alarm: 'Budík',
+    td_bed: 'Spánek',
+    td_co: 'Konec',
+    td_ci: 'Check-in',
     wr_countries: 'Země',
     wr_topRoute: 'Nejčastější trasy',
     bkr_later: 'Později',
@@ -4901,6 +4992,15 @@ var I18N = {
     e_noPeriod: 'Nenacházím období rozpisu. Je to „Individual duty plan“ z IDP v PDF?'
   },
   it: {
+    "td_until": "fino alle {h}",
+    "td_sectors": "{n} tratte",
+    "td_restAfter": "Riposo minimo dopo",
+    "td_rest": "Riposo: {g} h (min. {n} h)",
+    "td_pk": "Pick-up",
+    "td_alarm": "Sveglia",
+    "td_bed": "Dormire",
+    "td_co": "Fine",
+    "td_ci": "Check-in",
     "wr_countries": "Paesi",
     "wr_topRoute": "Rotte più frequenti",
     "bkr_later": "Più tardi",
@@ -5468,6 +5568,15 @@ var I18N = {
     "e_noPeriod": "Non trovo il periodo del turno. È l’«Individual duty plan» di IDP in PDF?"
   },
   pt: {
+    "td_until": "até às {h}",
+    "td_sectors": "{n} etapas",
+    "td_restAfter": "Descanso mínimo depois",
+    "td_rest": "Descanso: {g} h (mín. {n} h)",
+    "td_pk": "Transporte",
+    "td_alarm": "Alarme",
+    "td_bed": "Dormir",
+    "td_co": "Fim",
+    "td_ci": "Apresentação",
     "wr_countries": "Países",
     "wr_topRoute": "Rotas mais repetidas",
     "bkr_later": "Mais tarde",
@@ -6035,6 +6144,15 @@ var I18N = {
     "e_noPeriod": "Não encontro o período da escala. É o «Individual duty plan» do IDP em PDF?"
   },
   ro: {
+    "td_until": "până la {h}",
+    "td_sectors": "{n} segmente",
+    "td_restAfter": "Odihnă minimă după",
+    "td_rest": "Odihnă: {g} h (min. {n} h)",
+    "td_pk": "Transport",
+    "td_alarm": "Alarmă",
+    "td_bed": "Somn",
+    "td_co": "Final",
+    "td_ci": "Prezentare",
     "wr_countries": "Țări",
     "wr_topRoute": "Rute cele mai frecvente",
     "bkr_later": "Mai târziu",
@@ -9432,35 +9550,64 @@ function monthDuties(ro){
 
 // ---------- 4. today / next duty ----------
 let todayTimer = null;
+const legEnd = (date, l) => { let ms = utcAt(date, l.t2); if(+l.t2 < +l.t1) ms += 864e5; return ms; };
 function renderToday(){
   const el = $('today'); if(!el) return;
   const now = Date.now(), duties = allDuties();
   const cur = duties.find(x => x.start <= now && x.end && x.end > now);
   const next = duties.find(x => x.start > now);
   if(!cur && !next){ el.hidden = true; return; }
-  const x = cur || next, base = state.settings.base || 'PMI';
-  // between duties: show the minimum rest after the last one
+  const x = cur || next, base = state.settings.base || 'PMI', st = x.st || base;
   const prev = !cur ? duties.filter(d => d.end && d.end <= now).pop() : null;
-  const restNow = prev && now - prev.end < 36*36e5 ? restHtml(prev.d) : (cur ? restHtml(cur.d) : '');
-  const legs = (x.d.legs||[]).map(l => `<span class="${l.type==='dh'?'dhl':''}">${l.type==='dh'?'DH ':''}${esc(l.flight)} ${l.dep}–${l.arr} ${localHM(utcAt(x.date,l.t1), l.dep)}</span>`).join(' · ');
-  const when = cur ? t('td_now', {e: localHM(x.end, x.endSt||base)}) : t('td_next', {d: localDay(x.start, x.st), h: localHM(x.start, x.st), st: x.st || base});
-  // transport to the airport / training («Pick Up» or TAXI…): its own time and countdown
   const pk = pickupMs(x.date, x.d.events, x.start);
   const ftlA = typeof ftlAlertHtml === 'function' ? ftlAlertHtml() : '';
-  const cnt = [];
-  if(!cur && pk && pk > now) cnt.push(`<small>${t('td_pkin')}</small><span data-at="${pk}">${durTxt(pk - now)}</span>`);
-  if(!cur) cnt.push(`<small>${t('td_cin')}</small><span data-at="${x.start}">${durTxt(x.start - now)}</span>`);
+  const legs = (x.d.legs||[]).filter(l => l.t1 && l.t2);
+  const nFlt = legs.filter(l => l.type === 'flt').length;
+
+  // timeline: bed → alarm → pick-up → check-in (or check-in → check-out while on duty)
+  const steps = [];
+  if(cur){
+    steps.push({ ic:'✓', lb: t('td_ci'), ms: x.start });
+    if(x.end) steps.push({ ic:'🏁', lb: t('td_co'), ms: x.end, st: x.endSt || st });
+  } else {
+    const sp = sleepPlan(x.start, pk);
+    if(sp.bed - now < 20*36e5){ steps.push({ ic:'😴', lb: t('td_bed'), ms: sp.bed, warn: now > sp.bed && now < sp.wake }); steps.push({ ic:'⏰', lb: t('td_alarm'), ms: sp.wake }); }
+    if(pk) steps.push({ ic:'🚐', lb: t('td_pk'), ms: pk });
+    steps.push({ ic:'✓', lb: t('td_ci'), ms: x.start });
+  }
+  const nextIdx = steps.findIndex(s => s.ms > now);
+  const tl = `<div class="td-tl">${steps.map((s, i) => `<div class="td-st${i === nextIdx ? ' next' : ''}${s.ms <= now ? ' past' : ''}${s.warn ? ' warn' : ''}">
+      <div class="lb">${s.ic} ${s.lb}</div><div class="tm">${localHM(s.ms, s.st || st)}</div>
+      ${s.ms > now ? `<div class="in" data-at="${s.ms}">${durTxt(s.ms - now)}</div>` : '<div class="in">&nbsp;</div>'}</div>`).join('')}</div>`;
+
+  // flights, one per row, with the weather on arrival (filled in by loadWx)
+  const fl = legs.length ? `<div class="td-fl">${legs.map(l => { const t1 = utcAt(x.date, l.t1), t2 = legEnd(x.date, l), done = cur && t2 <= now;
+      return `<div class="td-leg${done ? ' past' : ''}"><span class="fn">${l.type==='dh' ? 'DH ' : ''}${esc(l.flight)}</span>
+        <span class="rt"><b>${l.dep}</b> → <b>${l.arr}</b><small>${localHM(t1, l.dep)} – ${localHM(t2, l.arr)}</small></span>
+        <span class="wx" data-wx="${l.arr}|${t2}"></span></div>`; }).join('')}</div>` : '';
+
+  // compact rest line; the full EASA explanation opens on tap
+  let rest = '';
+  const rd = cur ? null : prev && now - prev.end < 36*36e5 ? prev : null;
+  if(rd){
+    const home = (rd.endSt || base) === base && !rd.hotel, need = Math.max(rd.end - rd.start, (home ? 12 : 10) * 36e5), got = x.start - rd.end;
+    rest = `<details class="td-rest"><summary><span>🛏 ${t('td_rest', {g: hhmm(got/36e5), n: hhmm(need/36e5)})}</span><span class="${got >= need ? 'ok' : 'bad'}">${got >= need ? '✓' : '⚠'}</span></summary>${restHtml(rd.d)}</details>`;
+  } else if(cur) rest = `<details class="td-rest"><summary><span>🛏 ${t('td_restAfter')}</span></summary>${restHtml(cur.d)}</details>`;
+
+  const endTxt = x.end ? localHM(x.end, x.endSt || st) : '';
+  const sub = [localDay(x.start, st), nFlt ? t('td_sectors', {n: nFlt}) : '', endTxt ? t('td_until', {h: endTxt}) : ''].filter(Boolean).join(' · ');
   el.hidden = false;
-  el.innerHTML = `<div class="eyebrow">${cur ? t('td_curT') : t('td_nextT')}</div>
-    <div class="td-main"><div><div class="td-route">${esc(x.route || kind(x.kind).n)}</div><div class="note">${when}</div>${pk ? `<div class="note td-pk">🚐 ${t('td_pick', {h: localHM(pk, x.st || base)})}</div>` : ''}${cur ? '' : sleepHtml(x, pk, now)}</div>
-    ${cnt.length ? `<div class="td-count" id="tdCount">${cnt.join('')}</div>` : ''}</div>
-    ${legs ? `<div class="note td-legs">${legs}</div>` : ''}${x.hotel ? `<div class="note">🏨 ${t('nightIn',{st:x.hotel})}</div>` : ''}
-    <div id="tdWx"></div>
-    ${restNow}${ftlA ? `<div class="chips" style="margin-top:8px">${ftlA}</div>` : ''}
-    ${(x.d.legs||[]).some(l => l.type==='flt') && (cur || x.start - now < 18*36e5) ? `<button class="btn" type="button" id="td-mm" style="margin-top:10px">✈ ${t('mm_start')}</button>` : ''}`;
+  el.innerHTML = `<div class="td-head"><div class="eyebrow">${cur ? t('td_curT') : t('td_nextT')}</div>${x.st ? `<span class="td-base">📍 ${esc(x.st)}</span>` : ''}</div>
+    <div class="td-route">${esc(x.route || kind(x.kind).n)}</div>
+    <div class="note">${sub}</div>
+    ${tl}${fl}
+    ${x.hotel ? `<div class="td-hotel" id="tdHotel">🏨 ${t('nightIn',{st:x.hotel})}</div>` : ''}
+    ${ftlA ? `<div class="chips" style="margin-top:10px">${ftlA}</div>` : ''}
+    ${rest}
+    ${legs.some(l => l.type==='flt') && (cur || x.start - now < 18*36e5) ? `<button class="btn td-mmb" type="button" id="td-mm">✈ ${t('mm_start')}</button>` : ''}`;
   loadWx(x).catch(() => {});
   clearInterval(todayTimer);
-  todayTimer = setInterval(() => { const c = $('tdCount'); if(!c){ clearInterval(todayTimer); return; }
+  todayTimer = setInterval(() => { const c = $('today'); if(!c || c.hidden){ clearInterval(todayTimer); return; }
     for(const sp of c.querySelectorAll('[data-at]')){ const left = +sp.dataset.at - Date.now(); if(left <= 0){ renderToday(); return; } sp.textContent = durTxt(left); } }, 30000);
 }
 
@@ -10401,28 +10548,22 @@ function tzDiffH(stA, stB, ms){
   try{ return off(stB) - off(stA); }catch(e){ return 0; }
 }
 async function loadWx(x){
-  const el = $('tdWx'); if(!el) return;
-  if(!IS_PWA_BUILD || navigator.onLine === false || x.start - Date.now() > 14*864e5){ el.remove(); return; }
-  const legs = (x.d.legs||[]).filter(l => l.dep && l.arr);
-  const pts = [];
-  if(legs.length){ pts.push({ st: legs[0].dep, ms: utcAt(x.date, legs[0].t1) });
-    legs.forEach(l => { let ms = utcAt(x.date, l.t2); if(+l.t2 < +l.t1) ms += 864e5; pts.push({ st: l.arr, ms }); }); }
-  else if(x.st) pts.push({ st: x.st, ms: x.start });
-  const seen = new Set(), uniq = pts.filter(p => { if(seen.has(p.st)) return false; seen.add(p.st); return true; });
-  const hotel = x.hotel || x.d.hotel;
-  const stations = [...new Set(uniq.map(p => p.st).concat(hotel ? [hotel] : []))];
-  let v; try{ v = await wxFetch(stations, x.date); }catch(e){ el.remove(); return; }
-  if(!$('tdWx')) return;
-  const chips = uniq.map(p => { const w = wxAt(v[p.st], p.ms); return w ? `<span class="chip wxc">${p.st} ${w.ic} ${w.temp}°<small> ${localHM(p.ms, p.st)}</small></span>` : ''; }).join('');
-  let lay = '';
-  if(hotel && v[hotel] && v[hotel].daily){
+  const box = $('today'); if(!box) return;
+  const slots = [...box.querySelectorAll('[data-wx]')], hotelEl = $('tdHotel'), hotel = x.hotel || x.d.hotel;
+  if(!IS_PWA_BUILD || navigator.onLine === false || x.start - Date.now() > 14*864e5) return;
+  const legs = (x.d.legs||[]).filter(l => l.dep && l.arr && l.t1);
+  const depSt = legs.length ? legs[0].dep : x.st;
+  const stations = [...new Set([depSt].concat(slots.map(s => s.dataset.wx.split('|')[0]), hotel ? [hotel] : []).filter(Boolean))];
+  let v; try{ v = await wxFetch(stations, x.date); }catch(e){ return; }
+  if(!document.body.contains(box)) return;
+  for(const s of slots){ const [st, ms] = s.dataset.wx.split('|'); const w = wxAt(v[st], +ms); if(w) s.innerHTML = `${w.ic} ${w.temp}°`; }
+  if(hotel && hotelEl && v[hotel] && v[hotel].daily){
     const D = v[hotel].daily, ref = (x.end || x.start) / 1000;
     let i = D.time.findIndex(tt => tt + 86400 > ref); if(i < 0) i = 0;
     const base = state.settings.base || 'PMI', dh = tzDiffH(base, hotel, x.start);
     const sr = D.sunrise[i] ? localHM(D.sunrise[i]*1000, hotel) : '', ss = D.sunset[i] ? localHM(D.sunset[i]*1000, hotel) : '';
-    lay = `<div class="note">🏨 ${esc(hotel)}: 🌅 ${sr} · 🌇 ${ss}${dh ? ' · ' + t('wx_tz', {h: (dh > 0 ? '+' : '') + String(dh).replace('.', ',')}) : ''}</div>`;
+    hotelEl.innerHTML = `<span>🏨 ${t('nightIn',{st:esc(hotel)})}</span><span class="sun">🌅 ${sr} · 🌇 ${ss}${dh ? ' · ' + t('wx_tz', {h: (dh > 0 ? '+' : '') + String(dh).replace('.', ',')}) : ''}</span>`;
   }
-  el.innerHTML = chips || lay ? `<div class="chips wxrow">${chips}</div>${lay}` : '';
 }
 
 // ---------- 4. Face ID / passcode lock (installed app only) ----------
@@ -10540,7 +10681,7 @@ if(lockId()) setTimeout(() => { showLock(); setTimeout(() => unlock(true), 300);
 <script>
 const SEED = null;
 const SEED_SETTINGS = null;
-const APP_VERSION = '2026.11.09-1743';
+const APP_VERSION = '2026.11.09-1754';
 const IS_PWA_BUILD = true;
 const LS = 'payroster.v1';
 const KC = { sick:'--warn', flight:'--k-flight', deadhead:'--k-dh', training:'--k-train', standby:'--k-sby', reserve:'--k-sby', ground:'--k-ground', off:'--k-off', empty:'--k-off', other:'--k-ground' };
