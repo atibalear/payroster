@@ -262,6 +262,15 @@ table.chk tr.bad:not(.hint) td:last-child{color:var(--warn);font-weight:700}
 .m-ap{fill:var(--surface);stroke:var(--accent);stroke-width:2px;vector-effect:non-scaling-stroke} .m-apo{fill:var(--accent);opacity:.18}
 .m-lbl{fill:var(--ink);font-family:var(--f-mono);font-weight:700;paint-order:stroke;stroke:var(--map-land);stroke-width:3px;stroke-linejoin:round;vector-effect:non-scaling-stroke}
 .mm-box{position:relative}
+.g3box{position:relative;background:#02040a;aspect-ratio:4/3.4;overflow:hidden}
+.g3d{position:absolute;inset:0;touch-action:none}
+.g3d canvas{display:block;width:100%!important;height:100%!important}
+.g3-load{position:absolute;inset:0;display:grid;place-items:center;color:#9fb0d0}
+.g3-labels{position:absolute;inset:0;pointer-events:none}
+.g3-pin{position:absolute;left:0;top:0;margin:-14px 0 0 -6px;display:flex;align-items:center;gap:6px;padding:4px 10px 4px 6px;border-radius:999px;background:rgba(14,22,44,.72);color:#eef2ff;font:600 12px var(--f-body);white-space:nowrap;backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);border:1px solid rgba(255,255,255,.18)}
+.g3-pin b{color:#f2b84b;font-weight:700}
+.g3-dot{width:8px;height:8px;border-radius:50%;background:#f2b84b;box-shadow:0 0 0 3px rgba(242,184,75,.3)}
+.mm-zoom.on{border-color:var(--accent);color:var(--accent)}
 .mm-btns{position:absolute;right:8px;bottom:8px;display:flex;gap:6px;z-index:2}
 .mm-box.tilt{background:linear-gradient(180deg, var(--map-sky) 0%, var(--map-sea) 46%);perspective:760px;overflow:hidden}
 .mm-box.tilt .mapsvg{transform:rotateX(38deg) scale(1.12);transform-origin:50% 60%;border-radius:0}
@@ -1176,6 +1185,10 @@ var I18N = {
   names: { es: 'Español', ca: 'Català', en: 'English', de: 'Deutsch', fr: 'Français', it: 'Italiano', pt: 'Português', ro: 'Română', hu: 'Magyar', sk: 'Slovenčina', cs: 'Čeština' },
   locales: { es: 'es-ES', ca: 'ca-ES', en: 'en-GB', de: 'de-DE', fr: 'fr-FR', it: 'it-IT', pt: 'pt-PT', ro: 'ro-RO', hu: 'hu-HU', sk: 'sk-SK', cs: 'cs-CZ' },
   es: {
+    fat_daysAll: 'Carga de cada día de vuelo',
+    g3_near: 'Cerca',
+    g3_globe: 'Globo',
+    g3_loading: 'Cargando el globo 3D…',
     fat_note2: 'Es una orientación con las reglas EASA, no una evaluación médica. Si te sientes fatigado, díselo al comandante y repórtalo según el OM-A de Eurowings.',
     fe_long: '{n} FDP de 11 h o más.',
     fe_recov: 'Sin descanso de recuperación de 36 h con 2 noches locales en la semana (ORO.FTL.235 d).',
@@ -1602,6 +1615,10 @@ var I18N = {
     e_noPeriod: 'No encuentro el periodo del roster. ¿Es el «Individual duty plan» de IDP en PDF?'
   },
   ca: {
+    fat_daysAll: 'Càrrega de cada dia de vol',
+    g3_near: 'A prop',
+    g3_globe: 'Globus',
+    g3_loading: 'Carregant el globus 3D…',
     fat_note2: 'És una orientació amb les regles EASA, no una avaluació mèdica. Si et sents fatigat, digues-ho al comandant i reporta-ho segons l’OM-A d’Eurowings.',
     fe_long: '{n} FDP d’11 h o més.',
     fe_recov: 'Sense descans de recuperació de 36 h amb 2 nits locals a la setmana (ORO.FTL.235 d).',
@@ -2029,6 +2046,10 @@ var I18N = {
     e_noPeriod: 'No trobo el període del roster. És l’«Individual duty plan» d’IDP en PDF?'
   },
   en: {
+    fat_daysAll: 'Load of each flight day',
+    g3_near: 'Close',
+    g3_globe: 'Globe',
+    g3_loading: 'Loading the 3D globe…',
     fat_note2: 'A guide based on EASA rules, not a medical assessment. If you feel fatigued, tell the commander and report it following the Eurowings OM-A.',
     fe_long: '{n} FDPs of 11 h or more.',
     fe_recov: 'No 36 h recovery rest including 2 local nights in the week (ORO.FTL.235 d).',
@@ -2456,6 +2477,10 @@ var I18N = {
     e_noPeriod: 'I can’t find the roster period. Is this the IDP “Individual duty plan” PDF?'
   },
   de: {
+    fat_daysAll: 'Belastung pro Flugtag',
+    g3_near: 'Nah',
+    g3_globe: 'Globus',
+    g3_loading: '3D-Globus wird geladen…',
     fat_note2: 'Eine Orientierung nach EASA-Regeln, keine medizinische Bewertung. Wenn du müde bist, sag es dem Kommandanten und melde es nach dem Eurowings OM-A.',
     fe_long: '{n} FDPs von 11 h oder mehr.',
     fe_recov: 'Keine 36-h-Erholungsruhezeit mit 2 lokalen Nächten in der Woche (ORO.FTL.235 d).',
@@ -2883,6 +2908,10 @@ var I18N = {
     e_noPeriod: 'Ich finde den Zeitraum des Dienstplans nicht. Ist das der „Individual duty plan“ aus IDP als PDF?'
   },
   fr: {
+    fat_daysAll: 'Charge de chaque jour de vol',
+    g3_near: 'Proche',
+    g3_globe: 'Globe',
+    g3_loading: 'Chargement du globe 3D…',
     fat_note2: 'Indication basée sur les règles EASA, pas une évaluation médicale. Si tu te sens fatigué, dis-le au commandant et signale-le selon l’OM-A d’Eurowings.',
     fe_long: '{n} FDP de 11 h ou plus.',
     fe_recov: 'Pas de repos de récupération de 36 h avec 2 nuits locales dans la semaine (ORO.FTL.235 d).',
@@ -3310,6 +3339,10 @@ var I18N = {
     e_noPeriod: 'Je ne trouve pas la période du planning. Est-ce bien l’« Individual duty plan » d’IDP en PDF ?'
   },
   hu: {
+    fat_daysAll: 'Terhelés repülési naponként',
+    g3_near: 'Közeli',
+    g3_globe: 'Földgömb',
+    g3_loading: '3D földgömb betöltése…',
     fat_note2: 'EASA-szabályokon alapuló tájékoztatás, nem orvosi értékelés. Ha fáradt vagy, szólj a kapitánynak, és jelentsd az Eurowings OM-A szerint.',
     fe_long: '{n} db 11 órás vagy hosszabb FDP.',
     fe_recov: 'Nincs 36 órás, 2 helyi éjszakát tartalmazó regeneráló pihenő a héten (ORO.FTL.235 d).',
@@ -3737,6 +3770,10 @@ var I18N = {
     e_noPeriod: 'Nem találom a beosztás időszakát. Ez az IDP „Individual duty plan” PDF-je?'
   },
   sk: {
+    fat_daysAll: 'Záťaž každého letového dňa',
+    g3_near: 'Zblízka',
+    g3_globe: 'Glóbus',
+    g3_loading: 'Načítava sa 3D glóbus…',
     fat_note2: 'Orientácia podľa pravidiel EASA, nie lekárske hodnotenie. Ak si unavený/á, povedz to kapitánovi a nahlás to podľa OM-A Eurowings.',
     fe_long: '{n} FDP 11 h a viac.',
     fe_recov: 'Žiadny 36 h regeneračný odpočinok s 2 miestnymi nocami v týždni (ORO.FTL.235 d).',
@@ -4164,6 +4201,10 @@ var I18N = {
     e_noPeriod: 'Nenachádzam obdobie rozpisu. Je to „Individual duty plan“ z IDP v PDF?'
   },
   cs: {
+    fat_daysAll: 'Zátěž každého letového dne',
+    g3_near: 'Zblízka',
+    g3_globe: 'Glóbus',
+    g3_loading: 'Načítá se 3D glóbus…',
     fat_note2: 'Orientace podle pravidel EASA, ne lékařské hodnocení. Pokud jsi unavený/á, řekni to kapitánovi a nahlas to podle OM-A Eurowings.',
     fe_long: '{n} FDP 11 h a více.',
     fe_recov: 'Žádný 36h regenerační odpočinek se 2 místními nocemi v týdnu (ORO.FTL.235 d).',
@@ -4591,6 +4632,10 @@ var I18N = {
     e_noPeriod: 'Nenacházím období rozpisu. Je to „Individual duty plan“ z IDP v PDF?'
   },
   it: {
+    "fat_daysAll": "Carico di ogni giorno di volo",
+    "g3_near": "Vicino",
+    "g3_globe": "Globo",
+    "g3_loading": "Caricamento del globo 3D…",
     "fat_note2": "Indicazione basata sulle regole EASA, non una valutazione medica. Se ti senti affaticato, dillo al comandante e segnalalo secondo l’OM-A di Eurowings.",
     "fe_long": "{n} FDP di 11 h o più.",
     "fe_recov": "Nessun riposo di recupero di 36 h con 2 notti locali nella settimana (ORO.FTL.235 d).",
@@ -5123,6 +5168,10 @@ var I18N = {
     "e_noPeriod": "Non trovo il periodo del turno. È l’«Individual duty plan» di IDP in PDF?"
   },
   pt: {
+    "fat_daysAll": "Carga de cada dia de voo",
+    "g3_near": "Perto",
+    "g3_globe": "Globo",
+    "g3_loading": "A carregar o globo 3D…",
     "fat_note2": "É uma orientação com as regras da EASA, não uma avaliação médica. Se te sentes fatigado, diz ao comandante e reporta segundo o OM-A da Eurowings.",
     "fe_long": "{n} FDP de 11 h ou mais.",
     "fe_recov": "Sem descanso de recuperação de 36 h com 2 noites locais na semana (ORO.FTL.235 d).",
@@ -5655,6 +5704,10 @@ var I18N = {
     "e_noPeriod": "Não encontro o período da escala. É o «Individual duty plan» do IDP em PDF?"
   },
   ro: {
+    "fat_daysAll": "Încărcarea fiecărei zile de zbor",
+    "g3_near": "Aproape",
+    "g3_globe": "Glob",
+    "g3_loading": "Se încarcă globul 3D…",
     "fat_note2": "Orientativ după regulile EASA, nu o evaluare medicală. Dacă ești obosit, spune-i comandantului și raportează după OM-A Eurowings.",
     "fe_long": "{n} FDP de 11 h sau mai mult.",
     "fe_recov": "Fără odihnă de recuperare de 36 h cu 2 nopți locale în săptămână (ORO.FTL.235 d).",
@@ -9418,6 +9471,7 @@ function stopMoving(){
   if(!mm) return;
   try{ navigator.geolocation.clearWatch(mm.watch); }catch(e){}
   try{ mm.lock && mm.lock.release(); }catch(e){}
+  try{ mm.g3 && mm.g3.dispose(); }catch(e){}
   mm = null; renderMap();
 }
 function kmLL(la1, lo1, la2, lo2){ const r = Math.PI/180, h = Math.sin((la2-la1)*r/2)**2 + Math.cos(la1*r)*Math.cos(la2*r)*Math.sin((lo2-lo1)*r/2)**2; return 2*6371*Math.asin(Math.sqrt(h)); }
@@ -9440,6 +9494,20 @@ function schedProgress(L, now){
   return L.end > L.start ? (now - L.start) / (L.end - L.start) : 0;
 }
 let mmTimer = null;
+async function start3d(L, plane, done, now){
+  try{
+    if(mm.g3){ mm.g3.dispose(); mm.g3 = null; }
+    const tok = mm.g3tok = {};
+    if(!window.THREE) await loadScript('lib/three.min.js');
+    const box = $('g3d'); if(!box || !mm || mm.g3tok !== tok || box.querySelector('canvas')) return;
+    const cv = document.createElement('canvas'); if(!(cv.getContext('webgl2') || cv.getContext('webgl'))) throw new Error('no webgl');
+    mm.g3 = Globe3D(box);
+    mm.g3.setRoute(L.dep, L.arr, [AP[L.dep].lat, AP[L.dep].lon], [AP[L.arr].lat, AP[L.arr].lon], AP[L.dep].city, AP[L.arr].city);
+    if(mm.g3view) mm.g3.setView(mm.g3view);
+    mm.g3.update(plane, done, now);
+    const ld = $('g3-load'); if(ld) ld.remove();
+  }catch(e){ console.warn('3d', e); if(mm){ mm.no3d = true; mm._key = null; renderMoving(); } }
+}
 function renderMoving(){
   let now = Date.now();
   // when a leg is over (and there is no live GPS), go on to the next leg of the day by itself
@@ -9482,27 +9550,33 @@ function renderMoving(){
       ${st(land ? esc(land) : t('mm_sea'), t('mm_over'))}`;
   const fix = src === 'gps' ? t('mm_fix', {s: Math.round((now - f.at) / 1000), a: Math.round(f.acc || 0)}) : '';
   if(mm.tilt == null) mm.tilt = true;
-  const key = [L.flight, L.dep, L.start, !!mm.follow, !!mm.sim, !!mm.tilt, lang].join('|');
-  const el = $('mm-map');
+  // 3D globe (three.js, in the app); the flat map is the fallback
+  const use3d = !mm.no3d && /^https?:/.test(location.protocol);
+  const key = [L.flight, L.dep, L.start, !!mm.follow, !!mm.sim, !!mm.tilt, lang, use3d].join('|');
+  const el = use3d ? $('g3d') : $('mm-map');
   if(el && mm._key === key){
     // only move the plane and refresh the numbers: the map itself stays
-    MAP.place(el, one, mopt);
+    if(use3d){ if(mm.g3) mm.g3.update(plane, done / 100, now); }
+    else MAP.place(el, one, mopt);
     $('mm-badge').innerHTML = badge; $('mm-why').innerHTML = why; $('mm-stats').innerHTML = stats; $('mm-fix').textContent = fix;
   } else {
     mm._key = key;
     pnl(hdr('map') + `<div class="mm-head"><b>${esc(L.flight)}</b> ${L.dep} → ${L.arr} · ${t4(L.t1)}–${t4(L.t2)} UTC · ${Math.round(total)} km</div>
       <div class="row" style="align-items:center;gap:8px;margin:4px 0"><span id="mm-badge">${badge}</span>${legSel}</div>
-      <div class="mapbox mm-box${mm.tilt ? ' tilt' : ''}">${MAP.svg(one, mopt)}
-        <div class="mm-btns"><button class="mm-zoom" id="mm-follow" type="button">${mm.follow ? '🗺 ' + t('mm_route') : '🎯 ' + t('mm_follow')}</button></div></div>
+      ${use3d ? `<div class="mapbox g3box"><div id="g3d" class="g3d"></div><div class="g3-load note" id="g3-load">${t('g3_loading')}</div>
+        <div class="mm-btns"><button class="mm-zoom${mm.g3view !== 'near' ? ' on' : ''}" id="g3-globe" type="button">🌍 ${t('g3_globe')}</button><button class="mm-zoom${mm.g3view === 'near' ? ' on' : ''}" id="g3-near" type="button">✈ ${t('g3_near')}</button></div></div>` :
+      `<div class="mapbox mm-box${mm.tilt ? ' tilt' : ''}">${MAP.svg(one, mopt)}
+        <div class="mm-btns"><button class="mm-zoom" id="mm-follow" type="button">${mm.follow ? '🗺 ' + t('mm_route') : '🎯 ' + t('mm_follow')}</button></div></div>`}
       <div id="mm-why">${why}</div>
       <div class="mm-grid" id="mm-stats">${stats}</div>
       <p class="note" id="mm-fix">${fix}</p>
       <div class="row"><button class="btn${mm.sim ? '' : ' ghost'}" id="mm-sim" type="button">${mm.sim ? '■ ' + t('mm_simStop') : '▶ ' + t('mm_sim')}</button>
         <button class="btn ghost" id="mm-stop" type="button">${t('mm_stop')}</button></div>
       <p class="note">${t('mm_note')}</p><p class="note">${t('mm_tips')}</p>`);
+    if(use3d) start3d(L, plane, done / 100, now);
   }
   clearInterval(mmTimer);
-  mmTimer = setInterval(() => { if(!mm || toolOpen !== 'map'){ clearInterval(mmTimer); return; } renderMoving(); }, mm.sim ? 250 : 5000);
+  mmTimer = setInterval(() => { if(!mm || toolOpen !== 'map'){ clearInterval(mmTimer); if(mm && mm.g3){ mm.g3.dispose(); mm.g3 = null; } return; } renderMoving(); }, mm.sim ? 200 : (use3d ? 2000 : 5000));
 }
 document.addEventListener('change', e => { if(e.target.id === 'map-d'){ mapDay = e.target.value || null; renderMap(); }
   if(e.target.id === 'mm-leg' && mm){ mm.leg = mm.dayLegs[+e.target.value]; mm.sim = 0; mm.pinned = true; renderMoving(); } });
@@ -9513,6 +9587,8 @@ document.addEventListener('click', e => {
   if(id === 'mm-stop'){ clearInterval(mmTimer); stopMoving(); return; }
   if(id === 'mm-sim' && mm){ mm.sim = mm.sim ? 0 : Date.now(); renderMoving(); return; }
   if(id === 'mm-follow' && mm){ mm.follow = !mm.follow; renderMoving(); return; }
+  if((id === 'g3-globe' || id === 'g3-near') && mm){ mm.g3view = id === 'g3-near' ? 'near' : 'globe'; if(mm.g3) mm.g3.setView(mm.g3view);
+    $('g3-globe').classList.toggle('on', mm.g3view === 'globe'); $('g3-near').classList.toggle('on', mm.g3view === 'near'); return; }
   const md = e.target.closest('[data-mapday]'); if(md){ mapDay = md.dataset.mapday; toolOpen = null; openTool('map'); return; }
 });
 
@@ -9653,6 +9729,12 @@ function renderFat(){
     `<div class="mlist">${weeks.map(w => `<div class="mrow"><div class="mh nc">${dd(w.a)} – ${dd(w.b)}${w.hi ? `<span class="chip fatlvl-hi">⚠ ${t('fat_hiShort')}</span>` : ''}</div>
       <div class="note">${t('fat_weekS', {h: hhmm(w.hrs), d: w.n})}</div>
       ${w.hi ? `<ul class="fatwhy">${w.why.map(x => `<li>${x}</li>`).join('')}</ul>` : ''}</div>`).join('')}</div>
+    <h3 class="wh">${t('fat_daysAll')}</h3>
+    <div class="mlist">${c.days.filter(d => F[d.date] && F[d.date].len > 0).map(d => { const f = F[d.date];
+      const lvl = f.pts >= 5 || (f.night && f.pts >= 3) ? 'hi' : f.pts >= 2 ? 'mid' : 'lo';
+      const tags = ['early','night','late','short','long'].filter(k => f[k]).map(k => `<span class="chip">${t('fat_'+k)}</span>`).join('');
+      return `<div class="mrow"><div class="mh nc">${new Date(d.date+'T12:00').toLocaleDateString(LOC,{weekday:'short', day:'numeric'})} · ${esc(d.route||d.label||'')}
+        <span class="chip fatlvl-${lvl}">${lvl==='hi'?'⚠ ':''}${t('fat_'+lvl)}</span></div>${tags ? `<div class="chips">${tags}</div>` : ''}</div>`; }).join('') || `<p class="note">${t('fat_none')}</p>`}</div>
     <p class="note">${t('fat_note2')}</p>`);
 }
 // ---------- 6. on-board sales log ----------
@@ -9709,11 +9791,183 @@ document.addEventListener('click', async e => {
 
 });
 
+// ---- 3D moving map: satellite globe with day/night, atmosphere, route arc and a 3D airliner (three.js, offline) ----
+// Textures: NASA Blue Marble / Black Marble (public domain, via three-globe examples, MIT).
+
+function Globe3D(box){
+  const T = THREE, R = 1, rad = Math.PI / 180;
+  const W = () => box.clientWidth, H = () => box.clientHeight;
+  const renderer = new T.WebGLRenderer({ antialias: true, alpha: false });
+  renderer.setPixelRatio(Math.min(2, window.devicePixelRatio || 1));
+  renderer.setSize(W(), H());
+  renderer.outputColorSpace = T.SRGBColorSpace;
+  box.appendChild(renderer.domElement);
+  const labels = document.createElement('div'); labels.className = 'g3-labels'; box.appendChild(labels);
+  const scene = new T.Scene();
+  const camera = new T.PerspectiveCamera(42, W() / H(), 0.001, 100);
+
+  // lat/lon → point on the sphere (matches three's SphereGeometry UVs for an equirectangular map)
+  const vec = (lat, lon, r) => { const p = (lon + 180) * rad, la = lat * rad, c = Math.cos(la);
+    return new T.Vector3(-Math.cos(p) * c * r, Math.sin(la) * r, Math.sin(p) * c * r); };
+
+  // sun direction from the date (good enough for the terminator)
+  function sunDir(ms){
+    const d = new Date(ms), start = Date.UTC(d.getUTCFullYear(), 0, 0), n = (ms - start) / 864e5;
+    const decl = 23.44 * Math.sin(2 * Math.PI * (284 + n) / 365);
+    const h = d.getUTCHours() + d.getUTCMinutes() / 60;
+    return vec(decl, -15 * (h - 12), 1).normalize();
+  }
+
+  // stars
+  { const g = new T.BufferGeometry(), n = 1500, p = new Float32Array(n * 3);
+    for(let i = 0; i < n; i++){ const v = new T.Vector3().randomDirection().multiplyScalar(30 + Math.random() * 20); p.set([v.x, v.y, v.z], i * 3); }
+    g.setAttribute('position', new T.BufferAttribute(p, 3));
+    scene.add(new T.Points(g, new T.PointsMaterial({ color: 0xffffff, size: 0.06, sizeAttenuation: true, transparent: true, opacity: .8 }))); }
+
+  // earth: day/night blend by the sun, relief from the topography map
+  const load = u => { const t = new T.TextureLoader().load(u); t.colorSpace = T.SRGBColorSpace; t.anisotropy = renderer.capabilities.getMaxAnisotropy(); return t; };
+  const bump = new T.TextureLoader().load('img/earth-bump.jpg');
+  const earthMat = new T.ShaderMaterial({
+    uniforms: { day: { value: load('img/earth-day.jpg') }, night: { value: load('img/earth-night.jpg') }, bump: { value: bump }, sun: { value: sunDir(Date.now()) } },
+    vertexShader: `varying vec2 vUv; varying vec3 vN; void main(){ vUv = uv; vN = normalize(normal); gl_Position = projectionMatrix * modelViewMatrix * vec4(position,1.0); }`,
+    fragmentShader: `uniform sampler2D day, night, bump; uniform vec3 sun; varying vec2 vUv; varying vec3 vN;
+      void main(){
+        vec2 e = vec2(1.0/2048.0, 1.0/1024.0);
+        float h = texture2D(bump, vUv).r, hx = texture2D(bump, vUv + vec2(e.x,0.)).r, hy = texture2D(bump, vUv + vec2(0.,e.y)).r;
+        float relief = 1.0 + (h - hx) * 4.0 + (hy - h) * 4.0;
+        float d = dot(vN, sun);
+        vec3 dc = texture2D(day, vUv).rgb * (0.30 + 0.85 * max(d, 0.0)) * relief;
+        vec3 nc = texture2D(night, vUv).rgb * 1.6 + vec3(0.02,0.03,0.06);
+        gl_FragColor = vec4(mix(nc, dc, smoothstep(-0.12, 0.18, d)), 1.0);
+        #include <colorspace_fragment>
+      }`
+  });
+  const earth = new T.Mesh(new T.SphereGeometry(R, 160, 120), earthMat); scene.add(earth);
+  // atmosphere glow
+  scene.add(new T.Mesh(new T.SphereGeometry(R * 1.018, 96, 64), new T.ShaderMaterial({
+    side: T.BackSide, transparent: true, blending: T.AdditiveBlending, depthWrite: false,
+    vertexShader: `varying vec3 vN; varying vec3 vV; void main(){ vN = normalize(normalMatrix * normal); vec4 mv = modelViewMatrix * vec4(position,1.0); vV = normalize(-mv.xyz); gl_Position = projectionMatrix * mv; }`,
+    fragmentShader: `varying vec3 vN; varying vec3 vV; void main(){ float i = pow(max(0.0, 0.68 - dot(vN, vV)), 3.0); gl_FragColor = vec4(0.38, 0.64, 1.0, 1.0) * clamp(i * 1.7, 0.0, 0.85); }`
+  })));
+
+  // lights for the plane
+  const sunLight = new T.DirectionalLight(0xffffff, 2.2); scene.add(sunLight);
+  scene.add(new T.AmbientLight(0xb8c4dd, 0.9));
+
+  // airliner (twin-engine narrow body), nose along +z, up along +y, ~1 unit long
+  const accent = getComputedStyle(document.documentElement).getPropertyValue('--accent').trim() || '#6d83ff';
+  const white = new T.MeshStandardMaterial({ color: 0xf4f6fa, metalness: 0.25, roughness: 0.35 });
+  const grey = new T.MeshStandardMaterial({ color: 0xa9b2c2, metalness: 0.5, roughness: 0.3 });
+  const tailM = new T.MeshStandardMaterial({ color: new T.Color(accent), metalness: 0.2, roughness: 0.4 });
+  const plane = new T.Group();
+  { const body = new T.Mesh(new T.CylinderGeometry(0.055, 0.055, 0.78, 24), white); body.rotation.x = Math.PI / 2; plane.add(body);
+    const nose = new T.Mesh(new T.SphereGeometry(0.055, 24, 16), white); nose.scale.set(1, 1, 2.1); nose.position.z = 0.39; plane.add(nose);
+    const tailc = new T.Mesh(new T.ConeGeometry(0.055, 0.2, 24), white); tailc.rotation.x = -Math.PI / 2; tailc.position.z = -0.49; plane.add(tailc);
+    const wingShape = new T.Shape(); wingShape.moveTo(0, 0.13); wingShape.lineTo(0.5, -0.12); wingShape.lineTo(0.5, -0.2); wingShape.lineTo(0, -0.06); wingShape.closePath();
+    const wingG = new T.ExtrudeGeometry(wingShape, { depth: 0.012, bevelEnabled: false });
+    for(const s of [1, -1]){
+      const w = new T.Mesh(wingG, white); w.rotation.x = Math.PI / 2; w.scale.x = s; w.position.set(0, -0.02, 0.02); plane.add(w);
+      const eng = new T.Mesh(new T.CylinderGeometry(0.032, 0.028, 0.14, 16), grey); eng.rotation.x = Math.PI / 2; eng.position.set(s * 0.17, -0.06, 0.05); plane.add(eng);
+      const hs = new T.Shape(); hs.moveTo(0, 0.05); hs.lineTo(0.18, -0.04); hs.lineTo(0.18, -0.08); hs.lineTo(0, -0.04); hs.closePath();
+      const h = new T.Mesh(new T.ExtrudeGeometry(hs, { depth: 0.008, bevelEnabled: false }), white); h.rotation.x = Math.PI / 2; h.scale.x = s; h.position.set(0, 0.01, -0.46); plane.add(h);
+    }
+    const fs = new T.Shape(); fs.moveTo(0, 0); fs.lineTo(-0.2, 0); fs.lineTo(-0.27, 0.2); fs.lineTo(-0.2, 0.2); fs.lineTo(0, 0.02); fs.closePath();
+    const fin = new T.Mesh(new T.ExtrudeGeometry(fs, { depth: 0.01, bevelEnabled: false }), tailM); fin.rotation.y = -Math.PI / 2; fin.position.set(-0.005, 0.04, -0.33); plane.add(fin);
+  }
+  const planeHolder = new T.Group(); planeHolder.add(plane); scene.add(planeHolder);
+
+  // route: flown part (warm) and the rest (white, faint)
+  let routeDone = null, routeTodo = null, arcPts = [], aps = [];
+  const doneMat = new T.MeshBasicMaterial({ color: 0xf2b84b }), todoMat = new T.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.55 });
+  function tube(pts, mat, r){ if(pts.length < 2) return null; const m = new T.Mesh(new T.TubeGeometry(new T.CatmullRomCurve3(pts), Math.max(8, pts.length * 2), r, 8, false), mat); scene.add(m); return m; }
+  function setRoute(dep, arr, depLL, arrLL, depName, arrName){
+    arcPts = [];
+    const a = vec(depLL[0], depLL[1], 1), b = vec(arrLL[0], arrLL[1], 1), ang = a.angleTo(b);
+    for(let i = 0; i <= 96; i++){ const f = i / 96; const p = new T.Vector3().copy(a).multiplyScalar(Math.sin((1-f)*ang)).add(new T.Vector3().copy(b).multiplyScalar(Math.sin(f*ang))).divideScalar(Math.sin(ang) || 1).normalize();
+      arcPts.push(p.multiplyScalar(R * 1.0012)); }
+    aps = [{ code: dep, name: depName, p: vec(depLL[0], depLL[1], R * 1.002) }, { code: arr, name: arrName, p: vec(arrLL[0], arrLL[1], R * 1.002) }];
+    labels.innerHTML = aps.map((x, i) => `<div class="g3-pin" data-i="${i}"><span class="g3-dot"></span>${esc(x.name || x.code)} <b>(${x.code})</b></div>`).join('');
+    lastDone = -1;
+  }
+  let lastDone = -1, curDone = 0;
+  function setDone(f){
+    curDone = f;
+    const k = Math.round(Math.max(0, Math.min(1, f)) * 96); if(k === lastDone) return; lastDone = k;
+    [routeDone, routeTodo].forEach(m => { if(m){ scene.remove(m); m.geometry.dispose(); } });
+    const w = view === 'near' ? 0.055 : 1;     // thinner line when the camera is close
+    routeDone = tube(arcPts.slice(0, k + 1), doneMat, 0.0045 * w);
+    routeTodo = tube(arcPts.slice(k), todoMat, 0.0028 * w);
+  }
+
+  // camera views: 'globe' (whole earth around the plane) and 'near' (chase camera)
+  let view = 'globe', yaw = 0, zoom = 1, cur = null, target = null, planeState = null;
+  const tmp = new T.Vector3();
+  function frame(){
+    if(!planeState) return;
+    const { lat, lon, hdg, alt } = planeState;
+    const up = vec(lat, lon, 1).normalize();
+    const north = new T.Vector3(0, 1, 0).sub(up.clone().multiplyScalar(up.y)).normalize();
+    const east = new T.Vector3().crossVectors(north, up).normalize();
+    const h = (hdg || 0) * rad, fwd = north.clone().multiplyScalar(Math.cos(h)).add(east.clone().multiplyScalar(Math.sin(h))).normalize();
+    const altR = R * (view === 'near' ? 1.0016 : 1.004);
+    const pos = up.clone().multiplyScalar(altR);
+    planeHolder.position.copy(pos);
+    const m = new T.Matrix4().makeBasis(new T.Vector3().crossVectors(up, fwd).normalize(), up, fwd);
+    planeHolder.quaternion.setFromRotationMatrix(m);
+    const near = view === 'near';
+    plane.scale.setScalar(near ? 0.0075 : 0.065 * zoom);
+    // camera: behind and above the plane, turned by the user's drag (yaw)
+    const back = fwd.clone().applyAxisAngle(up, yaw).multiplyScalar(-1);
+    let cp, look;
+    if(near){ cp = pos.clone().add(back.multiplyScalar(0.028 * zoom)).add(up.clone().multiplyScalar(0.016 * zoom)); look = pos.clone().add(fwd.clone().multiplyScalar(0.01)); }
+    else { cp = up.clone().multiplyScalar(R + 0.55 * zoom).add(back.multiplyScalar(0.75 * zoom)); look = pos.clone().add(fwd.clone().multiplyScalar(0.12)); }
+    target = { cp, look };
+    if(!cur) cur = { cp: cp.clone(), look: look.clone() };
+  }
+  let raf = 0, dead = false;
+  function loop(){
+    if(dead) return;
+    raf = requestAnimationFrame(loop);
+    if(target){ cur.cp.lerp(target.cp, 0.08); cur.look.lerp(target.look, 0.08); camera.position.copy(cur.cp); camera.up.copy(cur.cp.clone().normalize()); camera.lookAt(cur.look); }
+    const s = earthMat.uniforms.sun.value; sunLight.position.copy(s).multiplyScalar(10);
+    renderer.render(scene, camera);
+    // airport pins
+    const wv = W(), hv = H(), camDir = camera.position.clone().normalize();
+    labels.querySelectorAll('.g3-pin').forEach(el => { const a = aps[+el.dataset.i]; if(!a) return;
+      const vis = a.p.clone().normalize().dot(camDir) > 0.12; tmp.copy(a.p).project(camera);
+      el.style.display = vis && tmp.z < 1 ? '' : 'none';
+      el.style.transform = `translate(${((tmp.x + 1) / 2 * wv).toFixed(1)}px, ${((1 - tmp.y) / 2 * hv).toFixed(1)}px)`; });
+  }
+  loop();
+
+  // drag to turn the camera around the plane, pinch / wheel to zoom
+  let drag = null, pinch = null;
+  const el = renderer.domElement;
+  el.addEventListener('pointerdown', e => { drag = { x: e.clientX, yaw }; el.setPointerCapture(e.pointerId); });
+  el.addEventListener('pointermove', e => { if(drag && !pinch){ yaw = drag.yaw - (e.clientX - drag.x) * 0.01; frame(); } });
+  el.addEventListener('pointerup', () => { drag = null; });
+  el.addEventListener('wheel', e => { e.preventDefault(); zoom = Math.min(2.5, Math.max(0.4, zoom * (e.deltaY > 0 ? 1.1 : 0.9))); frame(); }, { passive: false });
+  el.addEventListener('touchstart', e => { if(e.touches.length === 2){ pinch = { d: Math.hypot(e.touches[0].clientX - e.touches[1].clientX, e.touches[0].clientY - e.touches[1].clientY), z: zoom }; } }, { passive: true });
+  el.addEventListener('touchmove', e => { if(pinch && e.touches.length === 2){ const d = Math.hypot(e.touches[0].clientX - e.touches[1].clientX, e.touches[0].clientY - e.touches[1].clientY); zoom = Math.min(2.5, Math.max(0.4, pinch.z * pinch.d / d)); frame(); } }, { passive: true });
+  el.addEventListener('touchend', () => { pinch = null; });
+  const ro = new ResizeObserver(() => { renderer.setSize(W(), H()); camera.aspect = W() / H(); camera.updateProjectionMatrix(); }); ro.observe(box);
+
+  return {
+    setRoute,
+    update(st, done, nowMs){ planeState = st; earthMat.uniforms.sun.value.copy(sunDir(nowMs || Date.now())); setDone(done); frame(); },
+    setView(v){ view = v; zoom = 1; yaw = 0; lastDone = -1; setDone(curDone); frame(); },
+    get view(){ return view; },
+    snapshot(){ if(target){ camera.position.copy(target.cp); camera.up.copy(target.cp.clone().normalize()); camera.lookAt(target.look); } renderer.render(scene, camera); return renderer.domElement.toDataURL('image/jpeg', .85); },
+    stop(){ dead = true; cancelAnimationFrame(raf); },
+    dispose(){ dead = true; cancelAnimationFrame(raf); ro.disconnect(); renderer.dispose(); box.innerHTML = ''; }
+  };
+}
+
 </script>
 <script>
 const SEED = null;
 const SEED_SETTINGS = null;
-const APP_VERSION = '2026.11.09-1333';
+const APP_VERSION = '2026.11.09-1342';
 const IS_PWA_BUILD = true;
 const LS = 'payroster.v1';
 const KC = { sick:'--warn', flight:'--k-flight', deadhead:'--k-dh', training:'--k-train', standby:'--k-sby', reserve:'--k-sby', ground:'--k-ground', off:'--k-off', empty:'--k-off', other:'--k-ground' };

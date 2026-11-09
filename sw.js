@@ -1,9 +1,13 @@
 // Payroster service worker: keeps the app usable offline and lets new versions in.
-const CACHE = 'payroster-2026.11.09-1333';
+const CACHE = 'payroster-2026.11.09-1342';
 const SHELL = ['./', './index.html', './manifest.webmanifest', './lib/pdf.min.js', './lib/pdf.worker.min.js',
   './icons/icon4-192.png', './icons/icon4-512.png', './icons/apple-touch-icon4.png'];
-self.addEventListener('install', e => { e.waitUntil(caches.open(CACHE).then(c => c.addAll(SHELL)).then(() => self.skipWaiting())); });
-self.addEventListener('activate', e => { e.waitUntil(caches.keys().then(ks => Promise.all(ks.filter(k => k !== CACHE).map(k => caches.delete(k)))).then(() => self.clients.claim())); });
+// big files of the 3D moving map: kept in their own cache across versions so they work in flight
+const ASSETS = 'payroster-assets-1';
+const BIG = ['./lib/three.min.js', './img/earth-day.jpg', './img/earth-night.jpg', './img/earth-bump.jpg'];
+self.addEventListener('install', e => { e.waitUntil(caches.open(CACHE).then(c => c.addAll(SHELL)).then(() => self.skipWaiting()));
+  caches.open(ASSETS).then(async c => { for(const u of BIG) if(!(await c.match(u))) try{ await c.add(u); }catch(err){} }); });
+self.addEventListener('activate', e => { e.waitUntil(caches.keys().then(ks => Promise.all(ks.filter(k => k !== CACHE && k !== ASSETS).map(k => caches.delete(k)))).then(() => self.clients.claim())); });
 self.addEventListener('fetch', e => {
   if (e.request.method !== 'GET') return;
   const url = new URL(e.request.url);
@@ -15,7 +19,7 @@ self.addEventListener('fetch', e => {
       try { const r = await fetch(e.request, { cache: 'no-store' }); if (r.ok) cache.put('./index.html', r.clone()); return r; }
       catch { return (await cache.match('./index.html')) || (await cache.match('./')); }
     }
-    const hit = await cache.match(e.request);
+    const hit = await caches.match(e.request);
     if (hit) return hit;
     try { const r = await fetch(e.request); if (r.ok || r.type === 'opaque') cache.put(e.request, r.clone()); return r; }
     catch { return Response.error(); }
