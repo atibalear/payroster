@@ -1,7 +1,7 @@
 // Payroster service worker: keeps the app usable offline and lets new versions in.
-const CACHE = 'payroster-2026.11.09-1011';
+const CACHE = 'payroster-2026.11.09-1021';
 const SHELL = ['./', './index.html', './manifest.webmanifest', './lib/pdf.min.js', './lib/pdf.worker.min.js',
-  './icons/icon3-192.png', './icons/icon3-512.png', './icons/apple-touch-icon3.png'];
+  './icons/icon4-192.png', './icons/icon4-512.png', './icons/apple-touch-icon4.png'];
 self.addEventListener('install', e => { e.waitUntil(caches.open(CACHE).then(c => c.addAll(SHELL)).then(() => self.skipWaiting())); });
 self.addEventListener('activate', e => { e.waitUntil(caches.keys().then(ks => Promise.all(ks.filter(k => k !== CACHE).map(k => caches.delete(k)))).then(() => self.clients.claim())); });
 self.addEventListener('fetch', e => {
