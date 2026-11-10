@@ -315,6 +315,7 @@ html.locked #lockScr{display:flex;position:fixed;inset:0;z-index:999;background:
 .sftrack>div{height:100%;background:var(--pay);border-radius:3px}
 .sofar .note{margin-top:4px}
 .swp{margin-top:6px;font-size:13px}
+.msg.est{margin-top:12px;background:var(--warn-soft,#fff3e0);color:var(--ink);border-left:4px solid var(--warn)}
 .cfgqr{background:#fff;padding:10px;border-radius:10px;width:min(260px,100%);line-height:0;margin:10px 0}
 .cfgqr svg{width:100%;height:auto;display:block}
 #cfg-url{width:100%;box-sizing:border-box;font-family:var(--f-mono);font-size:11px}
@@ -1430,10 +1431,11 @@ var I18N = {
     "lay_none": "Aún no hay noches fuera en tus rosters. Añade un aeropuerto con su código.",
     "swp_take": "Coger su día",
     "swp_calc": "Calcular el cambio",
-    "swp_hint": "Marca los días que cogerías de su roster y pulsa «Calcular el cambio» para ver cuánto cambia tu nómina.",
+    "swp_hint": "Marca los días que cogerías de su roster y pulsa «Calcular el cambio» para ver una estimación de cuánto cambia tu nómina.",
     "swp_none": "Marca al menos un día.",
     "swp_days": "Días cambiados: {d}",
-    "swp_note": "Es una estimación: el roster compartido no trae el FDP, así que las horas salen de su check-in, último aterrizaje y check-out.",
+    "swp_note": "El roster compartido no trae el FDP: las horas salen de su check-in, su último aterrizaje y su check-out. La nómina real puede ser distinta.",
+    "swp_estT": "Es una estimación",
     "inst_t": "Instala Payroster+ en el móvil",
     "inst_why": "Se abre a pantalla completa desde el inicio y funciona sin conexión, también en vuelo.",
     "inst_btn": "Instalar",
@@ -1950,10 +1952,11 @@ var I18N = {
     "lay_none": "Encara no hi ha nits fora als teus rosters. Afegeix un aeroport amb el seu codi.",
     "swp_take": "Agafar el seu dia",
     "swp_calc": "Calcular el canvi",
-    "swp_hint": "Marca els dies que agafaries del seu roster i prem «Calcular el canvi» per veure quant canvia la nòmina.",
+    "swp_hint": "Marca els dies que agafaries del seu roster i prem «Calcular el canvi» per veure una estimació de quant canvia la nòmina.",
     "swp_none": "Marca almenys un dia.",
     "swp_days": "Dies canviats: {d}",
-    "swp_note": "És una estimació: el roster compartit no porta el FDP, així que les hores surten del seu check-in, últim aterratge i check-out.",
+    "swp_note": "El roster compartit no porta el FDP: les hores surten del seu check-in, últim aterratge i check-out. La nòmina real pot ser diferent.",
+    "swp_estT": "És una estimació",
     "inst_t": "Instal·la Payroster+ al mòbil",
     "inst_why": "S’obre a pantalla completa des de l’inici i funciona sense connexió, també en vol.",
     "inst_btn": "Instal·lar",
@@ -2470,10 +2473,11 @@ var I18N = {
     "lay_none": "No nights away in your rosters yet. Add an airport by its code.",
     "swp_take": "Take their day",
     "swp_calc": "Work out the swap",
-    "swp_hint": "Tick the days you would take from their roster and tap “Work out the swap” to see what it does to your pay.",
+    "swp_hint": "Tick the days you would take from their roster and tap “Work out the swap” for an estimate of what it does to your pay.",
     "swp_none": "Tick at least one day.",
     "swp_days": "Days swapped: {d}",
-    "swp_note": "An estimate: the shared roster has no FDP, so the hours come from their check-in, last landing and check-out.",
+    "swp_note": "The shared roster has no FDP: the hours come from their check-in, last landing and check-out. Your real pay may differ.",
+    "swp_estT": "This is an estimate",
     "inst_t": "Install Payroster+ on your phone",
     "inst_why": "It opens full screen from your home screen and works offline, in flight too.",
     "inst_btn": "Install",
@@ -2990,10 +2994,11 @@ var I18N = {
     "lay_none": "Noch keine Übernachtungen in deinen Dienstplänen. Füge einen Flughafen mit seinem Code hinzu.",
     "swp_take": "Ihren Tag übernehmen",
     "swp_calc": "Tausch berechnen",
-    "swp_hint": "Markiere die Tage, die du aus ihrem Dienstplan übernehmen würdest, und tippe auf „Tausch berechnen“.",
+    "swp_hint": "Markiere die Tage, die du übernehmen würdest, und tippe auf „Tausch berechnen“ für eine Schätzung der Auswirkung auf dein Gehalt.",
     "swp_none": "Markiere mindestens einen Tag.",
     "swp_days": "Getauschte Tage: {d}",
-    "swp_note": "Eine Schätzung: Der geteilte Dienstplan enthält keine FDP, die Stunden kommen aus Check-in, letzter Landung und Check-out.",
+    "swp_note": "Der geteilte Dienstplan enthält keine FDP: Die Stunden kommen aus Check-in, letzter Landung und Check-out. Die echte Abrechnung kann abweichen.",
+    "swp_estT": "Das ist eine Schätzung",
     "inst_t": "Payroster+ aufs Handy installieren",
     "inst_why": "Sie öffnet sich im Vollbild vom Startbildschirm und funktioniert offline, auch im Flug.",
     "inst_btn": "Installieren",
@@ -3510,10 +3515,11 @@ var I18N = {
     "lay_none": "Pas encore de nuits dehors dans tes plannings. Ajoute un aéroport avec son code.",
     "swp_take": "Prendre son jour",
     "swp_calc": "Calculer l’échange",
-    "swp_hint": "Coche les jours que tu prendrais de son planning et appuie sur « Calculer l’échange » pour voir l’effet sur ta paie.",
+    "swp_hint": "Coche les jours que tu prendrais de son planning et appuie sur « Calculer l’échange » pour une estimation de l’effet sur ta paie.",
     "swp_none": "Coche au moins un jour.",
     "swp_days": "Jours échangés : {d}",
-    "swp_note": "C’est une estimation : le planning partagé n’a pas la FDP, les heures viennent du check-in, du dernier atterrissage et du check-out.",
+    "swp_note": "Le planning partagé n’a pas la FDP : les heures viennent du check-in, du dernier atterrissage et du check-out. La vraie paie peut être différente.",
+    "swp_estT": "C’est une estimation",
     "inst_t": "Installe Payroster+ sur ton téléphone",
     "inst_why": "Elle s’ouvre en plein écran depuis l’accueil et marche hors ligne, en vol aussi.",
     "inst_btn": "Installer",
@@ -4030,10 +4036,11 @@ var I18N = {
     "lay_none": "Még nincs kint alvás a beosztásaidban. Adj hozzá egy repteret a kódjával.",
     "swp_take": "Átvenni a napját",
     "swp_calc": "Csere kiszámítása",
-    "swp_hint": "Jelöld be a napokat, amelyeket átvennél, és nyomd meg a „Csere kiszámítása” gombot.",
+    "swp_hint": "Jelöld be a napokat, amelyeket átvennél, és nyomd meg a „Csere kiszámítása” gombot a béredre gyakorolt hatás becsléséhez.",
     "swp_none": "Jelölj be legalább egy napot.",
     "swp_days": "Cserélt napok: {d}",
-    "swp_note": "Ez becslés: a megosztott beosztásban nincs FDP, ezért az órák a check-inből, az utolsó leszállásból és a check-outból jönnek.",
+    "swp_note": "A megosztott beosztásban nincs FDP: az órák a check-inből, az utolsó leszállásból és a check-outból jönnek. A valódi bér eltérhet.",
+    "swp_estT": "Ez csak becslés",
     "inst_t": "Telepítsd a Payroster+-t a telefonra",
     "inst_why": "Teljes képernyőn nyílik a kezdőképernyőről, és internet nélkül is működik, repülés közben is.",
     "inst_btn": "Telepítés",
@@ -4550,10 +4557,11 @@ var I18N = {
     "lay_none": "V rozpisoch zatiaľ nie sú noci mimo bázy. Pridaj letisko podľa kódu.",
     "swp_take": "Vziať jeho deň",
     "swp_calc": "Vypočítať výmenu",
-    "swp_hint": "Označ dni, ktoré by si zobral z jeho rozpisu, a ťukni na „Vypočítať výmenu“.",
+    "swp_hint": "Označ dni, ktoré by si zobral, a ťukni na „Vypočítať výmenu“ pre odhad vplyvu na mzdu.",
     "swp_none": "Označ aspoň jeden deň.",
     "swp_days": "Vymenené dni: {d}",
-    "swp_note": "Je to odhad: zdieľaný rozpis nemá FDP, hodiny sú z check-inu, posledného pristátia a check-outu.",
+    "swp_note": "Zdieľaný rozpis nemá FDP: hodiny sú z check-inu, posledného pristátia a check-outu. Skutočná mzda sa môže líšiť.",
+    "swp_estT": "Je to len odhad",
     "inst_t": "Nainštaluj Payroster+ do telefónu",
     "inst_why": "Otvára sa na celú obrazovku z plochy a funguje offline, aj počas letu.",
     "inst_btn": "Inštalovať",
@@ -5070,10 +5078,11 @@ var I18N = {
     "lay_none": "V rozpisech zatím nejsou noci mimo bázi. Přidej letiště podle kódu.",
     "swp_take": "Vzít jeho den",
     "swp_calc": "Spočítat výměnu",
-    "swp_hint": "Označ dny, které bys vzal z jeho rozpisu, a klepni na „Spočítat výměnu“.",
+    "swp_hint": "Označ dny, které bys vzal, a klepni na „Spočítat výměnu“ pro odhad dopadu na mzdu.",
     "swp_none": "Označ aspoň jeden den.",
     "swp_days": "Vyměněné dny: {d}",
-    "swp_note": "Je to odhad: sdílený rozpis nemá FDP, hodiny jsou z check-inu, posledního přistání a check-outu.",
+    "swp_note": "Sdílený rozpis nemá FDP: hodiny jsou z check-inu, posledního přistání a check-outu. Skutečná mzda se může lišit.",
+    "swp_estT": "Je to jen odhad",
     "inst_t": "Nainstaluj Payroster+ do telefonu",
     "inst_why": "Otevírá se na celou obrazovku z plochy a funguje offline, i za letu.",
     "inst_btn": "Instalovat",
@@ -5589,10 +5598,11 @@ var I18N = {
     "lay_none": "Ancora nessuna notte fuori nei tuoi roster. Aggiungi un aeroporto con il suo codice.",
     "swp_take": "Prendere il suo giorno",
     "swp_calc": "Calcola lo scambio",
-    "swp_hint": "Segna i giorni che prenderesti dal suo roster e premi «Calcola lo scambio» per vedere l’effetto sullo stipendio.",
+    "swp_hint": "Segna i giorni che prenderesti dal suo roster e premi «Calcola lo scambio» per una stima dell’effetto sullo stipendio.",
     "swp_none": "Segna almeno un giorno.",
     "swp_days": "Giorni scambiati: {d}",
-    "swp_note": "È una stima: il roster condiviso non ha l’FDP, quindi le ore vengono dal check-in, dall’ultimo atterraggio e dal check-out.",
+    "swp_note": "Il roster condiviso non ha l’FDP: le ore vengono dal check-in, dall’ultimo atterraggio e dal check-out. Lo stipendio reale può essere diverso.",
+    "swp_estT": "È una stima",
     "inst_t": "Installa Payroster+ sul telefono",
     "inst_why": "Si apre a schermo intero dalla schermata home e funziona offline, anche in volo.",
     "inst_btn": "Installa",
@@ -6214,10 +6224,11 @@ var I18N = {
     "lay_none": "Ainda não há noites fora nas tuas escalas. Adiciona um aeroporto pelo código.",
     "swp_take": "Ficar com o dia dele",
     "swp_calc": "Calcular a troca",
-    "swp_hint": "Marca os dias que ficarias da escala dele e carrega em «Calcular a troca» para ver o efeito no recibo.",
+    "swp_hint": "Marca os dias que ficarias da escala dele e carrega em «Calcular a troca» para ver uma estimativa do efeito no recibo.",
     "swp_none": "Marca pelo menos um dia.",
     "swp_days": "Dias trocados: {d}",
-    "swp_note": "É uma estimativa: a escala partilhada não traz o FDP, por isso as horas saem do check-in, última aterragem e check-out.",
+    "swp_note": "A escala partilhada não traz o FDP: as horas saem do check-in, última aterragem e check-out. O recibo real pode ser diferente.",
+    "swp_estT": "É uma estimativa",
     "inst_t": "Instala o Payroster+ no telemóvel",
     "inst_why": "Abre em ecrã inteiro a partir do ecrã inicial e funciona sem ligação, também em voo.",
     "inst_btn": "Instalar",
@@ -6839,10 +6850,11 @@ var I18N = {
     "lay_none": "Încă nu ai nopți în afara bazei în planuri. Adaugă un aeroport după cod.",
     "swp_take": "Iau ziua lui",
     "swp_calc": "Calculează schimbul",
-    "swp_hint": "Bifează zilele pe care le-ai lua din planul lui și apasă „Calculează schimbul”.",
+    "swp_hint": "Bifează zilele pe care le-ai lua și apasă „Calculează schimbul” pentru o estimare a efectului asupra salariului.",
     "swp_none": "Bifează cel puțin o zi.",
     "swp_days": "Zile schimbate: {d}",
-    "swp_note": "Este o estimare: planul partajat nu are FDP, deci orele vin din check-in, ultima aterizare și check-out.",
+    "swp_note": "Planul partajat nu are FDP: orele vin din check-in, ultima aterizare și check-out. Salariul real poate fi diferit.",
+    "swp_estT": "Este o estimare",
     "inst_t": "Instalează Payroster+ pe telefon",
     "inst_why": "Se deschide pe tot ecranul din ecranul principal și merge offline, și în zbor.",
     "inst_btn": "Instalează",
@@ -10883,11 +10895,12 @@ function runSwap(){
   const tier = x => x.T > b.rates.limits[1] ? 3 : x.T > b.rates.limits[0] ? 2 : 1, dn = Nb.net - Na.net;
   const sign = x => (x >= 0 ? '+' : '−') + eur.format(Math.abs(x));
   const dd = iso => new Date(iso + 'T12:00').toLocaleDateString(LOC, {weekday:'short', day:'numeric'});
-  out.innerHTML = `<dl class="sumbox" style="margin-top:12px">
-      <dt>${t('variableIn', {m: nm(ro.year, ro.month, {month:'long'})})}</dt><dd>${eur.format(a.variable)} → <b>${eur.format(b.variable)}</b></dd>
+  // always an estimate: say so before the numbers, and mark the numbers with ≈
+  out.innerHTML = `<div class="msg est">⚠️ <b>${t('swp_estT')}</b> · ${t('swp_note')}</div><dl class="sumbox" style="margin-top:12px">
+      <dt>${t('variableIn', {m: nm(ro.year, ro.month, {month:'long'})})}</dt><dd>${eur.format(a.variable)} → <b>≈ ${eur.format(b.variable)}</b></dd>
       <dt>${t('dutyTime', {h: fmtH(a.T)})} → ${fmtH(b.T)} h</dt><dd>${t('tierN', {n: tier(a)})} → ${t('tierN', {n: tier(b)})}</dd>
-      <dt class="netrow">${t('sim_net', {m: nm(ny, nmn, {month:'long'})})}</dt><dd class="netrow ${dn < 0 ? 'neg' : 'pos'}">${sign(dn)}</dd></dl>
-    <p class="note">${t('swp_days', {d: dates.map(dd).join(', ')})}</p><p class="note">${t('swp_note')}</p>`;
+      <dt class="netrow">${t('sim_net', {m: nm(ny, nmn, {month:'long'})})}</dt><dd class="netrow ${dn < 0 ? 'neg' : 'pos'}">≈ ${sign(dn)}</dd></dl>
+    <p class="note">${t('swp_days', {d: dates.map(dd).join(', ')})}</p>`;
 }
 document.addEventListener('click', e => { if(e.target.id === 'cmp-swp') runSwap(); });
 
@@ -11543,7 +11556,7 @@ document.addEventListener('click', e => { if(e.target.id === 'bwFix'){ state.set
 <script>
 const SEED = null;
 const SEED_SETTINGS = null;
-const APP_VERSION = '2026.11.10-1116';
+const APP_VERSION = '2026.11.10-1117';
 const IS_PWA_BUILD = true;
 const LS = 'payroster.v1';
 const KC = { sick:'--warn', flight:'--k-flight', deadhead:'--k-dh', training:'--k-train', standby:'--k-sby', reserve:'--k-sby', ground:'--k-ground', off:'--k-off', empty:'--k-off', other:'--k-ground' };
