@@ -159,6 +159,18 @@ input[type=number],input[type=text],select{background:var(--surface);border:1px 
 
 /* payslip */
 .slip{font-size:13.5px;border-collapse:collapse;width:100%}
+@media (max-width:520px){
+ #slip,#slip tbody{display:block}#slip tr{display:grid;grid-template-columns:1fr auto;column-gap:10px;border-bottom:1px solid var(--line)}
+ #slip td{border-bottom:0!important;padding:4px 2px}
+ #slip td:nth-child(1){grid-column:1;grid-row:1}#slip td:nth-child(3){grid-column:2;grid-row:1}
+ #slip td:nth-child(2){grid-column:1/-1;grid-row:2;text-align:left!important;padding-top:0;font-size:11px}
+ #slip td:nth-child(2):empty{display:none}
+ #slip tr.gross{background:var(--pay-soft)}#slip tr.sum{border-top:2px solid var(--pay);border-bottom:0}#slip tr.sum td{border-top:0}}
+.adv summary{cursor:pointer;color:var(--accent);font-weight:600;padding:6px 0}
+.how{margin:2px 0 10px}.how summary{cursor:pointer;color:var(--accent);font-size:13.5px;font-weight:600;padding:4px 0;list-style:none}.how summary::-webkit-details-marker{display:none}.how summary::before{content:'ⓘ ';}
+.toolback{display:none;background:none;border:0;color:var(--accent);font:inherit;font-size:16px;font-weight:600;padding:6px 0;cursor:pointer}
+body[data-toolopen] .toolback{display:inline-block}
+body[data-toolopen] #toolbar,body[data-toolopen] .tools-h{display:none}
 .slip td{padding:5px 4px;border-bottom:1px solid var(--line);vertical-align:top}
 .slip td:nth-child(2),.slip td:nth-child(3){text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
 .slip td:nth-child(2){color:var(--muted);font-family:var(--f-mono);font-size:12px}
@@ -413,14 +425,14 @@ input[type=date]::-webkit-date-and-time-value{text-align:left}
     <div class="h2row"><h2 data-i18n="dayByDay"></h2><button class="btn ghost" id="shareBtn" type="button" data-i18n="share_btn"></button></div>
     <div class="panel share" id="sharePanel" hidden></div>
     <p class="note" data-i18n="dayByDayNote"></p>
-    <p class="note" data-i18n="rateNote"></p>
-    <p class="note" data-i18n="fdpNote"></p>
+    <details class="how"><summary data-i18n="howCalc"></summary><p class="note" data-i18n="rateNote"></p><p class="note" data-i18n="fdpNote"></p></details>
     <div class="days" id="days"></div>
   </section>
 
   <section data-tab="tools">
-    <h2 data-i18n="toolsT"></h2>
+    <h2 data-i18n="toolsT" class="tools-h"></h2>
     <div class="toolgrid" id="toolbar"></div>
+    <button type="button" class="toolback" id="toolBack">‹ <span data-i18n="toolsT"></span></button>
     <div class="panel" id="toolPanel" hidden style="margin-top:10px"></div>
   </section>
 
@@ -1252,6 +1264,8 @@ var I18N = {
   names: { es: 'Español', ca: 'Català', en: 'English', de: 'Deutsch', fr: 'Français', it: 'Italiano', pt: 'Português', ro: 'Română', hu: 'Magyar', sk: 'Slovenčina', cs: 'Čeština' },
   locales: { es: 'es-ES', ca: 'ca-ES', en: 'en-GB', de: 'de-DE', fr: 'fr-FR', it: 'it-IT', pt: 'pt-PT', ro: 'ro-RO', hu: 'hu-HU', sk: 'sk-SK', cs: 'cs-CZ' },
   es: {
+    advSet: 'Ajustes avanzados (importes y códigos)',
+    howCalc: '¿Cómo se calcula?',
     td_restLong: 'Libre hasta la firma: {g}',
     bw_fix: 'Usar {r} como base',
     bw_text: 'Tu roster sale de {r}, pero en Mis datos tienes la base {b}. Con la base equivocada, las dietas y los descansos salen mal.',
@@ -1714,7 +1728,7 @@ var I18N = {
     slipTitle: 'Nómina estimada del mes', contractData: 'Mis datos de contrato', storedMonths: 'Meses guardados',
     storedNote: 'Los rosters se guardan solo en este dispositivo. Para añadir un mes, exporta el <b>Individual duty plan</b> en PDF desde IDP y pulsa <b>＋ PDF</b>.',
     footer: 'Cálculo según el Convenio TCP Eurowings Europe (bases en España): art. 11 h (dietas), 24.5 y 24.7 (tiempo relevante para el pago, tramos 70/110 h y regla de proporción FDP/servicio adicional), 24.7.2 c (mínimo 49 + 21 h), 24.9 (early check-in), 18.1 (compra y aplazamiento de días libres). Es una estimación: la nómina oficial manda.',
-    k_flight: 'Vuelo', k_deadhead: 'Posicionamiento', k_training: 'Formación', k_standby: 'Imaginaria', k_reserve: 'Franco', k_ground: 'Tierra', k_off: 'Libre', k_empty: '—', k_other: 'Otro',
+    k_flight: 'Vuelo', k_deadhead: 'Posicionamiento', k_training: 'Formación', k_standby: 'Imaginaria', k_reserve: 'Reserva', k_ground: 'Tierra', k_off: 'Libre', k_empty: '—', k_other: 'Otro',
     d_intlNight: 'Dieta internacional con pernocta', d_intlDay: 'Dieta internacional sin pernocta', d_natNight: 'Dieta nacional con pernocta', d_natDay: 'Dieta nacional sin pernocta',
     noData: 'Sin datos', startHere: 'Empieza aquí',
     startText: 'Descarga tu <b>Individual duty plan</b> en PDF desde IDP y pulsa <b>＋ PDF</b> arriba. Verás cada día con lo que generas.',
@@ -1772,6 +1786,8 @@ var I18N = {
     e_noPeriod: 'No encuentro el periodo del roster. ¿Es el «Individual duty plan» de IDP en PDF?'
   },
   ca: {
+    advSet: 'Ajustos avançats (imports i codis)',
+    howCalc: 'Com es calcula?',
     td_restLong: 'Lliure fins a la firma: {g}',
     bw_fix: 'Fer servir {r} com a base',
     bw_text: 'El teu roster surt de {r}, però a Les meves dades tens la base {b}. Amb la base equivocada, les dietes i els descansos surten malament.',
@@ -2235,7 +2251,7 @@ var I18N = {
     slipTitle: 'Nòmina estimada del mes', contractData: 'Les meves dades de contracte', storedMonths: 'Mesos desats',
     storedNote: 'Els rosters es desen només en aquest dispositiu. Per afegir un mes, exporta l’<b>Individual duty plan</b> en PDF des d’IDP i prem <b>＋ PDF</b>.',
     footer: 'Càlcul segons el Conveni TCP Eurowings Europe (bases a Espanya): art. 11 h (dietes), 24.5 i 24.7 (temps rellevant per al pagament, trams 70/110 h i regla de proporció FDP/servei addicional), 24.7.2 c (mínim 49 + 21 h), 24.9 (early check-in), 18.1 (compra i ajornament de dies lliures). És una estimació: mana la nòmina oficial.',
-    k_flight: 'Vol', k_deadhead: 'Posicionament', k_training: 'Formació', k_standby: 'Imaginària', k_reserve: 'Franc', k_ground: 'Terra', k_off: 'Lliure', k_other: 'Altre',
+    k_flight: 'Vol', k_deadhead: 'Posicionament', k_training: 'Formació', k_standby: 'Imaginària', k_reserve: 'Reserva', k_ground: 'Terra', k_off: 'Lliure', k_other: 'Altre',
     d_intlNight: 'Dieta internacional amb pernoctació', d_intlDay: 'Dieta internacional sense pernoctació', d_natNight: 'Dieta nacional amb pernoctació', d_natDay: 'Dieta nacional sense pernoctació',
     noData: 'Sense dades', startHere: 'Comença aquí',
     startText: 'Descarrega el teu <b>Individual duty plan</b> en PDF des d’IDP i prem <b>＋ PDF</b> a dalt. Veuràs cada dia amb el que generes.',
@@ -2293,6 +2309,8 @@ var I18N = {
     e_noPeriod: 'No trobo el període del roster. És l’«Individual duty plan» d’IDP en PDF?'
   },
   en: {
+    advSet: 'Advanced settings (amounts and codes)',
+    howCalc: 'How is it calculated?',
     td_restLong: 'Off until check-in: {g}',
     bw_fix: 'Use {r} as my base',
     bw_text: 'Your roster starts and ends in {r}, but My details says your base is {b}. With the wrong base, per diems and rest come out wrong.',
@@ -2814,6 +2832,8 @@ var I18N = {
     e_noPeriod: 'I can’t find the roster period. Is this the IDP “Individual duty plan” PDF?'
   },
   de: {
+    advSet: 'Erweiterte Einstellungen (Beträge und Codes)',
+    howCalc: 'Wie wird gerechnet?',
     td_restLong: 'Frei bis zum Check-in: {g}',
     bw_fix: '{r} als Basis verwenden',
     bw_text: 'Dein Dienstplan beginnt und endet in {r}, in Meine Daten steht aber {b}. Mit falscher Basis stimmen Spesen und Ruhezeiten nicht.',
@@ -3335,6 +3355,8 @@ var I18N = {
     e_noPeriod: 'Ich finde den Zeitraum des Dienstplans nicht. Ist das der „Individual duty plan“ aus IDP als PDF?'
   },
   fr: {
+    advSet: 'Réglages avancés (montants et codes)',
+    howCalc: 'Comment est-ce calculé ?',
     td_restLong: 'Libre jusqu’au check-in : {g}',
     bw_fix: 'Utiliser {r} comme base',
     bw_text: 'Ton planning part de {r}, mais Mes données indique la base {b}. Avec une mauvaise base, les per diem et les repos sont faux.',
@@ -3856,6 +3878,8 @@ var I18N = {
     e_noPeriod: 'Je ne trouve pas la période du planning. Est-ce bien l’« Individual duty plan » d’IDP en PDF ?'
   },
   hu: {
+    advSet: 'Speciális beállítások (összegek és kódok)',
+    howCalc: 'Hogyan számol?',
     td_restLong: 'Szabad a bejelentkezésig: {g}',
     bw_fix: '{r} legyen a bázis',
     bw_text: 'A beosztásod {r}-ból indul, de az Adataimban {b} a bázis. Rossz bázissal a napidíj és a pihenő hibás.',
@@ -4377,6 +4401,8 @@ var I18N = {
     e_noPeriod: 'Nem találom a beosztás időszakát. Ez az IDP „Individual duty plan” PDF-je?'
   },
   sk: {
+    advSet: 'Rozšírené nastavenia (sumy a kódy)',
+    howCalc: 'Ako sa to počíta?',
     td_restLong: 'Voľno do check-inu: {g}',
     bw_fix: 'Použiť {r} ako základňu',
     bw_text: 'Tvoj rozpis začína v {r}, ale v Mojich údajoch máš základňu {b}. So zlou základňou vychádzajú diéty a odpočinok zle.',
@@ -4898,6 +4924,8 @@ var I18N = {
     e_noPeriod: 'Nenachádzam obdobie rozpisu. Je to „Individual duty plan“ z IDP v PDF?'
   },
   cs: {
+    advSet: 'Pokročilá nastavení (částky a kódy)',
+    howCalc: 'Jak se to počítá?',
     td_restLong: 'Volno do check-inu: {g}',
     bw_fix: 'Použít {r} jako základnu',
     bw_text: 'Tvůj rozpis začíná v {r}, ale v Mých údajích máš základnu {b}. Se špatnou základnou vycházejí diety a odpočinek špatně.',
@@ -5419,6 +5447,8 @@ var I18N = {
     e_noPeriod: 'Nenacházím období rozpisu. Je to „Individual duty plan“ z IDP v PDF?'
   },
   it: {
+    "advSet": "Impostazioni avanzate (importi e codici)",
+    "howCalc": "Come si calcola?",
     "td_restLong": "Libero fino al check-in: {g}",
     "bw_fix": "Usa {r} come base",
     "bw_text": "Il tuo roster parte da {r}, ma in I miei dati la base è {b}. Con la base sbagliata diarie e riposi risultano errati.",
@@ -6045,6 +6075,8 @@ var I18N = {
     "e_noPeriod": "Non trovo il periodo del turno. È l’«Individual duty plan» di IDP in PDF?"
   },
   pt: {
+    "advSet": "Definições avançadas (valores e códigos)",
+    "howCalc": "Como se calcula?",
     "td_restLong": "Livre até à apresentação: {g}",
     "bw_fix": "Usar {r} como base",
     "bw_text": "O teu roster sai de {r}, mas em Os meus dados a base é {b}. Com a base errada, as ajudas de custo e os descansos saem mal.",
@@ -6671,6 +6703,8 @@ var I18N = {
     "e_noPeriod": "Não encontro o período da escala. É o «Individual duty plan» do IDP em PDF?"
   },
   ro: {
+    "advSet": "Setări avansate (sume și coduri)",
+    "howCalc": "Cum se calculează?",
     "td_restLong": "Liber până la prezentare: {g}",
     "bw_fix": "Folosește {r} ca bază",
     "bw_text": "Programul tău pleacă din {r}, dar în Datele mele baza este {b}. Cu baza greșită, diurnele și odihna ies greșit.",
@@ -9637,17 +9671,25 @@ function setTab(tab){
   // the 3D route map only draws while it can be seen
   if(typeof mapDispose === 'function' && toolOpen === 'map' && !mm){ if(tab !== 'tools') mapDispose(); else if(!mapG3 && !mapFlat && $('g3m')) renderMap(); }
 }
+// A tool opens as its own screen ("‹ Tools" goes back; so does the iPhone back swipe)
 function openTool(k){
   setTab('tools');
-  toolOpen = (toolOpen===k && k!=='sim') ? null : k;
+  const was = toolOpen;
+  toolOpen = k;
   renderToolbar();
   const p = $('toolPanel');
-  if(!toolOpen){ if(typeof mapDispose === 'function') mapDispose(); p.hidden = true; p.innerHTML = ''; return; }
-  p.hidden = false;
+  p.hidden = false; document.body.dataset.toolopen = k;
   if(toolOpen !== 'map' && typeof mapDispose === 'function') mapDispose();
   TOOL_FN()[toolOpen]();
-  p.scrollIntoView({block:'nearest'});
+  if(was !== k){ window.scrollTo(0, 0); try{ if(!(history.state && history.state.tool)) history.pushState({tool:k}, ''); else history.replaceState({tool:k}, ''); }catch(e){} }
 }
+function closeTool(){
+  if(typeof mapDispose === 'function') mapDispose();
+  toolOpen = null; delete document.body.dataset.toolopen;
+  const p = $('toolPanel'); p.hidden = true; p.innerHTML = '';
+  renderToolbar(); window.scrollTo(0, 0);
+}
+window.addEventListener('popstate', () => { if(toolOpen) closeTool(); });
 function refreshTool(){ if(toolOpen) TOOL_FN()[toolOpen](); }
 const TOOL_FN = () => ({check:renderCheck, sim:renderSim, cal:renderCal, ftl:renderFtl, vac:renderVac, year:renderYear, wrap:renderWrap, map:renderMap, lay:renderLay, lic:renderLic, fat:renderFat, sales:renderSales, cmp:renderCmp, fam:renderFam, backup:renderBackup});
 const pnl = html => { $('toolPanel').innerHTML = html; };
@@ -10057,7 +10099,8 @@ document.addEventListener('change', async e=>{
 });
 document.addEventListener('click', async e=>{
   const tb = e.target.closest('[data-tool]'); if(tb){ openTool(tb.dataset.tool); return; }
-  const tg = e.target.closest('[data-tabgo]'); if(tg){ setTab(tg.dataset.tabgo); window.scrollTo(0,0); return; }
+  if(e.target.closest('#toolBack')){ if(history.state && history.state.tool) history.back(); else closeTool(); return; }
+  const tg = e.target.closest('[data-tabgo]'); if(tg){ if(tg.dataset.tabgo === 'tools' && toolOpen && document.body.dataset.tab === 'tools'){ if(history.state && history.state.tool) history.back(); else closeTool(); return; } setTab(tg.dataset.tabgo); window.scrollTo(0,0); return; }
   const sd = e.target.closest('[data-sim]'); if(sd){ simDate = sd.dataset.sim; toolOpen = null; openTool('sim'); return; }
   const id = e.target.id;
   if(id==='sim-go'){ runSim(); return; }
@@ -11618,7 +11661,7 @@ document.addEventListener('click', e => { if(e.target.id === 'bwFix'){ state.set
 <script>
 const SEED = null;
 const SEED_SETTINGS = null;
-const APP_VERSION = '2026.11.10-1122';
+const APP_VERSION = '2026.11.10-2134';
 const IS_PWA_BUILD = true;
 const LS = 'payroster.v1';
 const KC = { sick:'--warn', flight:'--k-flight', deadhead:'--k-dh', training:'--k-train', standby:'--k-sby', reserve:'--k-sby', ground:'--k-ground', off:'--k-off', empty:'--k-off', other:'--k-ground' };
@@ -12015,6 +12058,7 @@ function renderSlip(c, ro){
 function renderForm(){
   if($('form').dataset.ready) return;
   const s = state.settings;
+  const advOpen = !!($('advSet') && $('advSet').open);
   const lvl = r => (r==='PU'?[...Array(15)].map((_,i)=>i+1):[...Array(12)].map((_,i)=>i));
   $('form').innerHTML = `
     ${langSelect('f-lang')}
@@ -12028,9 +12072,10 @@ function renderForm(){
     <label>${t('f_base')}<input type="text" id="f-base" maxlength="3" value="${esc(s.base)}"></label>
     <label class="chk"><input type="checkbox" id="f-isTrainer"${s.isTrainer?' checked':''}> ${t('f_isTrainer')}</label>
     <label class="chk"><input type="checkbox" id="f-isCT"${s.isCT?' checked':''}> ${t('f_isCT')}</label>
-    <label>${t('f_uniform')}<input type="number" step="0.01" id="f-uniform" value="${s.uniform}"></label>
     <label>${t('f_irpf')}<input type="number" step="0.01" id="f-irpf" value="${s.irpf}"></label>
     <label>${t('f_ss')}<input type="number" step="0.01" id="f-ss" value="${s.ss}"></label>
+    <details class="wide adv" id="advSet"${advOpen ? ' open' : ''}><summary>${t('advSet')}</summary><div class="form" style="margin-top:8px">
+    <label>${t('f_uniform')}<input type="number" step="0.01" id="f-uniform" value="${s.uniform}"></label>
     ${s.isTrainer?`<label>${t('f_tBase')}<input type="number" step="0.01" id="f-tBase" value="${s.tBase}"></label>
     <label>${t('f_tTwo')}<input type="number" step="0.01" id="f-tTwo" value="${s.tTwo}"></label>
     <label>${t('f_tExtra')}<input type="number" step="0.01" id="f-tExtra" value="${s.tExtra}"></label>
@@ -12041,6 +12086,7 @@ function renderForm(){
     <label>${t('f_salesEst')}<input type="number" step="0.01" id="f-salesEstimate" value="${s.salesEstimate}"></label>
     <label>${t('f_early')}<input type="number" step="0.01" id="f-earlyCheckin" value="${s.earlyCheckin}"></label>
     <label class="wide">${t('f_absence')}<input type="text" id="f-absenceCodes" value="${esc(s.absenceCodes)}"></label>
+    </div></details>
     <div class="wide row"><button class="btn ghost" id="resetSet" type="button">${t('resetSet')}</button><button class="btn ghost" id="redoSetup" type="button">${t('redoSetup')}</button></div>`;
   $('form').dataset.ready = '1';
 }
