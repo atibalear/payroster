@@ -1,5 +1,5 @@
 // Payroster service worker: keeps the app usable offline and lets new versions in.
-const CACHE = 'payroster-2026.11.09-2233';
+const CACHE = 'payroster-2026.11.10-1100';
 const SHELL = ['./', './index.html', './manifest.webmanifest', './lib/pdf.min.js', './lib/pdf.worker.min.js',
   './icons/icon4-192.png', './icons/icon4-512.png', './icons/apple-touch-icon4.png'];
 // big files of the 3D moving map: kept in their own cache across versions so they work in flight
@@ -13,6 +13,7 @@ self.addEventListener('fetch', e => {
   const url = new URL(e.request.url);
   if (url.pathname.endsWith('/version.json')) return; // always ask the network
   if (/open-meteo\.com$/.test(url.hostname)) return; // weather: always live, never cached
+  if (/er-api\.com$/.test(url.hostname)) return; // exchange rates: live, kept by the app itself
   const isPage = e.request.mode === 'navigate';
   e.respondWith((async () => {
     const cache = await caches.open(CACHE);

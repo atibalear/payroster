@@ -296,6 +296,26 @@ html.locked #lockScr{display:flex;position:fixed;inset:0;z-index:999;background:
 .m-leg{fill:none;stroke:var(--accent);stroke-linecap:round;stroke-linejoin:round;vector-effect:non-scaling-stroke}
 .m-glow{fill:none;stroke:var(--accent);stroke-linecap:round;opacity:.18;vector-effect:non-scaling-stroke}
 .m-todo{fill:none;stroke:var(--accent);stroke-width:2px;stroke-dasharray:3 5;stroke-linecap:round;opacity:.7;vector-effect:non-scaling-stroke}
+.m-trk{fill:none;stroke:var(--pay);stroke-width:2.5px;stroke-linecap:round;stroke-linejoin:round;vector-effect:non-scaling-stroke}
+.trkrow{display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap}
+.btn.sm{font-size:12.5px;padding:4px 10px}
+.td-lay{margin-top:10px;background:var(--sunk);border-radius:12px;padding:0 12px}
+.td-lay summary{padding:10px 0;cursor:pointer;font-size:14px;list-style:none}
+.td-lay summary::-webkit-details-marker{display:none}
+.td-lay[open]{padding-bottom:12px}
+.lay-g{display:grid;gap:6px;font-size:14px;margin-bottom:10px}
+.lay-n{display:grid;gap:4px}
+.lay-n textarea{min-height:72px;font-size:14px}
+.laylist{display:grid;gap:8px;margin-top:12px}
+.laylist .td-lay{margin-top:0}
+.sofar{margin:8px 0 4px}
+.sftrack{height:6px;border-radius:3px;background:var(--sunk);overflow:hidden}
+.sftrack>div{height:100%;background:var(--pay);border-radius:3px}
+.sofar .note{margin-top:4px}
+.swp{margin-top:6px;font-size:13px}
+.cfgqr{background:#fff;padding:10px;border-radius:10px;width:min(260px,100%);line-height:0;margin:10px 0}
+.cfgqr svg{width:100%;height:auto;display:block}
+#cfg-url{width:100%;box-sizing:border-box;font-family:var(--f-mono);font-size:11px}
 .m-dh{stroke-dasharray:4 4;opacity:.6}
 .m-ap{fill:var(--surface);stroke:var(--accent);stroke-width:2px;vector-effect:non-scaling-stroke} .m-apo{fill:var(--accent);opacity:.18}
 .m-lbl{fill:var(--ink);font-family:var(--f-mono);font-weight:700;paint-order:stroke;stroke:var(--map-land);stroke-width:3px;stroke-linejoin:round;vector-effect:non-scaling-stroke}
@@ -407,6 +427,7 @@ input[type=date]::-webkit-date-and-time-value{text-align:left}
   </section>
 
   <h2 data-tab="more" data-i18n="tab_more"></h2>
+  <section class="panel" id="instRow" data-tab="more" hidden></section>
   <section class="panel" id="licTable" data-tab="more"></section>
   <section class="panel" id="lockBox" data-tab="more" hidden></section>
   <details class="box panel" id="setBox" data-tab="more" open>
@@ -1380,6 +1401,50 @@ var I18N = {
     mm_noLeg: 'No encuentro ningún vuelo en tus rosters para mostrar.',
     mm_note: 'El moving map usa el GPS del móvil, que funciona en modo avión sin internet. Pon el móvil cerca de una ventanilla. Es solo informativo, no para navegar.',
     mm_start: 'Moving map en vuelo',
+    "sofar": "Hasta hoy llevas {a} de lo trabajado · con todo el roster, {b} de variable",
+    "sofar_min": "(incluye mínimos garantizados)",
+    "trk_title": "Trazas GPS guardadas",
+    "trk_line": "{k} km · {n} puntos",
+    "trk_alt": "máx. {f} ft",
+    "trk_spd": "máx. {k} kt",
+    "trk_del": "Borrar",
+    "trk_note": "Mientras el moving map está abierto con GPS, guarda la traza del vuelo. Después la verás aquí, sobre el mapa.",
+    "tool_lay": "Escalas",
+    "lay_title": "Escala en {c}",
+    "lay_time": "hora local",
+    "lay_diff": "{h} h respecto a {b}",
+    "lay_same": "misma hora que {b}",
+    "lay_cur": "Moneda",
+    "lay_fx": "1 € ≈ {v} {c}",
+    "lay_fxOff": "cambio: abre con conexión",
+    "lay_plug": "Enchufe {p} · {v} V",
+    "lay_notes": "Mis notas",
+    "lay_ph": "Restaurantes, súper, transporte, wifi del hotel…",
+    "lay_intro": "Hora local, moneda, enchufe y tus notas de cada aeropuerto. Las notas se guardan solo en este móvil (y en la copia de seguridad).",
+    "lay_add": "Añadir aeropuerto (IATA)",
+    "lay_bad": "No conozco ese código IATA.",
+    "lay_n": "{n} noches",
+    "lay_none": "Aún no hay noches fuera en tus rosters. Añade un aeropuerto con su código.",
+    "swp_take": "Coger su día",
+    "swp_calc": "Calcular el cambio",
+    "swp_hint": "Marca los días que cogerías de su roster y pulsa «Calcular el cambio» para ver cuánto cambia tu nómina.",
+    "swp_none": "Marca al menos un día.",
+    "swp_days": "Días cambiados: {d}",
+    "swp_note": "Es una estimación: el roster compartido no trae el FDP, así que las horas salen de su check-in, último aterrizaje y check-out.",
+    "inst_t": "Instala Payroster+ en el móvil",
+    "inst_why": "Se abre a pantalla completa desde el inicio y funciona sin conexión, también en vuelo.",
+    "inst_btn": "Instalar",
+    "inst_ios": "En Safari: pulsa Compartir ⬆︎ y luego «Añadir a pantalla de inicio».",
+    "cfg_t": "Pasar ajustes a otro móvil",
+    "cfg_intro": "Crea un QR con tus datos de contrato, licencias y notas de escalas (sin rosters ni nóminas: para eso está la copia de seguridad). Escanéalo con la cámara del otro móvil.",
+    "cfg_make": "Crear QR de ajustes",
+    "cfg_link": "Los datos van dentro del enlace, tras el #: no pasan por ningún servidor. Es solo para ti, no lo compartas.",
+    "cfg_copy": "Copiar enlace",
+    "cfg_trim": "Sin notas de escalas: no cabían en el QR.",
+    "cfg_ask": "¿Cargar los ajustes de este QR (del {d})? Tus datos de contrato se sustituyen; las licencias y notas se añaden.",
+    "cfg_ok": "Cargar ajustes",
+    "cfg_done": "Ajustes cargados.",
+    "cfg_bad": "Este enlace de ajustes no se puede leer.",
     map_noAp: 'sin coordenadas: {a}',
     map_stats: '{n} tramos · {k} km',
     map_show: 'Mostrar',
@@ -1855,6 +1920,50 @@ var I18N = {
     mm_noLeg: 'No trobo cap vol als teus rosters per mostrar.',
     mm_note: 'El moving map fa servir el GPS del mòbil, que funciona en mode avió sense internet. Posa el mòbil a prop d’una finestreta. És només informatiu, no per navegar.',
     mm_start: 'Moving map en vol',
+    "sofar": "Fins avui portes {a} del que has treballat · amb tot el roster, {b} de variable",
+    "sofar_min": "(inclou mínims garantits)",
+    "trk_title": "Traces GPS desades",
+    "trk_line": "{k} km · {n} punts",
+    "trk_alt": "màx. {f} ft",
+    "trk_spd": "màx. {k} kt",
+    "trk_del": "Esborrar",
+    "trk_note": "Mentre el moving map és obert amb GPS, desa la traça del vol. Després la veuràs aquí, sobre el mapa.",
+    "tool_lay": "Escales",
+    "lay_title": "Escala a {c}",
+    "lay_time": "hora local",
+    "lay_diff": "{h} h respecte a {b}",
+    "lay_same": "mateixa hora que {b}",
+    "lay_cur": "Moneda",
+    "lay_fx": "1 € ≈ {v} {c}",
+    "lay_fxOff": "canvi: obre amb connexió",
+    "lay_plug": "Endoll {p} · {v} V",
+    "lay_notes": "Les meves notes",
+    "lay_ph": "Restaurants, súper, transport, wifi de l’hotel…",
+    "lay_intro": "Hora local, moneda, endoll i les teves notes de cada aeroport. Les notes es desen només en aquest mòbil (i a la còpia de seguretat).",
+    "lay_add": "Afegir aeroport (IATA)",
+    "lay_bad": "No conec aquest codi IATA.",
+    "lay_n": "{n} nits",
+    "lay_none": "Encara no hi ha nits fora als teus rosters. Afegeix un aeroport amb el seu codi.",
+    "swp_take": "Agafar el seu dia",
+    "swp_calc": "Calcular el canvi",
+    "swp_hint": "Marca els dies que agafaries del seu roster i prem «Calcular el canvi» per veure quant canvia la nòmina.",
+    "swp_none": "Marca almenys un dia.",
+    "swp_days": "Dies canviats: {d}",
+    "swp_note": "És una estimació: el roster compartit no porta el FDP, així que les hores surten del seu check-in, últim aterratge i check-out.",
+    "inst_t": "Instal·la Payroster+ al mòbil",
+    "inst_why": "S’obre a pantalla completa des de l’inici i funciona sense connexió, també en vol.",
+    "inst_btn": "Instal·lar",
+    "inst_ios": "A Safari: prem Compartir ⬆︎ i després «Afegir a la pantalla d’inici».",
+    "cfg_t": "Passar ajustos a un altre mòbil",
+    "cfg_intro": "Crea un QR amb les dades de contracte, llicències i notes d’escales (sense rosters ni nòmines: per a això hi ha la còpia). Escaneja’l amb la càmera de l’altre mòbil.",
+    "cfg_make": "Crear QR d’ajustos",
+    "cfg_link": "Les dades van dins de l’enllaç, després del #: no passen per cap servidor. És només per a tu, no el comparteixis.",
+    "cfg_copy": "Copiar enllaç",
+    "cfg_trim": "Sense notes d’escales: no hi cabien al QR.",
+    "cfg_ask": "Carregar els ajustos d’aquest QR (del {d})? Les dades de contracte se substitueixen; les llicències i notes s’afegeixen.",
+    "cfg_ok": "Carregar ajustos",
+    "cfg_done": "Ajustos carregats.",
+    "cfg_bad": "Aquest enllaç d’ajustos no es pot llegir.",
     map_noAp: 'sense coordenades: {a}',
     map_stats: '{n} trams · {k} km',
     map_show: 'Mostrar',
@@ -2330,6 +2439,50 @@ var I18N = {
     mm_noLeg: 'I can’t find a flight in your rosters to show.',
     mm_note: 'The moving map uses the phone’s GPS, which works in flight mode without internet. Keep the phone near a window. For information only, not for navigation.',
     mm_start: 'In-flight moving map',
+    "sofar": "So far {a} from work done · with the whole roster, {b} variable pay",
+    "sofar_min": "(includes minimum guarantees)",
+    "trk_title": "Saved GPS traces",
+    "trk_line": "{k} km · {n} points",
+    "trk_alt": "max {f} ft",
+    "trk_spd": "max {k} kt",
+    "trk_del": "Delete",
+    "trk_note": "While the moving map is open with GPS, it saves the flight’s trace. You’ll see it here on the map afterwards.",
+    "tool_lay": "Layovers",
+    "lay_title": "Layover in {c}",
+    "lay_time": "local time",
+    "lay_diff": "{h} h vs {b}",
+    "lay_same": "same time as {b}",
+    "lay_cur": "Currency",
+    "lay_fx": "1 € ≈ {v} {c}",
+    "lay_fxOff": "rate: open when online",
+    "lay_plug": "Plug {p} · {v} V",
+    "lay_notes": "My notes",
+    "lay_ph": "Restaurants, supermarket, transport, hotel wifi…",
+    "lay_intro": "Local time, currency, plug and your own notes for each airport. Notes stay on this phone (and in the backup).",
+    "lay_add": "Add airport (IATA)",
+    "lay_bad": "I don’t know that IATA code.",
+    "lay_n": "{n} nights",
+    "lay_none": "No nights away in your rosters yet. Add an airport by its code.",
+    "swp_take": "Take their day",
+    "swp_calc": "Work out the swap",
+    "swp_hint": "Tick the days you would take from their roster and tap “Work out the swap” to see what it does to your pay.",
+    "swp_none": "Tick at least one day.",
+    "swp_days": "Days swapped: {d}",
+    "swp_note": "An estimate: the shared roster has no FDP, so the hours come from their check-in, last landing and check-out.",
+    "inst_t": "Install Payroster+ on your phone",
+    "inst_why": "It opens full screen from your home screen and works offline, in flight too.",
+    "inst_btn": "Install",
+    "inst_ios": "In Safari: tap Share ⬆︎, then “Add to Home Screen”.",
+    "cfg_t": "Move settings to another phone",
+    "cfg_intro": "Makes a QR with your contract data, licences and layover notes (no rosters or payslips: the backup is for those). Scan it with the other phone’s camera.",
+    "cfg_make": "Make settings QR",
+    "cfg_link": "The data sits inside the link, after the #: it never reaches a server. It’s for you only, don’t share it.",
+    "cfg_copy": "Copy link",
+    "cfg_trim": "Layover notes left out: they didn’t fit in the QR.",
+    "cfg_ask": "Load the settings from this QR (from {d})? Your contract data is replaced; licences and notes are added.",
+    "cfg_ok": "Load settings",
+    "cfg_done": "Settings loaded.",
+    "cfg_bad": "This settings link can’t be read.",
     map_noAp: 'no coordinates: {a}',
     map_stats: '{n} sectors · {k} km',
     map_show: 'Show',
@@ -2805,6 +2958,50 @@ var I18N = {
     mm_noLeg: 'Ich finde keinen Flug in deinen Dienstplänen.',
     mm_note: 'Die Moving Map nutzt das GPS des Handys, das im Flugmodus ohne Internet funktioniert. Halte das Handy nahe ans Fenster. Nur zur Information, nicht zur Navigation.',
     mm_start: 'Moving Map im Flug',
+    "sofar": "Bis heute {a} aus geleisteter Arbeit · mit dem ganzen Dienstplan {b} variabel",
+    "sofar_min": "(inkl. garantierter Mindestbeträge)",
+    "trk_title": "Gespeicherte GPS-Spuren",
+    "trk_line": "{k} km · {n} Punkte",
+    "trk_alt": "max. {f} ft",
+    "trk_spd": "max. {k} kt",
+    "trk_del": "Löschen",
+    "trk_note": "Solange die Moving Map mit GPS offen ist, speichert sie die Flugspur. Danach siehst du sie hier auf der Karte.",
+    "tool_lay": "Layover",
+    "lay_title": "Layover in {c}",
+    "lay_time": "Ortszeit",
+    "lay_diff": "{h} h gegenüber {b}",
+    "lay_same": "gleiche Zeit wie {b}",
+    "lay_cur": "Währung",
+    "lay_fx": "1 € ≈ {v} {c}",
+    "lay_fxOff": "Kurs: mit Internet öffnen",
+    "lay_plug": "Stecker {p} · {v} V",
+    "lay_notes": "Meine Notizen",
+    "lay_ph": "Restaurants, Supermarkt, Verkehr, Hotel-WLAN…",
+    "lay_intro": "Ortszeit, Währung, Stecker und deine Notizen zu jedem Flughafen. Die Notizen bleiben auf diesem Handy (und in der Sicherung).",
+    "lay_add": "Flughafen hinzufügen (IATA)",
+    "lay_bad": "Diesen IATA-Code kenne ich nicht.",
+    "lay_n": "{n} Nächte",
+    "lay_none": "Noch keine Übernachtungen in deinen Dienstplänen. Füge einen Flughafen mit seinem Code hinzu.",
+    "swp_take": "Ihren Tag übernehmen",
+    "swp_calc": "Tausch berechnen",
+    "swp_hint": "Markiere die Tage, die du aus ihrem Dienstplan übernehmen würdest, und tippe auf „Tausch berechnen“.",
+    "swp_none": "Markiere mindestens einen Tag.",
+    "swp_days": "Getauschte Tage: {d}",
+    "swp_note": "Eine Schätzung: Der geteilte Dienstplan enthält keine FDP, die Stunden kommen aus Check-in, letzter Landung und Check-out.",
+    "inst_t": "Payroster+ aufs Handy installieren",
+    "inst_why": "Sie öffnet sich im Vollbild vom Startbildschirm und funktioniert offline, auch im Flug.",
+    "inst_btn": "Installieren",
+    "inst_ios": "In Safari: Teilen ⬆︎ antippen, dann „Zum Home-Bildschirm“.",
+    "cfg_t": "Einstellungen auf ein anderes Handy",
+    "cfg_intro": "Erstellt einen QR-Code mit Vertragsdaten, Lizenzen und Layover-Notizen (ohne Dienstpläne und Abrechnungen: dafür gibt es die Sicherung). Mit der Kamera des anderen Handys scannen.",
+    "cfg_make": "Einstellungs-QR erstellen",
+    "cfg_link": "Die Daten stehen im Link nach dem #: Sie gehen über keinen Server. Nur für dich, nicht weitergeben.",
+    "cfg_copy": "Link kopieren",
+    "cfg_trim": "Ohne Layover-Notizen: Sie passten nicht in den QR-Code.",
+    "cfg_ask": "Einstellungen aus diesem QR-Code laden (vom {d})? Vertragsdaten werden ersetzt, Lizenzen und Notizen ergänzt.",
+    "cfg_ok": "Einstellungen laden",
+    "cfg_done": "Einstellungen geladen.",
+    "cfg_bad": "Dieser Einstellungs-Link lässt sich nicht lesen.",
     map_noAp: 'ohne Koordinaten: {a}',
     map_stats: '{n} Sektoren · {k} km',
     map_show: 'Zeigen',
@@ -3280,6 +3477,50 @@ var I18N = {
     mm_noLeg: 'Je ne trouve aucun vol dans tes plannings.',
     mm_note: 'La moving map utilise le GPS du téléphone, qui marche en mode avion sans internet. Garde le téléphone près d’un hublot. À titre indicatif, pas pour naviguer.',
     mm_start: 'Moving map en vol',
+    "sofar": "Jusqu’à aujourd’hui {a} pour le travail fait · avec tout le planning, {b} de variable",
+    "sofar_min": "(minimums garantis inclus)",
+    "trk_title": "Traces GPS enregistrées",
+    "trk_line": "{k} km · {n} points",
+    "trk_alt": "max. {f} ft",
+    "trk_spd": "max. {k} kt",
+    "trk_del": "Supprimer",
+    "trk_note": "Tant que la moving map est ouverte avec le GPS, elle enregistre la trace du vol. Tu la verras ensuite ici sur la carte.",
+    "tool_lay": "Escales",
+    "lay_title": "Escale à {c}",
+    "lay_time": "heure locale",
+    "lay_diff": "{h} h par rapport à {b}",
+    "lay_same": "même heure qu’à {b}",
+    "lay_cur": "Monnaie",
+    "lay_fx": "1 € ≈ {v} {c}",
+    "lay_fxOff": "taux : ouvrir avec connexion",
+    "lay_plug": "Prise {p} · {v} V",
+    "lay_notes": "Mes notes",
+    "lay_ph": "Restaurants, supermarché, transports, wifi de l’hôtel…",
+    "lay_intro": "Heure locale, monnaie, prise et tes notes pour chaque aéroport. Les notes restent sur ce téléphone (et dans la sauvegarde).",
+    "lay_add": "Ajouter un aéroport (IATA)",
+    "lay_bad": "Je ne connais pas ce code IATA.",
+    "lay_n": "{n} nuits",
+    "lay_none": "Pas encore de nuits dehors dans tes plannings. Ajoute un aéroport avec son code.",
+    "swp_take": "Prendre son jour",
+    "swp_calc": "Calculer l’échange",
+    "swp_hint": "Coche les jours que tu prendrais de son planning et appuie sur « Calculer l’échange » pour voir l’effet sur ta paie.",
+    "swp_none": "Coche au moins un jour.",
+    "swp_days": "Jours échangés : {d}",
+    "swp_note": "C’est une estimation : le planning partagé n’a pas la FDP, les heures viennent du check-in, du dernier atterrissage et du check-out.",
+    "inst_t": "Installe Payroster+ sur ton téléphone",
+    "inst_why": "Elle s’ouvre en plein écran depuis l’accueil et marche hors ligne, en vol aussi.",
+    "inst_btn": "Installer",
+    "inst_ios": "Dans Safari : touche Partager ⬆︎ puis « Sur l’écran d’accueil ».",
+    "cfg_t": "Transférer les réglages vers un autre téléphone",
+    "cfg_intro": "Crée un QR avec tes données de contrat, licences et notes d’escales (sans plannings ni fiches de paie : la sauvegarde sert à ça). Scanne-le avec l’appareil photo de l’autre téléphone.",
+    "cfg_make": "Créer le QR des réglages",
+    "cfg_link": "Les données sont dans le lien, après le # : elles ne passent par aucun serveur. C’est pour toi seul, ne le partage pas.",
+    "cfg_copy": "Copier le lien",
+    "cfg_trim": "Sans les notes d’escales : elles ne tenaient pas dans le QR.",
+    "cfg_ask": "Charger les réglages de ce QR (du {d}) ? Tes données de contrat sont remplacées ; licences et notes sont ajoutées.",
+    "cfg_ok": "Charger les réglages",
+    "cfg_done": "Réglages chargés.",
+    "cfg_bad": "Ce lien de réglages est illisible.",
     map_noAp: 'sans coordonnées : {a}',
     map_stats: '{n} étapes · {k} km',
     map_show: 'Afficher',
@@ -3755,6 +3996,50 @@ var I18N = {
     mm_noLeg: 'Nem találok járatot a beosztásaidban.',
     mm_note: 'A moving map a telefon GPS-ét használja, ami repülő üzemmódban, internet nélkül is működik. Tartsd a telefont az ablak közelében. Csak tájékoztató, nem navigációra.',
     mm_start: 'Moving map repülés közben',
+    "sofar": "Mai napig {a} az elvégzett munkából · a teljes beosztással {b} változó bér",
+    "sofar_min": "(a garantált minimumokkal)",
+    "trk_title": "Mentett GPS-nyomvonalak",
+    "trk_line": "{k} km · {n} pont",
+    "trk_alt": "max. {f} ft",
+    "trk_spd": "max. {k} kt",
+    "trk_del": "Törlés",
+    "trk_note": "Amíg a moving map GPS-szel nyitva van, elmenti a repülés nyomvonalát. Utána itt látod a térképen.",
+    "tool_lay": "Kint alvások",
+    "lay_title": "Kint alvás: {c}",
+    "lay_time": "helyi idő",
+    "lay_diff": "{h} óra {b}-hez képest",
+    "lay_same": "ugyanaz az idő, mint {b}",
+    "lay_cur": "Pénznem",
+    "lay_fx": "1 € ≈ {v} {c}",
+    "lay_fxOff": "árfolyam: internettel nyisd meg",
+    "lay_plug": "Csatlakozó {p} · {v} V",
+    "lay_notes": "Jegyzeteim",
+    "lay_ph": "Éttermek, bolt, közlekedés, hotel wifi…",
+    "lay_intro": "Helyi idő, pénznem, csatlakozó és saját jegyzeteid minden reptérhez. A jegyzetek csak ezen a telefonon maradnak (és a mentésben).",
+    "lay_add": "Reptér hozzáadása (IATA)",
+    "lay_bad": "Ezt az IATA-kódot nem ismerem.",
+    "lay_n": "{n} éjszaka",
+    "lay_none": "Még nincs kint alvás a beosztásaidban. Adj hozzá egy repteret a kódjával.",
+    "swp_take": "Átvenni a napját",
+    "swp_calc": "Csere kiszámítása",
+    "swp_hint": "Jelöld be a napokat, amelyeket átvennél, és nyomd meg a „Csere kiszámítása” gombot.",
+    "swp_none": "Jelölj be legalább egy napot.",
+    "swp_days": "Cserélt napok: {d}",
+    "swp_note": "Ez becslés: a megosztott beosztásban nincs FDP, ezért az órák a check-inből, az utolsó leszállásból és a check-outból jönnek.",
+    "inst_t": "Telepítsd a Payroster+-t a telefonra",
+    "inst_why": "Teljes képernyőn nyílik a kezdőképernyőről, és internet nélkül is működik, repülés közben is.",
+    "inst_btn": "Telepítés",
+    "inst_ios": "Safariban: Megosztás ⬆︎, majd „Főképernyőhöz adás”.",
+    "cfg_t": "Beállítások átvitele másik telefonra",
+    "cfg_intro": "QR-kódot készít a szerződéses adataiddal, engedélyeiddel és jegyzeteiddel (beosztás és bérjegyzék nélkül: arra a mentés való). Olvasd be a másik telefon kamerájával.",
+    "cfg_make": "Beállítás-QR készítése",
+    "cfg_link": "Az adatok a linkben vannak, a # után: nem mennek át szerveren. Csak neked szól, ne oszd meg.",
+    "cfg_copy": "Link másolása",
+    "cfg_trim": "Jegyzetek nélkül: nem fértek bele a QR-kódba.",
+    "cfg_ask": "Betöltöd a QR-kód beállításait ({d})? A szerződéses adatok lecserélődnek, az engedélyek és jegyzetek hozzáadódnak.",
+    "cfg_ok": "Beállítások betöltése",
+    "cfg_done": "Beállítások betöltve.",
+    "cfg_bad": "Ez a beállítás-link nem olvasható.",
     map_noAp: 'koordináta nélkül: {a}',
     map_stats: '{n} szektor · {k} km',
     map_show: 'Mutasd',
@@ -4230,6 +4515,50 @@ var I18N = {
     mm_noLeg: 'V tvojich rozpisoch nenachádzam žiadny let.',
     mm_note: 'Moving map používa GPS telefónu, ktoré funguje v režime lietadlo bez internetu. Drž telefón pri okne. Len informatívne, nie na navigáciu.',
     mm_start: 'Moving map počas letu',
+    "sofar": "Doteraz {a} za odvedenú prácu · s celým rozpisom {b} variabilnej mzdy",
+    "sofar_min": "(vrátane garantovaných miním)",
+    "trk_title": "Uložené GPS stopy",
+    "trk_line": "{k} km · {n} bodov",
+    "trk_alt": "max. {f} ft",
+    "trk_spd": "max. {k} kt",
+    "trk_del": "Zmazať",
+    "trk_note": "Kým je moving map otvorená s GPS, ukladá stopu letu. Potom ju uvidíš tu na mape.",
+    "tool_lay": "Layovery",
+    "lay_title": "Layover v {c}",
+    "lay_time": "miestny čas",
+    "lay_diff": "{h} h oproti {b}",
+    "lay_same": "rovnaký čas ako {b}",
+    "lay_cur": "Mena",
+    "lay_fx": "1 € ≈ {v} {c}",
+    "lay_fxOff": "kurz: otvor s internetom",
+    "lay_plug": "Zásuvka {p} · {v} V",
+    "lay_notes": "Moje poznámky",
+    "lay_ph": "Reštaurácie, obchod, doprava, wifi v hoteli…",
+    "lay_intro": "Miestny čas, mena, zásuvka a tvoje poznámky ku každému letisku. Poznámky zostávajú len v tomto telefóne (a v zálohe).",
+    "lay_add": "Pridať letisko (IATA)",
+    "lay_bad": "Tento kód IATA nepoznám.",
+    "lay_n": "{n} nocí",
+    "lay_none": "V rozpisoch zatiaľ nie sú noci mimo bázy. Pridaj letisko podľa kódu.",
+    "swp_take": "Vziať jeho deň",
+    "swp_calc": "Vypočítať výmenu",
+    "swp_hint": "Označ dni, ktoré by si zobral z jeho rozpisu, a ťukni na „Vypočítať výmenu“.",
+    "swp_none": "Označ aspoň jeden deň.",
+    "swp_days": "Vymenené dni: {d}",
+    "swp_note": "Je to odhad: zdieľaný rozpis nemá FDP, hodiny sú z check-inu, posledného pristátia a check-outu.",
+    "inst_t": "Nainštaluj Payroster+ do telefónu",
+    "inst_why": "Otvára sa na celú obrazovku z plochy a funguje offline, aj počas letu.",
+    "inst_btn": "Inštalovať",
+    "inst_ios": "V Safari: ťukni na Zdieľať ⬆︎ a potom „Pridať na plochu“.",
+    "cfg_t": "Preniesť nastavenia do iného telefónu",
+    "cfg_intro": "Vytvorí QR s údajmi zo zmluvy, licenciami a poznámkami (bez rozpisov a výplatných pások: na to je záloha). Naskenuj ho fotoaparátom druhého telefónu.",
+    "cfg_make": "Vytvoriť QR nastavení",
+    "cfg_link": "Údaje sú v odkaze za #: nejdú cez žiadny server. Je len pre teba, nezdieľaj ho.",
+    "cfg_copy": "Kopírovať odkaz",
+    "cfg_trim": "Bez poznámok: nezmestili sa do QR.",
+    "cfg_ask": "Načítať nastavenia z tohto QR ({d})? Údaje zo zmluvy sa nahradia, licencie a poznámky sa pridajú.",
+    "cfg_ok": "Načítať nastavenia",
+    "cfg_done": "Nastavenia načítané.",
+    "cfg_bad": "Tento odkaz s nastaveniami sa nedá prečítať.",
     map_noAp: 'bez súradníc: {a}',
     map_stats: '{n} úsekov · {k} km',
     map_show: 'Zobraziť',
@@ -4705,6 +5034,50 @@ var I18N = {
     mm_noLeg: 'V tvých rozpisech nenacházím žádný let.',
     mm_note: 'Moving map používá GPS telefonu, které funguje v režimu letadlo bez internetu. Drž telefon u okna. Jen informativní, ne k navigaci.',
     mm_start: 'Moving map během letu',
+    "sofar": "Zatím {a} za odvedenou práci · s celým rozpisem {b} variabilní mzdy",
+    "sofar_min": "(včetně garantovaných minim)",
+    "trk_title": "Uložené GPS stopy",
+    "trk_line": "{k} km · {n} bodů",
+    "trk_alt": "max. {f} ft",
+    "trk_spd": "max. {k} kt",
+    "trk_del": "Smazat",
+    "trk_note": "Dokud je moving map otevřená s GPS, ukládá stopu letu. Potom ji uvidíš tady na mapě.",
+    "tool_lay": "Layovery",
+    "lay_title": "Layover v {c}",
+    "lay_time": "místní čas",
+    "lay_diff": "{h} h oproti {b}",
+    "lay_same": "stejný čas jako {b}",
+    "lay_cur": "Měna",
+    "lay_fx": "1 € ≈ {v} {c}",
+    "lay_fxOff": "kurz: otevři s internetem",
+    "lay_plug": "Zásuvka {p} · {v} V",
+    "lay_notes": "Moje poznámky",
+    "lay_ph": "Restaurace, obchod, doprava, wifi v hotelu…",
+    "lay_intro": "Místní čas, měna, zásuvka a tvoje poznámky ke každému letišti. Poznámky zůstávají jen v tomto telefonu (a v záloze).",
+    "lay_add": "Přidat letiště (IATA)",
+    "lay_bad": "Tento kód IATA neznám.",
+    "lay_n": "{n} nocí",
+    "lay_none": "V rozpisech zatím nejsou noci mimo bázi. Přidej letiště podle kódu.",
+    "swp_take": "Vzít jeho den",
+    "swp_calc": "Spočítat výměnu",
+    "swp_hint": "Označ dny, které bys vzal z jeho rozpisu, a klepni na „Spočítat výměnu“.",
+    "swp_none": "Označ aspoň jeden den.",
+    "swp_days": "Vyměněné dny: {d}",
+    "swp_note": "Je to odhad: sdílený rozpis nemá FDP, hodiny jsou z check-inu, posledního přistání a check-outu.",
+    "inst_t": "Nainstaluj Payroster+ do telefonu",
+    "inst_why": "Otevírá se na celou obrazovku z plochy a funguje offline, i za letu.",
+    "inst_btn": "Instalovat",
+    "inst_ios": "V Safari: klepni na Sdílet ⬆︎ a pak „Přidat na plochu“.",
+    "cfg_t": "Přenést nastavení do jiného telefonu",
+    "cfg_intro": "Vytvoří QR s údaji ze smlouvy, licencemi a poznámkami (bez rozpisů a výplatních pásek: na to je záloha). Naskenuj ho fotoaparátem druhého telefonu.",
+    "cfg_make": "Vytvořit QR nastavení",
+    "cfg_link": "Údaje jsou v odkazu za #: nejdou přes žádný server. Je jen pro tebe, nesdílej ho.",
+    "cfg_copy": "Kopírovat odkaz",
+    "cfg_trim": "Bez poznámek: nevešly se do QR.",
+    "cfg_ask": "Načíst nastavení z tohoto QR ({d})? Údaje ze smlouvy se nahradí, licence a poznámky se přidají.",
+    "cfg_ok": "Načíst nastavení",
+    "cfg_done": "Nastavení načteno.",
+    "cfg_bad": "Tento odkaz s nastavením nejde přečíst.",
     map_noAp: 'bez souřadnic: {a}',
     map_stats: '{n} úseků · {k} km',
     map_show: 'Zobrazit',
@@ -5179,6 +5552,50 @@ var I18N = {
     "mm_noLeg": "Non trovo nessun volo nei tuoi roster.",
     "mm_note": "La moving map usa il GPS del telefono, che funziona in modalità aereo senza internet. Tieni il telefono vicino a un finestrino. Solo informativa, non per navigare.",
     "mm_start": "Moving map in volo",
+    "sofar": "Finora {a} dal lavoro fatto · con tutto il roster, {b} di variabile",
+    "sofar_min": "(minimi garantiti inclusi)",
+    "trk_title": "Tracce GPS salvate",
+    "trk_line": "{k} km · {n} punti",
+    "trk_alt": "max {f} ft",
+    "trk_spd": "max {k} kt",
+    "trk_del": "Elimina",
+    "trk_note": "Mentre la moving map è aperta con il GPS, salva la traccia del volo. Dopo la vedrai qui sulla mappa.",
+    "tool_lay": "Scali",
+    "lay_title": "Scalo a {c}",
+    "lay_time": "ora locale",
+    "lay_diff": "{h} h rispetto a {b}",
+    "lay_same": "stessa ora di {b}",
+    "lay_cur": "Valuta",
+    "lay_fx": "1 € ≈ {v} {c}",
+    "lay_fxOff": "cambio: apri con connessione",
+    "lay_plug": "Presa {p} · {v} V",
+    "lay_notes": "Le mie note",
+    "lay_ph": "Ristoranti, supermercato, trasporti, wifi dell’hotel…",
+    "lay_intro": "Ora locale, valuta, presa e le tue note per ogni aeroporto. Le note restano su questo telefono (e nel backup).",
+    "lay_add": "Aggiungi aeroporto (IATA)",
+    "lay_bad": "Non conosco questo codice IATA.",
+    "lay_n": "{n} notti",
+    "lay_none": "Ancora nessuna notte fuori nei tuoi roster. Aggiungi un aeroporto con il suo codice.",
+    "swp_take": "Prendere il suo giorno",
+    "swp_calc": "Calcola lo scambio",
+    "swp_hint": "Segna i giorni che prenderesti dal suo roster e premi «Calcola lo scambio» per vedere l’effetto sullo stipendio.",
+    "swp_none": "Segna almeno un giorno.",
+    "swp_days": "Giorni scambiati: {d}",
+    "swp_note": "È una stima: il roster condiviso non ha l’FDP, quindi le ore vengono dal check-in, dall’ultimo atterraggio e dal check-out.",
+    "inst_t": "Installa Payroster+ sul telefono",
+    "inst_why": "Si apre a schermo intero dalla schermata home e funziona offline, anche in volo.",
+    "inst_btn": "Installa",
+    "inst_ios": "In Safari: tocca Condividi ⬆︎ e poi «Aggiungi alla schermata Home».",
+    "cfg_t": "Passa le impostazioni a un altro telefono",
+    "cfg_intro": "Crea un QR con i dati del contratto, le licenze e le note degli scali (senza roster né buste paga: per quello c’è il backup). Scansionalo con la fotocamera dell’altro telefono.",
+    "cfg_make": "Crea QR delle impostazioni",
+    "cfg_link": "I dati sono dentro il link, dopo il #: non passano da nessun server. È solo per te, non condividerlo.",
+    "cfg_copy": "Copia link",
+    "cfg_trim": "Senza note degli scali: non entravano nel QR.",
+    "cfg_ask": "Caricare le impostazioni da questo QR (del {d})? I dati del contratto vengono sostituiti; licenze e note si aggiungono.",
+    "cfg_ok": "Carica impostazioni",
+    "cfg_done": "Impostazioni caricate.",
+    "cfg_bad": "Questo link di impostazioni non si può leggere.",
     "map_noAp": "senza coordinate: {a}",
     "map_stats": "{n} tratte · {k} km",
     "map_show": "Mostra",
@@ -5759,6 +6176,50 @@ var I18N = {
     "mm_noLeg": "Não encontro nenhum voo nas tuas escalas.",
     "mm_note": "O moving map usa o GPS do telemóvel, que funciona em modo de voo sem internet. Mantém o telemóvel junto a uma janela. É só informativo, não para navegar.",
     "mm_start": "Moving map em voo",
+    "sofar": "Até hoje levas {a} do trabalho feito · com a escala toda, {b} de variável",
+    "sofar_min": "(inclui mínimos garantidos)",
+    "trk_title": "Trajetos GPS guardados",
+    "trk_line": "{k} km · {n} pontos",
+    "trk_alt": "máx. {f} ft",
+    "trk_spd": "máx. {k} kt",
+    "trk_del": "Apagar",
+    "trk_note": "Enquanto o moving map está aberto com GPS, guarda o trajeto do voo. Depois vês aqui no mapa.",
+    "tool_lay": "Escalas",
+    "lay_title": "Escala em {c}",
+    "lay_time": "hora local",
+    "lay_diff": "{h} h em relação a {b}",
+    "lay_same": "mesma hora que {b}",
+    "lay_cur": "Moeda",
+    "lay_fx": "1 € ≈ {v} {c}",
+    "lay_fxOff": "câmbio: abre com ligação",
+    "lay_plug": "Tomada {p} · {v} V",
+    "lay_notes": "As minhas notas",
+    "lay_ph": "Restaurantes, supermercado, transporte, wifi do hotel…",
+    "lay_intro": "Hora local, moeda, tomada e as tuas notas de cada aeroporto. As notas ficam só neste telemóvel (e na cópia de segurança).",
+    "lay_add": "Adicionar aeroporto (IATA)",
+    "lay_bad": "Não conheço esse código IATA.",
+    "lay_n": "{n} noites",
+    "lay_none": "Ainda não há noites fora nas tuas escalas. Adiciona um aeroporto pelo código.",
+    "swp_take": "Ficar com o dia dele",
+    "swp_calc": "Calcular a troca",
+    "swp_hint": "Marca os dias que ficarias da escala dele e carrega em «Calcular a troca» para ver o efeito no recibo.",
+    "swp_none": "Marca pelo menos um dia.",
+    "swp_days": "Dias trocados: {d}",
+    "swp_note": "É uma estimativa: a escala partilhada não traz o FDP, por isso as horas saem do check-in, última aterragem e check-out.",
+    "inst_t": "Instala o Payroster+ no telemóvel",
+    "inst_why": "Abre em ecrã inteiro a partir do ecrã inicial e funciona sem ligação, também em voo.",
+    "inst_btn": "Instalar",
+    "inst_ios": "No Safari: toca em Partilhar ⬆︎ e depois «Adicionar ao ecrã principal».",
+    "cfg_t": "Passar definições para outro telemóvel",
+    "cfg_intro": "Cria um QR com os dados do contrato, licenças e notas de escalas (sem escalas de serviço nem recibos: para isso há a cópia). Lê-o com a câmara do outro telemóvel.",
+    "cfg_make": "Criar QR das definições",
+    "cfg_link": "Os dados vão dentro do link, depois do #: não passam por nenhum servidor. É só para ti, não o partilhes.",
+    "cfg_copy": "Copiar link",
+    "cfg_trim": "Sem notas de escalas: não cabiam no QR.",
+    "cfg_ask": "Carregar as definições deste QR (de {d})? Os dados do contrato são substituídos; licenças e notas são acrescentadas.",
+    "cfg_ok": "Carregar definições",
+    "cfg_done": "Definições carregadas.",
+    "cfg_bad": "Este link de definições não se consegue ler.",
     "map_noAp": "sem coordenadas: {a}",
     "map_stats": "{n} setores · {k} km",
     "map_show": "Mostrar",
@@ -6339,6 +6800,50 @@ var I18N = {
     "mm_noLeg": "Nu găsesc niciun zbor în rosterele tale.",
     "mm_note": "Moving map folosește GPS-ul telefonului, care merge în modul avion fără internet. Ține telefonul lângă un hublou. Doar informativ, nu pentru navigație.",
     "mm_start": "Moving map în zbor",
+    "sofar": "Până azi ai {a} din munca făcută · cu tot planul, {b} variabil",
+    "sofar_min": "(inclusiv minimele garantate)",
+    "trk_title": "Trasee GPS salvate",
+    "trk_line": "{k} km · {n} puncte",
+    "trk_alt": "max. {f} ft",
+    "trk_spd": "max. {k} kt",
+    "trk_del": "Șterge",
+    "trk_note": "Cât timp moving map e deschisă cu GPS, salvează traseul zborului. Apoi îl vezi aici pe hartă.",
+    "tool_lay": "Escale",
+    "lay_title": "Escală în {c}",
+    "lay_time": "ora locală",
+    "lay_diff": "{h} h față de {b}",
+    "lay_same": "aceeași oră ca {b}",
+    "lay_cur": "Moneda",
+    "lay_fx": "1 € ≈ {v} {c}",
+    "lay_fxOff": "curs: deschide cu internet",
+    "lay_plug": "Priză {p} · {v} V",
+    "lay_notes": "Notițele mele",
+    "lay_ph": "Restaurante, supermarket, transport, wifi la hotel…",
+    "lay_intro": "Ora locală, moneda, priza și notițele tale pentru fiecare aeroport. Notițele rămân doar pe acest telefon (și în backup).",
+    "lay_add": "Adaugă aeroport (IATA)",
+    "lay_bad": "Nu cunosc acest cod IATA.",
+    "lay_n": "{n} nopți",
+    "lay_none": "Încă nu ai nopți în afara bazei în planuri. Adaugă un aeroport după cod.",
+    "swp_take": "Iau ziua lui",
+    "swp_calc": "Calculează schimbul",
+    "swp_hint": "Bifează zilele pe care le-ai lua din planul lui și apasă „Calculează schimbul”.",
+    "swp_none": "Bifează cel puțin o zi.",
+    "swp_days": "Zile schimbate: {d}",
+    "swp_note": "Este o estimare: planul partajat nu are FDP, deci orele vin din check-in, ultima aterizare și check-out.",
+    "inst_t": "Instalează Payroster+ pe telefon",
+    "inst_why": "Se deschide pe tot ecranul din ecranul principal și merge offline, și în zbor.",
+    "inst_btn": "Instalează",
+    "inst_ios": "În Safari: apasă Partajare ⬆︎, apoi „Adaugă pe ecranul principal”.",
+    "cfg_t": "Mută setările pe alt telefon",
+    "cfg_intro": "Creează un QR cu datele contractului, licențele și notițele (fără planuri sau fluturași: pentru ele e backupul). Scanează-l cu camera celuilalt telefon.",
+    "cfg_make": "Creează QR cu setări",
+    "cfg_link": "Datele sunt în link, după #: nu trec prin niciun server. E doar pentru tine, nu-l partaja.",
+    "cfg_copy": "Copiază linkul",
+    "cfg_trim": "Fără notițe: nu încăpeau în QR.",
+    "cfg_ask": "Încarci setările din acest QR (din {d})? Datele contractului se înlocuiesc; licențele și notițele se adaugă.",
+    "cfg_ok": "Încarcă setările",
+    "cfg_done": "Setări încărcate.",
+    "cfg_bad": "Acest link cu setări nu poate fi citit.",
     "map_noAp": "fără coordonate: {a}",
     "map_stats": "{n} sectoare · {k} km",
     "map_show": "Arată",
@@ -9075,11 +9580,12 @@ var qrcode = function() {
 // ---- Payroster tools: payslip check, what-if, calendar, FTL, days off, year summary, backup ----
 // Shares the page's globals (state, t, eur, n2, hhmm, PR, monthName, key, prevKey, save, render…).
 
-const TOOLS = ['map','check','sim','cal','ftl','fat','vac','lic','sales','year','wrap','cmp','fam','backup'];
+const TOOLS = ['map','lay','check','sim','cal','ftl','fat','vac','lic','sales','year','wrap','cmp','fam','backup'];
 let toolOpen = null, simDate = null;
 
 const TOOL_ICON = {
   map:'<path d="M9 4 3.5 6v14L9 18l6 2 5.5-2V4L15 6 9 4z"/><path d="M9 4v14M15 6v14"/>',
+  lay:'<rect x="4" y="7.5" width="16" height="12" rx="2.5"/><path d="M9 7.5V5.5a1.5 1.5 0 0 1 1.5-1.5h3A1.5 1.5 0 0 1 15 5.5v2M4 12.5h16M10.5 12.5v1.5h3v-1.5"/>',
   check:'<path d="M7 3.5h8l3.5 3.5v13.5h-11.5z"/><path d="M14.5 3.5V7h4"/><path d="m9.5 13.5 2 2 4-4.5"/>',
   sim:'<path d="M4 18 9.5 12l3.5 3.5L20 8"/><path d="M15 8h5v5"/>',
   cal:'<rect x="3.5" y="5" width="17" height="15" rx="2.5"/><path d="M3.5 10h17M8 3v4M16 3v4"/><path d="M12 13v4M10 15h4"/>',
@@ -9092,7 +9598,7 @@ const TOOL_ICON = {
   lic:'<rect x="4" y="5" width="16" height="14" rx="2.5"/><circle cx="9" cy="11" r="2"/><path d="M6.5 16c.5-1.5 1.4-2.2 2.5-2.2s2 .7 2.5 2.2M14 10h3.5M14 13.5h3.5"/>',
   fat:'<path d="M20 14.5A8 8 0 1 1 9.5 4a6.5 6.5 0 0 0 10.5 10.5z"/>',
   sales:'<path d="M5 7h14l-1.4 9.2a2 2 0 0 1-2 1.8H8.4a2 2 0 0 1-2-1.8z"/><path d="M9 7V5.5a3 3 0 0 1 6 0V7"/>',
-  backup:'<path d=""M7 18.5a4.5 4.5 0 0 1-.6-9A6 6 0 0 1 18 8.6a4 4 0 0 1-.5 9.9H7z"/><path d="m12 11v5M9.8 13.2 12 11l2.2 2.2"/>'
+  backup:'<path d="M7 18.5a4.5 4.5 0 0 1-.6-9A6 6 0 0 1 18 8.6a4 4 0 0 1-.5 9.9H7z"/><path d="m12 11v5M9.8 13.2 12 11l2.2 2.2"/>'
 };
 function renderToolbar(){
   const bar = $('toolbar'); if(!bar) return;
@@ -9114,7 +9620,7 @@ function openTool(k){
   p.scrollIntoView({block:'nearest'});
 }
 function refreshTool(){ if(toolOpen) TOOL_FN()[toolOpen](); }
-const TOOL_FN = () => ({check:renderCheck, sim:renderSim, cal:renderCal, ftl:renderFtl, vac:renderVac, year:renderYear, wrap:renderWrap, map:renderMap, lic:renderLic, fat:renderFat, sales:renderSales, cmp:renderCmp, fam:renderFam, backup:renderBackup});
+const TOOL_FN = () => ({check:renderCheck, sim:renderSim, cal:renderCal, ftl:renderFtl, vac:renderVac, year:renderYear, wrap:renderWrap, map:renderMap, lay:renderLay, lic:renderLic, fat:renderFat, sales:renderSales, cmp:renderCmp, fam:renderFam, backup:renderBackup});
 const pnl = html => { $('toolPanel').innerHTML = html; };
 const hdr = (k, sub) => `<div class="eyebrow">${t('tool_'+k)}</div>${sub?`<p class="note" style="margin:6px 0 12px">${sub}</p>`:''}`;
 const fmtH = h => hhmm(Math.max(0,h||0));
@@ -9495,7 +10001,9 @@ function renderBackup(msg){
   pnl(hdr('backup', t('bk_intro')) + `<p class="note">${t('bk_have',{m:n,s:ns})}</p>
     <div class="row"><button class="btn" id="bk-exp" type="button">${t('bk_export')}</button>
     <label class="btn ghost" for="bk-in" style="display:inline-block">${t('bk_import')}</label><input type="file" id="bk-in" class="sr"></div>
-    <div id="bk-out">${msg||''}</div>`);
+    <div id="bk-out">${msg||''}</div>
+    <h3 class="wh">📱 ${t('cfg_t')}</h3><p class="note">${t('cfg_intro')}</p>
+    <div class="row"><button class="btn ghost" id="cfg-make" type="button">${t('cfg_make')}</button></div><div id="cfg-out"></div>`);
 }
 let bkPending = null;
 // any file can be picked (iOS greys out .json files when the picker filters by type); the content is checked here
@@ -9648,6 +10156,7 @@ function renderToday(){
     <div class="note">${sub}</div>
     ${tl}${fl}
     ${x.hotel ? `<div class="td-hotel" id="tdHotel">🏨 ${t('nightIn',{st:x.hotel})}</div>` : ''}
+    ${(() => { const ls = x.hotel && x.hotel !== base ? x.hotel : (x.st && x.st !== base ? x.st : null); return ls ? layHtml(ls) : ''; })()}
     ${ftlA ? `<div class="chips" style="margin-top:10px">${ftlA}</div>` : ''}
     ${rest}
     ${legs.some(l => l.type==='flt') && (cur || x.start - now < 18*36e5) ? `<button class="btn td-mmb" type="button" id="td-mm">✈ ${t('mm_start')}</button>` : ''}`;
@@ -9788,9 +10297,13 @@ async function renderCmp(){
     else if(isOff(m)){ swapA++; tag = `<span class="chip">${t('cmp_meOff')}</span>`; }
     else if(isOff(o)){ swapB++; tag = `<span class="chip">${t('cmp_themOff')}</span>`; }
     const dd = new Date(m.date+'T12:00').toLocaleDateString(LOC, {weekday:'short', day:'numeric'});
-    return `<div class="mrow"><div class="mh">${dd} ${tag}</div><div class="cmp2"><div><span class="note">${t('cmp_me')}</span> ${lbl(m)}</div><div><span class="note">${esc(p.n || t('cmp_them'))}</span> ${lbl(o)}</div></div></div>`;
+    const canSwap = !together && !(isOff(m) && isOff(o)) && !!o;
+    return `<div class="mrow"><div class="mh">${dd} ${tag}</div><div class="cmp2"><div><span class="note">${t('cmp_me')}</span> ${lbl(m)}</div><div><span class="note">${esc(p.n || t('cmp_them'))}</span> ${lbl(o)}</div></div>${canSwap ? `<label class="chk swp"><input type="checkbox" data-swp="${m.date}"> 💱 ${t('swp_take')}</label>` : ''}</div>`;
   }).join('');
-  $('cmp-out').innerHTML = `<p class="msg">${t('cmp_sum', {b: both, s: same, a: swapA, o: swapB})}</p><div class="mlist">${rows}</div>`;
+  cmpCur = { ro, theirs };
+  $('cmp-out').innerHTML = `<p class="msg">${t('cmp_sum', {b: both, s: same, a: swapA, o: swapB})}</p>
+    <p class="note">${t('swp_hint')}</p><div class="row"><button class="btn" id="cmp-swp" type="button">💱 ${t('swp_calc')}</button></div><div id="swp-out"></div>
+    <div class="mlist" style="margin-top:10px">${rows}</div>`;
 }
 
 // ---------- 6. parents: birth leave, breastfeeding / infant care ----------
@@ -9950,7 +10463,8 @@ const MAP = (() => {
       const w = 1.6 + 2.6 * (l.n||1) / max;
       if(opt.done == null) return `<path d="${pathOf(a)}" class="m-glow" style="stroke-width:${w + 5}px"/><path d="${pathOf(a)}" class="m-leg${l.dh?' m-dh':''}" style="stroke-width:${w}px"/>`;
       const cut = Math.max(0, Math.min(96, Math.round(opt.done * 96)));
-      return `<path d="${pathOf(a)}" class="m-todo"/><path id="mm-done" d="${pathOf(a.slice(0, cut + 1))}" class="m-leg" style="stroke-width:3.5px"/>`; }).join('');
+      return `<path d="${pathOf(a)}" class="m-todo"/><path id="mm-done" d="${pathOf(a.slice(0, cut + 1))}" class="m-leg" style="stroke-width:3.5px"/>`; }).join('')
+      + (opt.tracks || []).filter(tr => tr.length > 1).map(tr => `<path d="${pathOf(tr.map(p => [p[1], p[0]]))}" class="m-trk"/>`).join('');
     const aps = [...new Set(legs.flatMap(l => [l.dep, l.arr]))].filter(a => AP[a]);
     const dots = aps.map(a => { const [x, y] = P(AP[a].lon, AP[a].lat);
       return `<circle cx="${x.toFixed(3)}" cy="${y.toFixed(3)}" r="${(k*1.5).toFixed(3)}" class="m-apo"/><circle cx="${x.toFixed(3)}" cy="${y.toFixed(3)}" r="${(k*0.75).toFixed(3)}" class="m-ap"/>
@@ -9997,11 +10511,12 @@ function renderMap(){
   const km = legs.reduce((a, l) => a + kmBetween(l.dep, l.arr) * (l.dh ? 0 : l.n), 0);
   const opts = `<option value="">${t('map_all',{m:monthName(ro.year, ro.month)})}</option>` + flDays.map(d => `<option value="${d.date}"${d.date===sel?' selected':''}>${d.day} · ${esc(d.route)}</option>`).join('');
   const missing = [...new Set(legs.flatMap(l => [l.dep, l.arr]))].filter(a => !AP[a]);
+  const trk = tracksOf(new Set(sel ? [sel] : ro.days.map(d => d.date)));
   pnl(hdr('map', t('map_intro')) + `<label class="note">${t('map_show')} <select id="map-d">${opts}</select></label>
-    <div class="mapbox">${MAP.svg(legs)}</div>
+    <div class="mapbox">${MAP.svg(legs, {tracks: trk.map(tr => tr.pts)})}</div>
     <p class="note">${t('map_stats', {n: legs.filter(l=>!l.dh).reduce((a,l)=>a+l.n,0), k: Math.round(km).toLocaleString(LOC)})}${missing.length ? ' · ' + t('map_noAp',{a: missing.join(', ')}) : ''}</p>
     <div class="row"><button class="btn" id="mm-go" type="button">✈ ${t('mm_start')}</button></div>
-    <p class="note">${t('mm_note')}</p>`);
+    <p class="note">${t('mm_note')}</p>${tracksHtml(trk)}`);
 }
 
 // ---------- moving map ----------
@@ -10035,6 +10550,7 @@ function startMoving(){
       if(mm.fix.hdg == null || isNaN(mm.fix.hdg)) mm.fix.hdg = bearing(prev.lat, prev.lon, mm.fix.lat, mm.fix.lon);
     }
     mm.track.push([mm.fix.lat, mm.fix.lon]); if(mm.track.length > 500) mm.track.shift();
+    try{ trackAdd(mm.leg, mm.fix); }catch(err){}
     mm.err = null; if(toolOpen === 'map') renderMoving();
   }, e => { if(!mm) return; mm.err = e.code === 1 ? 'denied' : 'wait'; },
   { enableHighAccuracy: true, maximumAge: 5000, timeout: 60000 });
@@ -10044,6 +10560,7 @@ function startMoving(){
 function stopMoving(){
   if(!mm) return;
   try{ navigator.geolocation.clearWatch(mm.watch); }catch(e){}
+  try{ trackSave(); }catch(e){}
   try{ mm.lock && mm.lock.release(); }catch(e){}
   try{ mm.g3 && mm.g3.dispose(); }catch(e){}
   mm = null; renderMap();
@@ -10164,6 +10681,262 @@ document.addEventListener('click', e => {
   if((id === 'g3-globe' || id === 'g3-near') && mm){ mm.g3view = id === 'g3-near' ? 'near' : 'globe'; if(mm.g3) mm.g3.setView(mm.g3view);
     $('g3-globe').classList.toggle('on', mm.g3view === 'globe'); $('g3-near').classList.toggle('on', mm.g3view === 'near'); return; }
   const md = e.target.closest('[data-mapday]'); if(md){ mapDay = md.dataset.mapday; toolOpen = null; openTool('map'); return; }
+});
+
+// ---- Payroster+ (Nov 2026): GPS trace, layovers, month so far, swap with a colleague, install, settings by QR ----
+
+// ---------- GPS trace of the moving map ----------
+// Fixes are kept per flight while the moving map runs with GPS, thinned to one point every
+// 30 s or 5 km, so a sector is about 10 kB. The 25 newest flights are kept, under 500 kB in all,
+// so the traces never crowd the rosters out of local storage.
+let trkDirty = 0, trkSavedAt = 0;
+const trkKey = l => l.date + '|' + l.flight;
+function trackAdd(leg, f){
+  if(!leg || !f || !(f.acc < 3000)) return;
+  const T = state.tracks = state.tracks || {}, k = trkKey(leg);
+  const tr = T[k] = T[k] || { date: leg.date, flight: leg.flight, dep: leg.dep, arr: leg.arr, pts: [], alt: 0, spd: 0 };
+  const last = tr.pts[tr.pts.length - 1], sec = Math.round(f.at / 1000);
+  if(last && sec - last[3] < 30 && kmLL(last[0], last[1], f.lat, f.lon) < 5) return;
+  tr.pts.push([+f.lat.toFixed(4), +f.lon.toFixed(4), f.alt != null ? Math.round(f.alt) : null, sec]);
+  if(tr.pts.length > 800) tr.pts = tr.pts.filter((p, i, a) => i % 2 === 0 || i === a.length - 1);
+  if(f.alt != null && f.alt > tr.alt) tr.alt = Math.round(f.alt);
+  if(f.spd != null && f.spd < 340 && f.spd > tr.spd) tr.spd = Math.round(f.spd);   // < 340 m/s drops GPS glitches
+  const ks = Object.keys(T).sort(); while(ks.length > 25) delete T[ks.shift()];
+  trkDirty++;
+  if(trkDirty >= 6 || Date.now() - trkSavedAt > 120e3) trackSave();
+}
+function trackSave(){
+  if(!trkDirty) return; trkDirty = 0; trkSavedAt = Date.now();
+  const T = state.tracks || {}, ks = Object.keys(T).sort();
+  while(ks.length > 1 && JSON.stringify(T).length > 500e3) delete T[ks.shift()];
+  save();
+}
+const trkKm = tr => tr.pts.reduce((a, p, i) => i ? a + kmLL(tr.pts[i-1][0], tr.pts[i-1][1], p[0], p[1]) : 0, 0);
+function tracksOf(dates){ return Object.values(state.tracks || {}).filter(tr => tr.pts.length > 1 && dates.has(tr.date)).sort((a, b) => a.date.localeCompare(b.date)); }
+function tracksHtml(list){
+  if(!list.length) return `<p class="note">📡 ${t('trk_note')}</p>`;
+  return `<h3 class="wh">📡 ${t('trk_title')}</h3><div class="mlist">${list.map(tr => {
+    const d = new Date(tr.date + 'T12:00').toLocaleDateString(LOC, {weekday:'short', day:'numeric', month:'short'});
+    const bits = [t('trk_line', {k: Math.round(trkKm(tr)).toLocaleString(LOC), n: tr.pts.length})];
+    if(tr.alt) bits.push(t('trk_alt', {f: (Math.round(tr.alt * 3.28084 / 100) * 100).toLocaleString(LOC)}));
+    if(tr.spd) bits.push(t('trk_spd', {k: Math.round(tr.spd * 1.94384)}));
+    return `<div class="mrow"><div class="mh">${d} · <b>${esc(tr.flight)}</b> ${tr.dep} → ${tr.arr}</div>
+      <div class="note trkrow"><span>${bits.join(' · ')}</span><button class="btn ghost sm" type="button" data-trkdel="${esc(trkKey(tr))}">${t('trk_del')}</button></div></div>`; }).join('')}</div>`;
+}
+
+// ---------- layovers: local time, currency, plug and my own notes per airport ----------
+// [currency, plug types]; 230 V everywhere listed. Bulgaria uses the euro since 1 Jan 2026.
+const CTRY = {
+  AE:['AED','G'], AL:['ALL','C/F'], AM:['AMD','C/F'], AT:['EUR','C/F'], AZ:['AZN','C/F'], BA:['BAM','C/F'], BE:['EUR','C/E'], BG:['EUR','C/F'],
+  BH:['BHD','G'], BY:['BYN','C/F'], CH:['CHF','C/J'], CV:['CVE','C/F'], CY:['EUR','G'], CZ:['CZK','C/E'], DE:['EUR','C/F'], DK:['DKK','C/E/F/K'],
+  DZ:['DZD','C/F'], EE:['EUR','C/F'], EG:['EGP','C/F'], ES:['EUR','C/F'], FI:['EUR','C/F'], FR:['EUR','C/E'], GB:['GBP','G'], GE:['GEL','C/F'],
+  GG:['GBP','G'], GR:['EUR','C/F'], HR:['EUR','C/F'], HU:['HUF','C/F'], IE:['EUR','G'], IL:['ILS','C/H'], IQ:['IQD','C/D/G'], IR:['IRR','C/F'],
+  IS:['ISK','C/F'], IT:['EUR','C/F/L'], JO:['JOD','C/D/F/G/J'], KZ:['KZT','C/F'], LB:['LBP','C/D/G'], LT:['EUR','C/F'], LU:['EUR','C/F'], LV:['EUR','C/F'],
+  LY:['LYD','C/D/F/L'], MA:['MAD','C/E'], MD:['MDL','C/F'], ME:['EUR','C/F'], MK:['MKD','C/F'], MT:['EUR','G'], NL:['EUR','C/F'], NO:['NOK','C/F'],
+  OM:['OMR','C/G'], PL:['PLN','C/E'], PT:['EUR','C/F'], RO:['RON','C/F'], RS:['RSD','C/F'], RU:['RUB','C/F'], SA:['SAR','G'], SE:['SEK','C/F'],
+  SI:['EUR','C/F'], SK:['EUR','C/E'], TN:['TND','C/E'], TR:['TRY','C/F'], UA:['UAH','C/F'], UZ:['UZS','C/F'], XK:['EUR','C/F']
+};
+let layOpen = {};   // which layover boxes are open, kept across re-renders
+async function fxLoad(){
+  const f = state.fx;
+  if(f && Date.now() - f.at < 864e5) return f;
+  if(navigator.onLine === false) return f || null;
+  try{
+    const r = await fetch('https://open.er-api.com/v6/latest/EUR', {cache:'no-store'}); const j = await r.json();
+    if(j && j.result === 'success' && j.rates){
+      const want = new Set(Object.values(CTRY).map(x => x[0])), rates = {};
+      for(const c of want) if(j.rates[c]) rates[c] = j.rates[c];
+      state.fx = { at: Date.now(), r: rates }; save();
+    }
+  }catch(e){}
+  return state.fx || null;
+}
+function fxTxt(cur){
+  if(cur === 'EUR') return '';
+  const f = state.fx, v = f && f.r && f.r[cur];
+  if(!v) return t('lay_fxOff');
+  const nf = new Intl.NumberFormat(LOC, {maximumSignificantDigits: v >= 100 ? 5 : 3});
+  return t('lay_fx', {v: nf.format(v), c: cur});
+}
+function fxFill(){ fxLoad().then(() => document.querySelectorAll('[data-fx]').forEach(el => { el.textContent = fxTxt(el.dataset.fx); })).catch(() => {}); }
+function layBody(st){
+  const a = AP[st], c = a && CTRY[a.cc], base = state.settings.base || 'PMI', now = Date.now();
+  const rows = [];
+  if(a && a.tz){
+    const dh = tzDiffH(base, st, now), dtxt = dh ? t('lay_diff', {h: (dh > 0 ? '+' : '−') + String(Math.abs(dh)).replace('.', ','), b: base}) : t('lay_same', {b: base});
+    rows.push(`<div>🕐 <b>${localHM(now, st)}</b> ${t('lay_time')} · ${dtxt}</div>`);
+  }
+  if(c){
+    rows.push(`<div>💶 ${t('lay_cur')}: <b>${c[0]}</b>${c[0] !== 'EUR' ? ` · <span data-fx="${c[0]}">${fxTxt(c[0])}</span>` : ''}</div>`);
+    rows.push(`<div>🔌 ${t('lay_plug', {p: c[1], v: 230})}</div>`);
+  }
+  const note = (state.notes || {})[st] || '';
+  return `${rows.length ? `<div class="lay-g">${rows.join('')}</div>` : ''}
+    <label class="lay-n"><span class="note">📝 ${t('lay_notes')}</span><textarea data-note="${esc(st)}" rows="3" placeholder="${esc(t('lay_ph'))}">${esc(note)}</textarea></label>`;
+}
+function layHtml(st, extra){
+  const a = AP[st], city = a ? a.city : st;
+  return `<details class="td-lay" data-lay="${esc(st)}"${layOpen[st] ? ' open' : ''}><summary>🧳 ${t('lay_title', {c: esc(city) + ' (' + st + ')'})}${extra ? ` <span class="note">${extra}</span>` : ''}${(state.notes||{})[st] ? ' 📝' : ''}</summary>${layBody(st)}</details>`;
+}
+let noteTimer = null;
+document.addEventListener('input', e => {
+  const st = e.target.dataset && e.target.dataset.note; if(!st) return;
+  state.notes = state.notes || {}; const v = e.target.value;
+  if(v.trim()) state.notes[st] = v; else if(!state.layExtra || !state.layExtra.includes(st)) delete state.notes[st]; else state.notes[st] = '';
+  clearTimeout(noteTimer); noteTimer = setTimeout(save, 400);
+});
+document.addEventListener('toggle', e => { const st = e.target.dataset && e.target.dataset.lay; if(st) layOpen[st] = e.target.open; if(st && e.target.open) fxFill(); }, true);
+
+function renderLay(msg){
+  const base = state.settings.base || 'PMI', nights = {}, visits = {};
+  for(const k of Object.keys(state.months)){
+    let c; try{ c = PR.compute(state.months[k], state.settings, state.extras); }catch(e){ continue; }
+    for(const d of c.days){
+      if(d.hotel && d.hotel !== base) nights[d.hotel] = (nights[d.hotel] || 0) + 1;
+      for(const l of d.legs) if(l.arr !== base) visits[l.arr] = (visits[l.arr] || 0) + 1;
+    }
+  }
+  const extra = state.layExtra || [];
+  const all = [...new Set([...Object.keys(nights), ...extra, ...Object.keys(state.notes || {})])];
+  all.sort((a, b) => (nights[b] || 0) - (nights[a] || 0) || (visits[b] || 0) - (visits[a] || 0) || a.localeCompare(b));
+  pnl(hdr('lay', t('lay_intro')) + `<div class="row" style="align-items:flex-end;gap:8px">
+      <label class="note" style="display:grid;gap:4px">${t('lay_add')}<input type="text" id="lay-in" maxlength="3" autocapitalize="characters" placeholder="RAK" style="width:90px;text-transform:uppercase"></label>
+      <button class="btn ghost" type="button" id="lay-go">＋</button></div>${msg || ''}
+    ${all.length ? `<div class="laylist">${all.map(st => layHtml(st, nights[st] ? t('lay_n', {n: nights[st]}) : '')).join('')}</div>` : `<p class="msg">${t('lay_none')}</p>`}`);
+  fxFill();
+}
+document.addEventListener('click', e => {
+  if(e.target.id !== 'lay-go') return;
+  const st = String(($('lay-in') || {}).value || '').trim().toUpperCase();
+  if(!/^[A-Z]{3}$/.test(st) || !AP[st]){ renderLay(`<p class="msg err">${t('lay_bad')}</p>`); return; }
+  state.layExtra = [...new Set([...(state.layExtra || []), st])]; layOpen[st] = true; save(); renderLay();
+});
+
+// ---------- month so far ----------
+function soFarHtml(c, ro){
+  const tdy = todayISO(); if(key(ro) !== tdy.slice(0, 7)) return '';
+  // the bar is the part of the month's work already done; the total is the month's variable pay,
+  // which can include the minimum guarantees (hours, per diems) that no single day carries
+  const a = c.days.filter(d => d.date <= tdy).reduce((s, d) => s + (d.total || 0), 0), all = c.days.reduce((s, d) => s + (d.total || 0), 0);
+  if(!(all > 0)) return '';
+  const guar = c.topUp > 0 || c.dietasPaid > c.dietas;
+  return `<div class="sofar"><div class="sftrack"><div style="width:${Math.min(100, a / all * 100).toFixed(1)}%"></div></div><div class="note">${t('sofar', {a: eur.format(a), b: eur.format(c.variable)})}${guar ? ' ' + t('sofar_min') : ''}</div></div>`;
+}
+
+// ---------- swap with a colleague (a shared roster) ----------
+// Their day goes into a copy of my roster. The shared roster has no FDP or duty-time values,
+// so they are rebuilt: FDP = check-in to last on-block, duty = check-in to check-out.
+let cmpCur = null;
+function dayFromShared(orig, o){
+  const d = Object.assign({}, orig, { events: [], hotel: (o && o.hotel) || null, crew: [], gcrew: [] });
+  delete d.fdp; delete d.dt; delete d.dtLimit; delete d.bt; delete d.dp;
+  const L = (o && o.legs || []).filter(l => l.dep && l.arr && l.t1 && l.t2);
+  if(!L.length){
+    if(o && o.label) d.events.push({ type:'code', code:o.label, label:o.label, st:o.startLoc || null, t1:o.ci || null, t2:o.co || null, arr:null });
+    return d;
+  }
+  if(o.ci) d.events.push({ type:'ci', st:L[0].dep, t1:o.ci });
+  for(const l of L) d.events.push({ type:l.type === 'dh' ? 'dh' : 'flt', flight:l.flight, dep:l.dep, arr:l.arr, t1:l.t1, t2:l.t2 });
+  if(o.co) d.events.push({ type:'co', st:L[L.length-1].arr, t1:o.co });
+  const m = x => +x.slice(0, 2) * 60 + +x.slice(2), span = (a, b) => { let v = m(b) - m(a); if(v < 0) v += 1440; return v / 60; };
+  if(o.ci){ d.fdp = span(o.ci, L[L.length-1].t2); d.dt = o.co ? Math.max(d.fdp, span(o.ci, o.co)) : d.fdp + 0.5; }
+  return d;
+}
+function runSwap(){
+  const out = $('swp-out'); if(!out || !cmpCur) return;
+  const dates = [...document.querySelectorAll('[data-swp]:checked')].map(x => x.dataset.swp);
+  if(!dates.length){ out.innerHTML = `<p class="msg err">${t('swp_none')}</p>`; return; }
+  const { ro, theirs } = cmpCur, s = state.settings;
+  const ro2 = JSON.parse(JSON.stringify(ro)), ex2 = JSON.parse(JSON.stringify(state.extras || {}));
+  for(const dt of dates){
+    const i = ro2.days.findIndex(d => d.date === dt); if(i < 0) continue;
+    ro2.days[i] = dayFromShared(ro2.days[i], theirs.find(x => x.date === dt));
+    delete ex2[dt];
+  }
+  const a = PR.compute(ro, s, state.extras), b = PR.compute(ro2, s, ex2);
+  const [ny, nmn] = nextYM(ro.year, ro.month), Na = slipFor(a, s, ny, nmn), Nb = slipFor(b, s, ny, nmn);
+  const tier = x => x.T > b.rates.limits[1] ? 3 : x.T > b.rates.limits[0] ? 2 : 1, dn = Nb.net - Na.net;
+  const sign = x => (x >= 0 ? '+' : '−') + eur.format(Math.abs(x));
+  const dd = iso => new Date(iso + 'T12:00').toLocaleDateString(LOC, {weekday:'short', day:'numeric'});
+  out.innerHTML = `<dl class="sumbox" style="margin-top:12px">
+      <dt>${t('variableIn', {m: nm(ro.year, ro.month, {month:'long'})})}</dt><dd>${eur.format(a.variable)} → <b>${eur.format(b.variable)}</b></dd>
+      <dt>${t('dutyTime', {h: fmtH(a.T)})} → ${fmtH(b.T)} h</dt><dd>${t('tierN', {n: tier(a)})} → ${t('tierN', {n: tier(b)})}</dd>
+      <dt class="netrow">${t('sim_net', {m: nm(ny, nmn, {month:'long'})})}</dt><dd class="netrow ${dn < 0 ? 'neg' : 'pos'}">${sign(dn)}</dd></dl>
+    <p class="note">${t('swp_days', {d: dates.map(dd).join(', ')})}</p><p class="note">${t('swp_note')}</p>`;
+}
+document.addEventListener('click', e => { if(e.target.id === 'cmp-swp') runSwap(); });
+
+// ---------- install as an app ----------
+let instEvt = null;
+const isStandalone = () => { try{ return matchMedia('(display-mode: standalone)').matches || navigator.standalone === true; }catch(e){ return false; } };
+const isIOS = () => /iphone|ipad|ipod/i.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+function renderInstall(){
+  const el = $('instRow'); if(!el) return;
+  if(isStandalone() || (!instEvt && !isIOS())){ el.hidden = true; el.innerHTML = ''; return; }
+  el.hidden = false;
+  el.innerHTML = `<b>📲 ${t('inst_t')}</b><p class="note" style="margin:6px 0">${t('inst_why')}</p>` +
+    (instEvt ? `<button class="btn" id="inst-go" type="button">${t('inst_btn')}</button>` : `<p class="note" style="margin:0">${t('inst_ios')}</p>`);
+}
+addEventListener('beforeinstallprompt', e => { e.preventDefault(); instEvt = e; renderInstall(); });
+addEventListener('appinstalled', () => { instEvt = null; renderInstall(); });
+document.addEventListener('click', async e => {
+  if(e.target.id !== 'inst-go' || !instEvt) return;
+  try{ instEvt.prompt(); await instEvt.userChoice; }catch(err){}
+  instEvt = null; renderInstall();
+});
+
+// ---------- settings to another phone by QR ----------
+// Contract data, licences and layover notes travel inside the link, after the #, so they never reach
+// a server. Rosters and payslips stay out: they are too big for a QR and have their own backup.
+function cfgPayload(withNotes){
+  const lic = (state.lic || []).filter(x => !x.del && x.exp).map(x => ({ key: x.key, name: x.name, exp: x.exp }));
+  const p = { v: 1, at: todayISO(), s: state.settings, lic };
+  if(withNotes && state.notes && Object.keys(state.notes).length) p.notes = state.notes;
+  return p;
+}
+const cfgEncode = p => '1' + b64u(fflate.deflateSync(new TextEncoder().encode(JSON.stringify(p)), {level: 9}));
+function cfgMake(){
+  const out = $('cfg-out'); if(!out) return;
+  let str = cfgEncode(cfgPayload(true)), trimmed = false;
+  if(str.length > 2200 && state.notes){ str = cfgEncode(cfgPayload(false)); trimmed = true; }
+  const url = SHARE_BASE + '#cfg=' + str;
+  let qr = '';
+  try{ const q = qrcode(0, 'L'); q.addData(url); q.make(); qr = q.createSvgTag({cellSize: 4, margin: 2, scalable: true}); }catch(err){ qr = ''; }
+  out.innerHTML = `${qr ? `<div class="cfgqr">${qr}</div>` : ''}${trimmed ? `<p class="note">${t('cfg_trim')}</p>` : ''}
+    <p class="note">${t('cfg_link')}</p><input type="text" id="cfg-url" readonly value="${esc(url)}">
+    <div class="row" style="margin-top:8px"><button class="btn ghost" id="cfg-copy" type="button">${t('cfg_copy')}</button><span class="note" id="cfg-msg"></span></div>`;
+}
+let cfgPending = null;
+function cfgOpen(str){
+  try{
+    if(str[0] !== '1') throw 0;
+    const p = JSON.parse(new TextDecoder().decode(fflate.inflateSync(unb64u(str.slice(1)))));
+    if(!p || p.v !== 1 || !p.s) throw 0;
+    cfgPending = p;
+    showMsg(`${t('cfg_ask', {d: esc(p.at || '')})}<div class="row" style="margin-top:8px"><button class="btn" id="cfg-ok" type="button">${t('cfg_ok')}</button><button class="btn ghost" id="cfg-no" type="button">${t('no')}</button></div>`);
+  }catch(e){ showMsg(t('cfg_bad'), true); }
+  try{ history.replaceState(null, '', location.pathname + location.search); }catch(e){}
+}
+function cfgApply(){
+  const p = cfgPending; if(!p) return; cfgPending = null;
+  state.settings = Object.assign({}, state.settings, p.s);
+  const L = state.lic = state.lic || [];
+  for(const x of p.lic || []){
+    const have = L.find(y => !y.del && (x.key ? y.key === x.key : y.name === x.name));
+    if(have){ if(!have.exp || x.exp > have.exp) have.exp = x.exp; }
+    else L.push({ key: x.key, name: x.name, exp: x.exp });
+  }
+  if(p.notes){ state.notes = state.notes || {}; for(const k in p.notes) if(!state.notes[k]) state.notes[k] = p.notes[k]; }
+  save(); render(); showMsg(t('cfg_done'));
+}
+document.addEventListener('click', async e => {
+  const id = e.target.id;
+  if(id === 'cfg-make'){ cfgMake(); return; }
+  if(id === 'cfg-copy'){ const i = $('cfg-url'); try{ await navigator.clipboard.writeText(i.value); $('cfg-msg').textContent = t('share_copied'); }catch(err){ i.focus(); i.select(); } return; }
+  if(id === 'cfg-ok'){ cfgApply(); return; }
+  if(id === 'cfg-no'){ cfgPending = null; $('importMsg').hidden = true; return; }
+  const td = e.target.closest('[data-trkdel]');
+  if(td){ delete (state.tracks || {})[td.dataset.trkdel]; save(); if(toolOpen === 'map' && !mm) renderMap(); return; }
 });
 
 // ---- Payroster+: licences & expiry dates, delays (actual FDP), fatigue, on-board sales log ----
@@ -10745,7 +11518,7 @@ document.addEventListener('click', e => { if(e.target.id === 'bwFix'){ state.set
 <script>
 const SEED = null;
 const SEED_SETTINGS = null;
-const APP_VERSION = '2026.11.09-2233';
+const APP_VERSION = '2026.11.10-1100';
 const IS_PWA_BUILD = true;
 const LS = 'payroster.v1';
 const KC = { sick:'--warn', flight:'--k-flight', deadhead:'--k-dh', training:'--k-train', standby:'--k-sby', reserve:'--k-sby', ground:'--k-ground', off:'--k-off', empty:'--k-off', other:'--k-ground' };
@@ -10934,6 +11707,7 @@ function render(){
   const s = state.settings;
   { const b = $('privBtn'); if(b && !b.innerHTML){ b.innerHTML = privIcon(); b.title = t(PRIV ? 'priv_show' : 'priv_hide'); b.setAttribute('aria-pressed', PRIV ? 'true' : 'false'); } }
   renderSetup();
+  try{ renderInstall(); }catch(e){}
   try{ renderToday(); renderChanges(ro); renderLicAlert(); renderLicTable(); renderBkRemind(); renderLockBox(); renderBaseWarn(ro); }catch(e){ console.warn(e); }
   if(ro.base && !s.baseSetByUser) s.base = ro.base;
   const w = $('rankWarn');
@@ -10986,6 +11760,7 @@ function renderHero(c, ro){
     ${oneOffInput(N.year, N.month)}
     ${N.month===12 && !state.settings.joined ? `<div class="askj"><span>${t('askJoined')}</span><label class="askjin">${t('f_joinedShort')}<input type="date" id="q-joined"></label><button class="btn" id="q-joined-save" type="button" style="align-self:flex-start">${t('saveDate')}</button></div>` : ''}
     <div class="eyebrow" style="margin-top:16px">${t('variableOf',{p:mNow})}</div>
+    ${soFarHtml(c, ro)}
     <dl class="kv">
       <dt>${t('dutyTime',{h:hhmm(c.T)})}</dt><dd>${eur.format(c.hourPay + c.topUp)}</dd>
       <dt>${t('perDiems')} · ${dietLine}</dt><dd>${eur.format(c.dietasPaid)}</dd>
@@ -11601,7 +12376,7 @@ async function openViewer(str){
 function viewerKey(){ return viewerData ? `${viewerData.y}-${String(viewerData.m).padStart(2,'0')}·${viewerData.n||'-'}·${viewerData.at}` : ''; }
 function closeViewer(){ document.body.classList.remove('viewer'); $('viewer').hidden = true; $('viewer').innerHTML=''; viewerData=null;
   try{ history.replaceState(null,'',location.pathname); }catch(e){ location.hash=''; } render(); }
-function checkHash(){ const h = location.hash; if(h.startsWith('#s=')) openViewer(h.slice(3)); else if(document.body.classList.contains('viewer')) closeViewer(); }
+function checkHash(){ const h = location.hash; if(h.startsWith('#cfg=')){ cfgOpen(h.slice(5)); return; } if(h.startsWith('#s=')) openViewer(h.slice(3)); else if(document.body.classList.contains('viewer')) closeViewer(); }
 addEventListener('hashchange', checkHash);
 
 document.addEventListener('click', async e=>{
@@ -11618,6 +12393,7 @@ document.addEventListener('click', async e=>{
 });
 
 render();
+try{ renderInstall(); }catch(e){}
 checkHash();
 if(state.stale && state.stale.length) showMsg(t('staleMsg',{m:state.stale.map(k=>{const [y,m]=k.split('-');return monthName(+y,+m,{month:'long',year:'numeric'});}).join(', ')}), true);
 // ---- updates (installed webapp) ----
