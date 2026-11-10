@@ -13,7 +13,7 @@
 <link rel="icon" href="icons/icon4-192.png">
 <style>:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0}img{max-width:100%}[hidden]{display:none!important}</style>
 <title>Payroster+</title>
-<script>try{if(localStorage.getItem('pr.lock'))document.documentElement.classList.add('locked')}catch(e){}</script>
+<script>try{if(localStorage.getItem('pr.lock'))document.documentElement.classList.add('locked');var u=JSON.parse(localStorage.getItem('pr.ui')||'{}');if(u.theme==='light'||u.theme==='dark')document.documentElement.dataset.theme=u.theme;if(u.zoom&&u.zoom!==100)document.documentElement.style.setProperty('--uiz',u.zoom/100)}catch(e){}</script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@75..100,500..800&family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
@@ -94,7 +94,7 @@ button,select,input{font:inherit;color:inherit}
 @media (max-width:560px){.hero{grid-template-columns:1fr}}
 .panel{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:16px}
 .eyebrow{font-size:11.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);font-weight:600}
-.big{font-family:var(--f-display);font-weight:800;font-stretch:78%;font-size:46px;line-height:1;margin:6px 0 4px;letter-spacing:-.01em}
+.big{font-family:var(--f-display);font-weight:800;font-stretch:78%;font-size:min(46px, calc(11vw / var(--uiz,1)));line-height:1;margin:6px 0 4px;letter-spacing:-.01em}
 .big small{font-size:22px;font-weight:600;color:var(--muted);margin-left:2px}
 .sub{color:var(--muted);font-size:13px}
 .kv{display:grid;grid-template-columns:1fr auto;gap:6px 12px;font-size:14px;margin-top:10px}
@@ -167,6 +167,9 @@ input[type=number],input[type=text],select{background:var(--surface);border:1px 
  #slip td:nth-child(2):empty{display:none}
  #slip tr.gross{background:var(--pay-soft)}#slip tr.sum{border-top:2px solid var(--pay);border-bottom:0}#slip tr.sum td{border-top:0}}
 .adv summary{cursor:pointer;color:var(--accent);font-weight:600;padding:6px 0}
+.fam-blk{display:grid;grid-template-columns:1fr auto auto;gap:8px;align-items:end;margin:6px 0}.fam-blk label{display:grid;gap:4px;font-size:12.5px;color:var(--muted)}.fam-blk input,.fam-blk select{font:inherit;padding:8px;border:1px solid var(--line);border-radius:10px;background:var(--surface);color:var(--ink)}
+.famt small.neg{color:var(--warn)}.famt small.pos{color:var(--pay)}
+.wrap > :not(.bar){zoom:var(--uiz,1)}
 .how{margin:2px 0 10px}.how summary{cursor:pointer;color:var(--accent);font-size:13.5px;font-weight:600;padding:4px 0;list-style:none}.how summary::-webkit-details-marker{display:none}.how summary::before{content:'ⓘ ';}
 .toolback{display:none;background:none;border:0;color:var(--accent);font:inherit;font-size:16px;font-weight:600;padding:6px 0;cursor:pointer}
 body[data-toolopen] .toolback{display:inline-block}
@@ -445,6 +448,7 @@ input[type=date]::-webkit-date-and-time-value{text-align:left}
   <h2 data-tab="more" data-i18n="tab_more"></h2>
   <section class="panel" id="instRow" data-tab="more" hidden></section>
   <section class="panel" id="licTable" data-tab="more"></section>
+  <section class="panel" id="uiBox" data-tab="more"></section>
   <section class="panel" id="lockBox" data-tab="more" hidden></section>
   <details class="box panel" id="setBox" data-tab="more" open>
     <summary data-i18n="contractData"></summary>
@@ -1264,6 +1268,37 @@ var I18N = {
   names: { es: 'Español', ca: 'Català', en: 'English', de: 'Deutsch', fr: 'Français', it: 'Italiano', pt: 'Português', ro: 'Română', hu: 'Magyar', sk: 'Slovenčina', cs: 'Čeština' },
   locales: { es: 'es-ES', ca: 'ca-ES', en: 'en-GB', de: 'de-DE', fr: 'fr-FR', it: 'it-IT', pt: 'pt-PT', ro: 'ro-RO', hu: 'hu-HU', sk: 'sk-SK', cs: 'cs-CZ' },
   es: {
+    ui_z_xl: 'Muy grande',
+    ui_z_l: 'Grande',
+    ui_z_n: 'Normal',
+    ui_z_s: 'Pequeño',
+    ui_zoom: 'Tamaño del texto',
+    ui_th_dark: 'Oscuro',
+    ui_th_light: 'Claro',
+    ui_th_auto: 'Automático (como el iPhone)',
+    ui_theme: 'Tema',
+    ui_T: 'Pantalla',
+    irpf_note: 'Estimación con la escala estatal y la de Illes Balears, el mínimo personal y familiar y 2.000 € de gastos. Usa {n} meses con datos y completa el resto con la media. No incluye otros ingresos, deducciones (vivienda, donativos…) ni planes de pensiones. No es asesoramiento fiscal: confírmalo con tu gestor o en Renta Web.',
+    irpf_raise: 'Para no pagar en la Renta, pide a RRHH una retención de ≈ {p} % para las nóminas que quedan del año.',
+    irpf_ok: 'La retención cuadra',
+    irpf_back: 'Te devolverían ≈',
+    irpf_pay: 'Te saldría a pagar en la Renta ≈',
+    irpf_retSplit: '{a} ya retenido en tus nóminas + {b} previsto con tu {p} %',
+    irpf_ret: 'Retención del año',
+    irpf_base: 'base liquidable ≈ {b}',
+    irpf_rate: '{p} % de tu bruto sujeto',
+    irpf_owed: 'IRPF estimado del año',
+    irpf_kids3: 'De ellos, menores de 3 años',
+    irpf_kids: 'Hijos',
+    irpf_T: 'IRPF {y}: ¿te alcanza la retención?',
+    fam_late: 'Algún bloque termina después de que el bebé cumpla 12 meses. Solo 2 semanas se pueden coger hasta los 8 años.',
+    fam_cheap: 'Los meses en que menos cobras normalmente (y por tanto menos pierdes estando de permiso): {m}.',
+    fam_seasonal: 'El «normal» de cada mes es lo que cobraste ese mismo mes el año anterior: así se ve si te cuesta más en verano que en invierno.',
+    fam_blkAdd: 'Añadir bloque',
+    fam_blkNote: 'Las semanas que no coges seguidas tras el parto puedes repartirlas por semanas hasta que el bebé cumpla 12 meses. Te quedan {n} por planificar.',
+    fam_blkT: 'Resto de semanas, en bloques',
+    fam_blkW: 'Semanas',
+    fam_blkStart: 'Desde',
     advSet: 'Ajustes avanzados (importes y códigos)',
     howCalc: '¿Cómo se calcula?',
     td_restLong: 'Libre hasta la firma: {g}',
@@ -1786,6 +1821,37 @@ var I18N = {
     e_noPeriod: 'No encuentro el periodo del roster. ¿Es el «Individual duty plan» de IDP en PDF?'
   },
   ca: {
+    ui_z_xl: 'Molt gran',
+    ui_z_l: 'Gran',
+    ui_z_n: 'Normal',
+    ui_z_s: 'Petita',
+    ui_zoom: 'Mida del text',
+    ui_th_dark: 'Fosc',
+    ui_th_light: 'Clar',
+    ui_th_auto: 'Automàtic (com l’iPhone)',
+    ui_theme: 'Tema',
+    ui_T: 'Pantalla',
+    irpf_note: 'Estimació amb l’escala estatal i la de les Illes Balears, el mínim personal i familiar i 2.000 € de despeses. Fa servir {n} mesos amb dades i completa la resta amb la mitjana. No inclou altres ingressos, deduccions ni plans de pensions. No és assessorament fiscal: confirma-ho amb el teu gestor o a Renda Web.',
+    irpf_raise: 'Per no pagar a la Renda, demana a RRHH una retenció de ≈ {p} % per a les nòmines que queden de l’any.',
+    irpf_ok: 'La retenció quadra',
+    irpf_back: 'Et retornarien ≈',
+    irpf_pay: 'Et sortiria a pagar a la Renda ≈',
+    irpf_retSplit: '{a} ja retingut a les nòmines + {b} previst amb el teu {p} %',
+    irpf_ret: 'Retenció de l’any',
+    irpf_base: 'base liquidable ≈ {b}',
+    irpf_rate: '{p} % del teu brut subjecte',
+    irpf_owed: 'IRPF estimat de l’any',
+    irpf_kids3: 'D’ells, menors de 3 anys',
+    irpf_kids: 'Fills',
+    irpf_T: 'IRPF {y}: t’arriba la retenció?',
+    fam_late: 'Algun bloc acaba després que el nadó faci 12 mesos. Només 2 setmanes es poden agafar fins als 8 anys.',
+    fam_cheap: 'Els mesos en què menys cobres normalment (i per tant menys perds estant de permís): {m}.',
+    fam_seasonal: 'El «normal» de cada mes és el que vas cobrar el mateix mes l’any anterior: així es veu si et costa més a l’estiu que a l’hivern.',
+    fam_blkAdd: 'Afegir bloc',
+    fam_blkNote: 'Les setmanes que no agafes seguides després del part les pots repartir per setmanes fins que el nadó faci 12 mesos. Te’n queden {n} per planificar.',
+    fam_blkT: 'Resta de setmanes, en blocs',
+    fam_blkW: 'Setmanes',
+    fam_blkStart: 'Des de',
     advSet: 'Ajustos avançats (imports i codis)',
     howCalc: 'Com es calcula?',
     td_restLong: 'Lliure fins a la firma: {g}',
@@ -2309,6 +2375,37 @@ var I18N = {
     e_noPeriod: 'No trobo el període del roster. És l’«Individual duty plan» d’IDP en PDF?'
   },
   en: {
+    ui_z_xl: 'Extra large',
+    ui_z_l: 'Large',
+    ui_z_n: 'Normal',
+    ui_z_s: 'Small',
+    ui_zoom: 'Text size',
+    ui_th_dark: 'Dark',
+    ui_th_light: 'Light',
+    ui_th_auto: 'Automatic (like the iPhone)',
+    ui_theme: 'Theme',
+    ui_T: 'Display',
+    irpf_note: 'Estimate with the Spanish state and Illes Balears scales, personal and family allowances and €2,000 expenses. Uses {n} months with data and fills the rest with the average. Leaves out other income, deductions and pension plans. Not tax advice: check with your adviser or Renta Web.',
+    irpf_raise: 'To avoid paying in the tax return, ask HR for ≈ {p} % withholding on the rest of this year’s payslips.',
+    irpf_ok: 'Your withholding is about right',
+    irpf_back: 'You would get back ≈',
+    irpf_pay: 'You would owe in the tax return ≈',
+    irpf_retSplit: '{a} already withheld on your payslips + {b} expected at your {p} %',
+    irpf_ret: 'Withheld this year',
+    irpf_base: 'taxable base ≈ {b}',
+    irpf_rate: '{p} % of your taxable gross',
+    irpf_owed: 'Estimated tax for the year',
+    irpf_kids3: 'Of them, under 3',
+    irpf_kids: 'Children',
+    irpf_T: 'Income tax {y}: is your withholding enough?',
+    fam_late: 'A block ends after the baby turns 12 months. Only 2 weeks can be taken until age 8.',
+    fam_cheap: 'The months when you normally earn least (so you lose least on leave): {m}.',
+    fam_seasonal: 'Each month’s "normal" is what you earned in that same month a year earlier, so you can see whether it costs more in summer than in winter.',
+    fam_blkAdd: 'Add block',
+    fam_blkNote: 'The weeks you don’t take right after the birth can be split into whole weeks until the baby turns 12 months. {n} left to plan.',
+    fam_blkT: 'Remaining weeks, in blocks',
+    fam_blkW: 'Weeks',
+    fam_blkStart: 'From',
     advSet: 'Advanced settings (amounts and codes)',
     howCalc: 'How is it calculated?',
     td_restLong: 'Off until check-in: {g}',
@@ -2832,6 +2929,37 @@ var I18N = {
     e_noPeriod: 'I can’t find the roster period. Is this the IDP “Individual duty plan” PDF?'
   },
   de: {
+    ui_z_xl: 'Sehr groß',
+    ui_z_l: 'Groß',
+    ui_z_n: 'Normal',
+    ui_z_s: 'Klein',
+    ui_zoom: 'Textgröße',
+    ui_th_dark: 'Dunkel',
+    ui_th_light: 'Hell',
+    ui_th_auto: 'Automatisch (wie das iPhone)',
+    ui_theme: 'Design',
+    ui_T: 'Anzeige',
+    irpf_note: 'Schätzung mit spanischem Staats- und Balearen-Tarif, Grund- und Kinderfreibetrag und 2.000 € Werbungskosten. Nutzt {n} Monate mit Daten, den Rest als Durchschnitt. Ohne andere Einkünfte, Abzüge und Pensionspläne. Keine Steuerberatung.',
+    irpf_raise: 'Um nichts nachzuzahlen, bitte HR um ≈ {p} % Einbehalt für die restlichen Abrechnungen des Jahres.',
+    irpf_ok: 'Dein Abzug passt',
+    irpf_back: 'Erstattung ≈',
+    irpf_pay: 'Nachzahlung bei der Steuererklärung ≈',
+    irpf_retSplit: '{a} schon auf den Abrechnungen + {b} erwartet mit deinen {p} %',
+    irpf_ret: 'Einbehalten im Jahr',
+    irpf_base: 'Bemessungsgrundlage ≈ {b}',
+    irpf_rate: '{p} % deines steuerpflichtigen Bruttos',
+    irpf_owed: 'Geschätzte Steuer des Jahres',
+    irpf_kids3: 'Davon unter 3 Jahren',
+    irpf_kids: 'Kinder',
+    irpf_T: 'IRPF {y}: reicht dein Steuerabzug?',
+    fam_late: 'Ein Block endet nach dem 1. Geburtstag. Nur 2 Wochen können bis zum 8. Lebensjahr genommen werden.',
+    fam_cheap: 'Die Monate, in denen du normalerweise am wenigsten verdienst (und in der Elternzeit am wenigsten verlierst): {m}.',
+    fam_seasonal: 'Das „normal“ jedes Monats ist, was du im selben Monat des Vorjahres verdient hast – so siehst du, ob es im Sommer mehr kostet als im Winter.',
+    fam_blkAdd: 'Block hinzufügen',
+    fam_blkNote: 'Die Wochen, die du nicht direkt nach der Geburt nimmst, kannst du wochenweise bis zum 1. Geburtstag verteilen. Noch {n} zu planen.',
+    fam_blkT: 'Restliche Wochen, in Blöcken',
+    fam_blkW: 'Wochen',
+    fam_blkStart: 'Ab',
     advSet: 'Erweiterte Einstellungen (Beträge und Codes)',
     howCalc: 'Wie wird gerechnet?',
     td_restLong: 'Frei bis zum Check-in: {g}',
@@ -3355,6 +3483,37 @@ var I18N = {
     e_noPeriod: 'Ich finde den Zeitraum des Dienstplans nicht. Ist das der „Individual duty plan“ aus IDP als PDF?'
   },
   fr: {
+    ui_z_xl: 'Très grande',
+    ui_z_l: 'Grande',
+    ui_z_n: 'Normale',
+    ui_z_s: 'Petite',
+    ui_zoom: 'Taille du texte',
+    ui_th_dark: 'Sombre',
+    ui_th_light: 'Clair',
+    ui_th_auto: 'Automatique (comme l’iPhone)',
+    ui_theme: 'Thème',
+    ui_T: 'Affichage',
+    irpf_note: 'Estimation avec les barèmes de l’État et des Baléares, minimums personnel et familial et 2 000 € de frais. Utilise {n} mois de données et complète avec la moyenne. Sans autres revenus, déductions ni plans de retraite. Pas un conseil fiscal.',
+    irpf_raise: 'Pour ne pas payer à la déclaration, demande aux RH une retenue d’environ {p} % pour les bulletins restants.',
+    irpf_ok: 'Ta retenue est correcte',
+    irpf_back: 'On te rembourserait ≈',
+    irpf_pay: 'Tu paierais à la déclaration ≈',
+    irpf_retSplit: '{a} déjà retenu sur tes bulletins + {b} prévu avec ton {p} %',
+    irpf_ret: 'Retenu dans l’année',
+    irpf_base: 'base imposable ≈ {b}',
+    irpf_rate: '{p} % de ton brut imposable',
+    irpf_owed: 'Impôt estimé de l’année',
+    irpf_kids3: 'Dont de moins de 3 ans',
+    irpf_kids: 'Enfants',
+    irpf_T: 'IRPF {y} : ta retenue suffit-elle ?',
+    fam_late: 'Un bloc se termine après les 12 mois du bébé. Seules 2 semaines peuvent être prises jusqu’à 8 ans.',
+    fam_cheap: 'Les mois où tu gagnes normalement le moins (donc où tu perds le moins en congé) : {m}.',
+    fam_seasonal: 'Le « normal » de chaque mois est ce que tu as touché le même mois l’année précédente : on voit si c’est plus cher en été qu’en hiver.',
+    fam_blkAdd: 'Ajouter un bloc',
+    fam_blkNote: 'Les semaines non prises juste après la naissance peuvent être réparties par semaines jusqu’aux 12 mois du bébé. Il t’en reste {n} à planifier.',
+    fam_blkT: 'Semaines restantes, en blocs',
+    fam_blkW: 'Semaines',
+    fam_blkStart: 'À partir du',
     advSet: 'Réglages avancés (montants et codes)',
     howCalc: 'Comment est-ce calculé ?',
     td_restLong: 'Libre jusqu’au check-in : {g}',
@@ -3878,6 +4037,37 @@ var I18N = {
     e_noPeriod: 'Je ne trouve pas la période du planning. Est-ce bien l’« Individual duty plan » d’IDP en PDF ?'
   },
   hu: {
+    ui_z_xl: 'Nagyon nagy',
+    ui_z_l: 'Nagy',
+    ui_z_n: 'Normál',
+    ui_z_s: 'Kicsi',
+    ui_zoom: 'Betűméret',
+    ui_th_dark: 'Sötét',
+    ui_th_light: 'Világos',
+    ui_th_auto: 'Automatikus (mint az iPhone)',
+    ui_theme: 'Téma',
+    ui_T: 'Megjelenés',
+    irpf_note: 'Becslés a spanyol állami és a Baleár-szigeteki adótáblával, személyi és családi kedvezménnyel és 2.000 € költséggel. {n} hónap adatát használja, a többit átlaggal tölti ki. Más jövedelem, levonás és nyugdíjterv nélkül. Nem adótanácsadás.',
+    irpf_raise: 'Hogy ne kelljen fizetni, kérj a HR-től ≈ {p} % levonást az év hátralévő bérjegyzékeire.',
+    irpf_ok: 'A levonás rendben van',
+    irpf_back: 'Visszakapnál ≈',
+    irpf_pay: 'Adóbevalláskor fizetendő ≈',
+    irpf_retSplit: '{a} már levonva a bérjegyzékeken + {b} várható {p} %-kal',
+    irpf_ret: 'Levonva az évben',
+    irpf_base: 'adóalap ≈ {b}',
+    irpf_rate: 'az adóköteles bruttód {p} %-a',
+    irpf_owed: 'Becsült éves adó',
+    irpf_kids3: 'Közülük 3 év alatti',
+    irpf_kids: 'Gyerekek',
+    irpf_T: 'IRPF {y}: elég a levonás?',
+    fam_late: 'Egy blokk a baba 1 éves kora után ér véget. Csak 2 hét vehető ki 8 éves korig.',
+    fam_cheap: 'A hónapok, amikor általában a legkevesebbet keresed (így a legkevesebbet veszíted szabadságon): {m}.',
+    fam_seasonal: 'Minden hónap „normál” értéke az előző év ugyanazon havában kapott összeg: így látszik, hogy nyáron többe kerül-e, mint télen.',
+    fam_blkAdd: 'Blokk hozzáadása',
+    fam_blkNote: 'A szülés után nem azonnal kivett heteket hetenként oszthatod el a baba 1 éves koráig. Még {n} hetet kell beosztani.',
+    fam_blkT: 'Maradék hetek, blokkokban',
+    fam_blkW: 'Hét',
+    fam_blkStart: 'Kezdete',
     advSet: 'Speciális beállítások (összegek és kódok)',
     howCalc: 'Hogyan számol?',
     td_restLong: 'Szabad a bejelentkezésig: {g}',
@@ -4401,6 +4591,37 @@ var I18N = {
     e_noPeriod: 'Nem találom a beosztás időszakát. Ez az IDP „Individual duty plan” PDF-je?'
   },
   sk: {
+    ui_z_xl: 'Veľmi veľká',
+    ui_z_l: 'Veľká',
+    ui_z_n: 'Normálna',
+    ui_z_s: 'Malá',
+    ui_zoom: 'Veľkosť textu',
+    ui_th_dark: 'Tmavá',
+    ui_th_light: 'Svetlá',
+    ui_th_auto: 'Automaticky (ako iPhone)',
+    ui_theme: 'Téma',
+    ui_T: 'Zobrazenie',
+    irpf_note: 'Odhad so štátnou a baleárskou tabuľkou, osobným a rodinným minimom a 2 000 € výdavkov. Použije {n} mesiacov s údajmi, zvyšok priemerom. Bez iných príjmov, odpočtov a dôchodkových plánov. Nie je to daňové poradenstvo.',
+    irpf_raise: 'Aby si nedoplácal, požiadaj HR o zrážku ≈ {p} % na zvyšné výplaty roka.',
+    irpf_ok: 'Zrážka sedí',
+    irpf_back: 'Vrátili by ti ≈',
+    irpf_pay: 'Doplatil by si v daňovom priznaní ≈',
+    irpf_retSplit: '{a} už zrazené na výplatných páskach + {b} očakávané s tvojimi {p} %',
+    irpf_ret: 'Zrazené za rok',
+    irpf_base: 'základ dane ≈ {b}',
+    irpf_rate: '{p} % zdaniteľného hrubého',
+    irpf_owed: 'Odhadovaná daň za rok',
+    irpf_kids3: 'Z toho do 3 rokov',
+    irpf_kids: 'Deti',
+    irpf_T: 'IRPF {y}: stačí zrážka?',
+    fam_late: 'Niektorý blok končí po 12. mesiaci dieťaťa. Len 2 týždne sa dajú vziať do 8 rokov.',
+    fam_cheap: 'Mesiace, keď zvyčajne zarábaš najmenej (a teda najmenej stratíš počas voľna): {m}.',
+    fam_seasonal: '„Normál“ každého mesiaca je to, čo si zarobil v rovnakom mesiaci minulý rok: vidno, či to v lete stojí viac než v zime.',
+    fam_blkAdd: 'Pridať blok',
+    fam_blkNote: 'Týždne, ktoré si nevezmeš hneď po pôrode, môžeš rozdeliť po týždňoch do 12 mesiacov dieťaťa. Zostáva {n} na naplánovanie.',
+    fam_blkT: 'Zvyšné týždne, v blokoch',
+    fam_blkW: 'Týždne',
+    fam_blkStart: 'Od',
     advSet: 'Rozšírené nastavenia (sumy a kódy)',
     howCalc: 'Ako sa to počíta?',
     td_restLong: 'Voľno do check-inu: {g}',
@@ -4924,6 +5145,37 @@ var I18N = {
     e_noPeriod: 'Nenachádzam obdobie rozpisu. Je to „Individual duty plan“ z IDP v PDF?'
   },
   cs: {
+    ui_z_xl: 'Velmi velká',
+    ui_z_l: 'Velká',
+    ui_z_n: 'Normální',
+    ui_z_s: 'Malá',
+    ui_zoom: 'Velikost textu',
+    ui_th_dark: 'Tmavý',
+    ui_th_light: 'Světlý',
+    ui_th_auto: 'Automaticky (jako iPhone)',
+    ui_theme: 'Motiv',
+    ui_T: 'Zobrazení',
+    irpf_note: 'Odhad se státní a baleárskou tabulkou, osobním a rodinným minimem a 2 000 € výdajů. Použije {n} měsíců s daty, zbytek průměrem. Bez jiných příjmů, odpočtů a penzijních plánů. Není to daňové poradenství.',
+    irpf_raise: 'Abys nedoplácel, požádej HR o srážku ≈ {p} % na zbývající výplaty roku.',
+    irpf_ok: 'Srážka sedí',
+    irpf_back: 'Vrátili by ti ≈',
+    irpf_pay: 'Doplatil bys v přiznání ≈',
+    irpf_retSplit: '{a} už sraženo na výplatnicích + {b} očekáváno s tvými {p} %',
+    irpf_ret: 'Sraženo za rok',
+    irpf_base: 'základ daně ≈ {b}',
+    irpf_rate: '{p} % zdanitelného hrubého',
+    irpf_owed: 'Odhadovaná daň za rok',
+    irpf_kids3: 'Z toho do 3 let',
+    irpf_kids: 'Děti',
+    irpf_T: 'IRPF {y}: stačí srážka?',
+    fam_late: 'Některý blok končí po 12. měsíci dítěte. Jen 2 týdny lze vzít do 8 let.',
+    fam_cheap: 'Měsíce, kdy obvykle vyděláváš nejméně (a tedy nejméně ztratíš na volnu): {m}.',
+    fam_seasonal: '„Normál“ každého měsíce je to, co jsi vydělal ve stejném měsíci loni: je vidět, jestli to v létě stojí víc než v zimě.',
+    fam_blkAdd: 'Přidat blok',
+    fam_blkNote: 'Týdny, které si nevezmeš hned po porodu, můžeš rozdělit po týdnech do 12 měsíců dítěte. Zbývá {n} k naplánování.',
+    fam_blkT: 'Zbývající týdny, v blocích',
+    fam_blkW: 'Týdny',
+    fam_blkStart: 'Od',
     advSet: 'Pokročilá nastavení (částky a kódy)',
     howCalc: 'Jak se to počítá?',
     td_restLong: 'Volno do check-inu: {g}',
@@ -5447,6 +5699,37 @@ var I18N = {
     e_noPeriod: 'Nenacházím období rozpisu. Je to „Individual duty plan“ z IDP v PDF?'
   },
   it: {
+    "ui_z_xl": "Molto grande",
+    "ui_z_l": "Grande",
+    "ui_z_n": "Normale",
+    "ui_z_s": "Piccolo",
+    "ui_zoom": "Dimensione testo",
+    "ui_th_dark": "Scuro",
+    "ui_th_light": "Chiaro",
+    "ui_th_auto": "Automatico (come l’iPhone)",
+    "ui_theme": "Tema",
+    "ui_T": "Schermo",
+    "irpf_note": "Stima con le aliquote statali e delle Baleari, minimi personali e familiari e 2.000 € di spese. Usa {n} mesi con dati e completa con la media. Esclude altri redditi, detrazioni e fondi pensione. Non è consulenza fiscale.",
+    "irpf_raise": "Per non pagare nella dichiarazione, chiedi alle HR una ritenuta di circa {p} % per le buste paga rimanenti.",
+    "irpf_ok": "La ritenuta torna",
+    "irpf_back": "Ti rimborserebbero ≈",
+    "irpf_pay": "Pagheresti nella dichiarazione ≈",
+    "irpf_retSplit": "{a} già trattenuto in busta + {b} previsto col tuo {p} %",
+    "irpf_ret": "Trattenuto nell’anno",
+    "irpf_base": "base imponibile ≈ {b}",
+    "irpf_rate": "{p} % del tuo lordo imponibile",
+    "irpf_owed": "IRPF stimata dell’anno",
+    "irpf_kids3": "Di cui sotto i 3 anni",
+    "irpf_kids": "Figli",
+    "irpf_T": "IRPF {y}: la ritenuta basta?",
+    "fam_late": "Un blocco finisce dopo i 12 mesi del bambino. Solo 2 settimane si possono prendere fino agli 8 anni.",
+    "fam_cheap": "I mesi in cui di solito guadagni meno (e quindi perdi meno in congedo): {m}.",
+    "fam_seasonal": "Il «normale» di ogni mese è quanto hai preso nello stesso mese dell’anno prima: così vedi se costa di più d’estate che d’inverno.",
+    "fam_blkAdd": "Aggiungi blocco",
+    "fam_blkNote": "Le settimane che non prendi subito dopo il parto si possono distribuire a settimane fino ai 12 mesi del bambino. Te ne restano {n} da pianificare.",
+    "fam_blkT": "Settimane restanti, a blocchi",
+    "fam_blkW": "Settimane",
+    "fam_blkStart": "Dal",
     "advSet": "Impostazioni avanzate (importi e codici)",
     "howCalc": "Come si calcola?",
     "td_restLong": "Libero fino al check-in: {g}",
@@ -6075,6 +6358,37 @@ var I18N = {
     "e_noPeriod": "Non trovo il periodo del turno. È l’«Individual duty plan» di IDP in PDF?"
   },
   pt: {
+    "ui_z_xl": "Muito grande",
+    "ui_z_l": "Grande",
+    "ui_z_n": "Normal",
+    "ui_z_s": "Pequeno",
+    "ui_zoom": "Tamanho do texto",
+    "ui_th_dark": "Escuro",
+    "ui_th_light": "Claro",
+    "ui_th_auto": "Automático (como o iPhone)",
+    "ui_theme": "Tema",
+    "ui_T": "Ecrã",
+    "irpf_note": "Estimativa com as escalas estatal e das Baleares, mínimos pessoal e familiar e 2.000 € de despesas. Usa {n} meses com dados e completa com a média. Sem outros rendimentos, deduções nem PPR. Não é aconselhamento fiscal.",
+    "irpf_raise": "Para não pagar no IRS, pede aos RH uma retenção de ≈ {p} % nos recibos que faltam do ano.",
+    "irpf_ok": "A retenção bate certo",
+    "irpf_back": "Devolver-te-iam ≈",
+    "irpf_pay": "Terias a pagar no IRS ≈",
+    "irpf_retSplit": "{a} já retido nos recibos + {b} previsto com os teus {p} %",
+    "irpf_ret": "Retido no ano",
+    "irpf_base": "base tributável ≈ {b}",
+    "irpf_rate": "{p} % do teu bruto sujeito",
+    "irpf_owed": "IRPF estimado do ano",
+    "irpf_kids3": "Dos quais menores de 3 anos",
+    "irpf_kids": "Filhos",
+    "irpf_T": "IRPF {y}: a retenção chega?",
+    "fam_late": "Algum bloco termina depois de o bebé fazer 12 meses. Só 2 semanas se podem gozar até aos 8 anos.",
+    "fam_cheap": "Os meses em que normalmente ganhas menos (e por isso perdes menos de licença): {m}.",
+    "fam_seasonal": "O «normal» de cada mês é o que recebeste nesse mesmo mês no ano anterior: assim vês se custa mais no verão do que no inverno.",
+    "fam_blkAdd": "Adicionar bloco",
+    "fam_blkNote": "As semanas que não gozas logo após o parto podem ser repartidas por semanas até o bebé fazer 12 meses. Faltam {n} por planear.",
+    "fam_blkT": "Restantes semanas, em blocos",
+    "fam_blkW": "Semanas",
+    "fam_blkStart": "Desde",
     "advSet": "Definições avançadas (valores e códigos)",
     "howCalc": "Como se calcula?",
     "td_restLong": "Livre até à apresentação: {g}",
@@ -6703,6 +7017,37 @@ var I18N = {
     "e_noPeriod": "Não encontro o período da escala. É o «Individual duty plan» do IDP em PDF?"
   },
   ro: {
+    "ui_z_xl": "Foarte mare",
+    "ui_z_l": "Mare",
+    "ui_z_n": "Normal",
+    "ui_z_s": "Mic",
+    "ui_zoom": "Mărimea textului",
+    "ui_th_dark": "Întunecat",
+    "ui_th_light": "Luminos",
+    "ui_th_auto": "Automat (ca iPhone-ul)",
+    "ui_theme": "Temă",
+    "ui_T": "Afișare",
+    "irpf_note": "Estimare cu scala de stat și a Insulelor Baleare, minimul personal și familial și 2.000 € cheltuieli. Folosește {n} luni cu date și completează cu media. Fără alte venituri, deduceri sau pensii private. Nu este consultanță fiscală.",
+    "irpf_raise": "Ca să nu plătești la declarație, cere la HR o reținere de ≈ {p} % pentru fluturașii rămași din an.",
+    "irpf_ok": "Reținerea este corectă",
+    "irpf_back": "Ți s-ar returna ≈",
+    "irpf_pay": "Ai avea de plătit la declarație ≈",
+    "irpf_retSplit": "{a} deja reținut pe fluturași + {b} prevăzut cu {p} %",
+    "irpf_ret": "Reținut în an",
+    "irpf_base": "bază impozabilă ≈ {b}",
+    "irpf_rate": "{p} % din brutul impozabil",
+    "irpf_owed": "IRPF estimat pe an",
+    "irpf_kids3": "Dintre care sub 3 ani",
+    "irpf_kids": "Copii",
+    "irpf_T": "IRPF {y}: îți ajunge reținerea?",
+    "fam_late": "Un bloc se termină după ce bebelușul împlinește 12 luni. Doar 2 săptămâni se pot lua până la 8 ani.",
+    "fam_cheap": "Lunile în care câștigi de obicei cel mai puțin (deci pierzi cel mai puțin în concediu): {m}.",
+    "fam_seasonal": "„Normalul” fiecărei luni este cât ai câștigat în aceeași lună cu un an înainte: vezi dacă vara costă mai mult decât iarna.",
+    "fam_blkAdd": "Adaugă bloc",
+    "fam_blkNote": "Săptămânile pe care nu le iei imediat după naștere le poți împărți pe săptămâni până la 12 luni ale bebelușului. Mai ai {n} de planificat.",
+    "fam_blkT": "Săptămânile rămase, în blocuri",
+    "fam_blkW": "Săptămâni",
+    "fam_blkStart": "De la",
     "advSet": "Setări avansate (sume și coduri)",
     "howCalc": "Cum se calculează?",
     "td_restLong": "Liber până la prezentare: {g}",
@@ -10063,7 +10408,8 @@ function renderYear(){
       <div class="note num">${t('grossTotal')} ${r.gross!=null?eur.format(r.gross):'—'} · ${t('yr_diet')} ${eur.format(r.dietas)} · ${t('slip_ss')} ${eur.format(r.ss)} · IRPF ${eur.format(r.irpf)}</div></div>`).join('')}
       <div class="mrow tot"><div class="mh"><span>${t('vac_total')}</span><b class="num">${eur.format(sum('net'))}</b></div>
       <div class="note num">${t('grossTotal')} ${eur.format(sum('gross'))} · ${t('yr_diet')} ${eur.format(sum('dietas'))} · ${t('slip_ss')} ${eur.format(sum('ss'))} · IRPF ${eur.format(sum('irpf'))}</div></div></div>
-    ${nPart?`<p class="note">${t('yr_partNote',{n:nPart})}</p>`:''}<p class="note">${t('yr_note',{g:eur.format(sum('gross')-sum('dietas')),i:eur.format(sum('irpf')),s:eur.format(sum('ss')),d:eur.format(sum('dietas'))})}</p>`);
+    ${nPart?`<p class="note">${t('yr_partNote',{n:nPart})}</p>`:''}<p class="note">${t('yr_note',{g:eur.format(sum('gross')-sum('dietas')),i:eur.format(sum('irpf')),s:eur.format(sum('ss')),d:eur.format(sum('dietas'))})}</p>
+    ${typeof irpfHtml === 'function' ? irpfHtml(year, rows) : ''}`);
 }
 
 // ================= 7. backup =================
@@ -10398,38 +10744,73 @@ function normalNet(){
   const ks = Object.keys(state.slips||{}).sort().slice(-6), v = ks.map(k => state.slips[k].net).filter(x => x > 0);
   return v.length ? v.reduce((a,b) => a+b, 0) / v.length : 0;
 }
+// normal net for a calendar month: the same month a year earlier if you have that payslip (summer
+// flying pays more than winter), otherwise the average of your last payslips
+function monthNormal(y, m){
+  const sl = state.slips || {}, k = kOf(y-1, m);
+  if(sl[k] && sl[k].net > 0) return { v: sl[k].net, src: 'ly' };
+  if(sl[kOf(y, m)] && sl[kOf(y, m)].net > 0) return { v: sl[kOf(y, m)].net, src: 'ty' };
+  return { v: normalNet(), src: 'avg' };
+}
+function famLeaveDays(f){
+  const out = new Set(), add = (s, w) => { if(!s || !(w > 0)) return; const a = Date.parse(s+'T12:00'); for(let i = 0; i < w*7; i++) out.add(new Date(a + i*864e5).toISOString().slice(0,10)); };
+  const w1 = Math.min(17, Math.max(6, +f.weeks || 17));
+  add(f.birth, w1);
+  for(const bl of (f.blocks||[])) add(bl.s, +bl.w);
+  return out;
+}
 function renderFam(){
   const f = state.fam = state.fam || {};
   const birth = f.birth || '', weeks = Math.min(17, Math.max(6, +f.weeks || 17));
+  f.blocks = (f.blocks||[]).filter(b => b && b.w > 0);
+  const used = weeks + f.blocks.reduce((a, b) => a + (+b.w||0), 0), left = Math.max(0, 17 - used);
+  const blkRows = f.blocks.map((bl, i) => `<div class="fam-blk"><label>${t('fam_blkStart')}<input type="date" data-famblk="${i}" data-f="s" value="${esc(bl.s||'')}"></label>
+      <label>${t('fam_blkW')}<select data-famblk="${i}" data-f="w">${[...Array(Math.max(+bl.w||1, (+bl.w||0) + left))].map((_, j) => j+1).map(w => `<option value="${w}"${w===+bl.w?' selected':''}>${t('fam_wk',{n:w})}</option>`).join('')}</select></label>
+      <button class="btn ghost" type="button" data-famdel="${i}">✕</button></div>`).join('');
   const form = `<div class="form" style="margin-top:0">
       <label>${t('fam_birth')}<input type="date" id="fam-birth" value="${esc(birth)}"></label>
-      <label>${t('fam_weeks')}<select id="fam-weeks">${[6,8,10,12,14,16,17].map(w => `<option value="${w}"${w===weeks?' selected':''}>${t('fam_wk',{n:w})}</option>`).join('')}</select></label>
+      <label>${t('fam_weeks')}<select id="fam-weeks">${[6,7,8,9,10,11,12,13,14,15,16,17].filter(w => w <= 17 - (used - weeks)).map(w => `<option value="${w}"${w===weeks?' selected':''}>${t('fam_wk',{n:w})}</option>`).join('')}</select></label>
       <label>${t('fam_base')}<input type="text" inputmode="decimal" id="fam-base" value="${f.base ? f.base : ''}" placeholder="auto"></label>
-    </div><button class="btn ghost" id="fam-save" type="button">${t('fam_calc')}</button>`;
+    </div>
+    ${birth ? `<h3 class="wh">${t('fam_blkT')}</h3><p class="note" style="margin-top:0">${t('fam_blkNote', {n: left})}</p>${blkRows}
+      ${left > 0 ? `<button class="btn ghost" id="fam-add" type="button">＋ ${t('fam_blkAdd')}</button>` : ''}` : ''}
+    <div style="margin-top:10px"><button class="btn" id="fam-save" type="button">${t('fam_calc')}</button></div>`;
   if(!birth){ pnl(hdr('fam', t('fam_intro')) + form + famInfo()); return; }
-  const start = birth, b = famBase(start);
+  const b = famBase(birth);
   const base = Math.min(+f.base || b.v || 0, MAX_BASE_2026), daily = base / 30;
-  const endMs = Date.parse(start + 'T12:00') + (weeks * 7 - 1) * 864e5, end = new Date(endMs).toISOString().slice(0,10);
-  const normal = normalNet();
-  // months touched by the leave
-  const rows = []; let tot = 0, totN = 0;
-  for(let [y, m] = start.split('-').map(Number); kOf(y, m) <= end.slice(0,7); [y, m] = nextYM(y, m)){
-    const dim = new Date(y, m, 0).getDate(), a = Math.max(Date.parse(start+'T12:00'), Date.parse(kOf(y,m)+'-01T12:00')),
-      z = Math.min(endMs, Date.parse(kOf(y,m)+'-'+String(dim).padStart(2,'0')+'T12:00')), days = Math.round((z - a) / 864e5) + 1;
-    const inss = daily * days, comp = normal * (dim - days) / dim;
+  const leave = famLeaveDays(f), ld = [...leave].sort();
+  const endMs = Date.parse(birth + 'T12:00') + (weeks * 7 - 1) * 864e5;
+  const lastDay = ld[ld.length - 1] || birth;
+  const rows = []; let tot = 0, totN = 0, anyLy = false;
+  for(let [y, m] = birth.split('-').map(Number); kOf(y, m) <= lastDay.slice(0,7); [y, m] = nextYM(y, m)){
+    const dim = new Date(y, m, 0).getDate(), pre = kOf(y, m) + '-';
+    let days = 0; for(let d = 1; d <= dim; d++) if(leave.has(pre + String(d).padStart(2,'0'))) days++;
+    if(!days) continue;
+    const N = monthNormal(y, m), normal = N.v; if(N.src === 'ly') anyLy = true;
+    const inss = daily * days, comp = normal * (dim - days) / dim, diff = inss + comp - normal;
     tot += inss + comp; totN += normal;
-    rows.push(`<tr><td>${nm(y, m, {month:'short', year:'numeric'})}</td><td>${days}</td><td>${eur.format(inss)}</td><td>${normal ? eur.format(comp) : '—'}</td><td><b>${eur.format(inss + comp)}</b></td></tr>`);
+    rows.push(`<tr><td>${nm(y, m, {month:'short', year:'numeric'})}</td><td>${days}</td><td>${eur.format(inss)}</td><td>${normal ? eur.format(comp) : '—'}</td><td><b>${eur.format(inss + comp)}</b>${normal ? `<br><small class="${diff < 0 ? 'neg' : 'pos'}">${diff >= 0 ? '+' : ''}${eur.format(diff)}</small>` : ''}</td></tr>`);
+  }
+  // which months cost least: lowest normal pay (needs payslips of the year before)
+  const cheap = [];
+  if(Object.keys(state.slips||{}).length >= 6){
+    const by = birth.split('-').map(Number), list = [];
+    for(let i = 0, y = by[0], m = by[1]; i < 12; i++, [y, m] = nextYM(y, m)){ const N = monthNormal(y, m); if(N.src !== 'avg') list.push({ y, m, v: N.v }); }
+    list.sort((a, b) => a.v - b.v).slice(0, 3).forEach(x => cheap.push(nm(x.y, x.m, {month:'long'})));
   }
   const d9 = new Date(Date.parse(birth+'T12:00')); d9.setMonth(d9.getMonth() + 9);
-  const back = new Date(endMs + 864e5);
+  const back = new Date(Date.parse(lastDay+'T12:00') + 864e5);
   let wd = 0; for(let x = back.getTime(); x < d9.getTime(); x += 864e5){ const g = new Date(x).getDay(); if(g && g < 6) wd++; }
-  const lact = Math.round(wd / 8);   // 1 h per working day, in 8-hour days
+  const lact = Math.round(wd / 8);
+  const late = f.blocks.some(bl => bl.s && Date.parse(bl.s+'T12:00') + bl.w*7*864e5 > Date.parse(birth+'T12:00') + 366*864e5);
   pnl(hdr('fam', t('fam_intro')) + form + `
-    <p class="msg">${t('fam_sum', {s: new Date(start+'T12:00').toLocaleDateString(LOC), e: new Date(end+'T12:00').toLocaleDateString(LOC), w: weeks, d: eur.format(daily), m: eur.format(daily*30)})}</p>
+    <p class="msg">${t('fam_sum', {s: new Date(birth+'T12:00').toLocaleDateString(LOC), e: new Date(endMs).toLocaleDateString(LOC), w: weeks, d: eur.format(daily), m: eur.format(daily*30)})}</p>
     <p class="note">${b.src === 'slip' ? t('fam_baseSlip', {v: eur.format(b.v), m: b.m}) : b.src === 'est' ? t('fam_baseEst', {v: eur.format(b.v)}) : ''}${(+f.base || b.v) > MAX_BASE_2026 ? ' ' + t('fam_cap', {v: eur.format(MAX_BASE_2026)}) : ''}</p>
-    <div class="tablewrap"><table class="slip"><tr class="sec"><td>${t('fam_month')}</td><td>${t('fam_days')}</td><td>INSS</td><td>Eurowings</td><td>${t('fam_total')}</td></tr>${rows.join('')}</table></div>
-    ${normal ? `<p class="note">${t('fam_vs', {n: eur.format(normal), t: eur.format(tot), d: (tot-totN>=0?'+':'') + eur.format(tot - totN)})}</p>` : `<p class="note">${t('fam_noNormal')}</p>`}
-    ${weeks < 17 ? `<p class="note">${t('fam_rest', {n: 17 - weeks, d: new Date(Date.parse(birth+'T12:00') + 365*864e5).toLocaleDateString(LOC)})}</p>` : ''}
+    <div class="tablewrap"><table class="slip famt"><tr class="sec"><td>${t('fam_month')}</td><td>${t('fam_days')}</td><td>INSS</td><td>Eurowings</td><td>${t('fam_total')}</td></tr>${rows.join('')}</table></div>
+    ${totN ? `<p class="note">${t('fam_vs', {n: eur.format(totN / Math.max(1, rows.length)), t: eur.format(tot), d: (tot-totN>=0?'+':'') + eur.format(tot - totN)})} ${anyLy ? t('fam_seasonal') : ''}</p>` : `<p class="note">${t('fam_noNormal')}</p>`}
+    ${cheap.length ? `<p class="msg">💡 ${t('fam_cheap', {m: cheap.join(', ')})}</p>` : ''}
+    ${late ? `<p class="msg err">${t('fam_late')}</p>` : ''}
+    ${left > 0 ? `<p class="note">${t('fam_rest', {n: left, d: new Date(Date.parse(birth+'T12:00') + 365*864e5).toLocaleDateString(LOC)})}</p>` : ''}
     <h3 class="wh">${t('fam_lactT')}</h3>
     <p class="note">${t('fam_lact', {d: d9.toLocaleDateString(LOC), b: back.toLocaleDateString(LOC), n: lact})}</p>
     ${famInfo()}`);
@@ -10440,16 +10821,22 @@ function famInfo(){
     <p class="note">${t('fam_disc')}</p>`;
 }
 
+function famRead(f){ document.querySelectorAll('[data-famblk]').forEach(el => { const b = (f.blocks||[])[+el.dataset.famblk]; if(b) b[el.dataset.f] = el.dataset.f === 'w' ? +el.value : el.value; }); }
 // tool events
 document.addEventListener('change', e => {
   if(e.target.id === 'wr-y'){ renderWrap(); return; }
   if(e.target.id === 'cmp-k'){ renderCmp(); return; }
+  if(e.target.dataset && e.target.dataset.famblk != null){ famRead(state.fam); save(); renderFam(); return; }
 });
 document.addEventListener('click', e => {
   const id = e.target.id;
   if(id === 'chg-x'){ delete (state.changes||{})[e.target.dataset.k]; save(); renderChanges(null); return; }
+  if(id === 'fam-add'){ const f = state.fam = state.fam || {}; famRead(f);
+    const last = famLeaveDays(f), ls = [...last].sort().pop() || f.birth; const d = new Date(Date.parse(ls+'T12:00') + 864e5);
+    (f.blocks = f.blocks || []).push({ s: d.toISOString().slice(0,10), w: 1 }); save(); renderFam(); return; }
+  const fd = e.target.closest('[data-famdel]'); if(fd){ const f = state.fam; famRead(f); f.blocks.splice(+fd.dataset.famdel, 1); save(); renderFam(); return; }
   if(id === 'fam-save'){
-    const f = state.fam = state.fam || {};
+    const f = state.fam = state.fam || {}; famRead(f);
     f.birth = $('fam-birth').value || ''; f.weeks = +$('fam-weeks').value || 17;
     const b = String($('fam-base').value).trim(); f.base = b ? (parseFloat(/,/.test(b) ? b.replace(/\./g,'').replace(',','.') : b) || null) : null;
     save(); renderFam(); return;
@@ -11657,11 +12044,95 @@ function renderBaseWarn(ro){
 }
 document.addEventListener('click', e => { if(e.target.id === 'bwFix'){ state.settings.base = e.target.dataset.b; save(); render(); } });
 
+// ---------- IRPF: will this year's withholding be enough? (Illes Balears scale) ----------
+const IRPF_STATE = [[12450,9.5],[20200,12],[35200,15],[60000,18.5],[300000,22.5],[Infinity,24.5]];
+const IRPF_BAL = [[10000,9],[18000,11.25],[30000,14.25],[48000,17.5],[70000,19],[90000,21.75],[120000,22.75],[175000,23.75],[Infinity,24.75]];
+function irpfScale(sc, b){ let tax = 0, lo = 0; for(const [hi, r] of sc){ if(b <= lo) break; tax += (Math.min(b, hi) - lo) * r / 100; lo = hi; } return tax; }
+function irpfYear(year, rows, kids, under3){
+  const full = rows.filter(r => !r.partial && r.gross != null);
+  const avg = f => full.length ? full.reduce((a, r) => a + (+r[f]||0), 0) / full.length : 0;
+  const have = new Set(full.map(r => r.m)), miss = 12 - have.size;
+  let G = 0, SS = 0, Rreal = 0, Gfut = 0, Rfut = 0;
+  for(const r of full){ const g = r.gross - (r.dietas||0); G += g; SS += r.ss||0; if(r.real){ Rreal += r.irpf||0; } else { Gfut += g; Rfut += r.irpf||0; } }
+  const gAvg = avg('gross') - avg('dietas');
+  G += gAvg * miss; SS += avg('ss') * miss; Gfut += gAvg * miss; Rfut += avg('irpf') * miss;
+  let net = Math.max(0, G - SS - 2000);
+  // reducción por obtención de rendimientos del trabajo (art. 20 LIRPF), only for low incomes
+  const red = net <= 14852 ? 7302 : net <= 17673.52 ? 7302 - 1.75*(net-14852) : net <= 19747.5 ? 2364.34 - 1.14*(net-17673.52) : 0;
+  const base = Math.max(0, net - red);
+  const dState = [2400, 2700, 4000, 4500], dBal = [2400, 2970, 4400, 4950];
+  let minS = 5550, minB = 5550;
+  for(let i = 0; i < kids; i++){ minS += dState[Math.min(i, 3)]; minB += dBal[Math.min(i, 3)]; }
+  minS += 2800 * under3; minB += 2800 * under3;
+  const cuota = Math.max(0, irpfScale(IRPF_STATE, base) - irpfScale(IRPF_STATE, Math.min(base, minS))) + Math.max(0, irpfScale(IRPF_BAL, base) - irpfScale(IRPF_BAL, Math.min(base, minB)));
+  const R = Rreal + Rfut, need = Gfut > 0 ? (cuota - Rreal) / Gfut * 100 : null;
+  return { G, SS, base, cuota, Rreal, Rfut, R, diff: cuota - R, need, miss, months: have.size, Gfut };
+}
+function irpfHtml(year, rows){
+  const s = state.settings, f = state.fam || {};
+  const bornBy = f.birth && f.birth <= year + '-12-31';
+  const kids = s.kids != null ? +s.kids : (bornBy ? 1 : 0);
+  const under3 = Math.min(kids, s.kids3 != null ? +s.kids3 : (bornBy ? 1 : 0));
+  const x = irpfYear(year, rows, kids, under3);
+  if(!x.G) return '';
+  const pay = x.diff > 150, back = x.diff < -150;
+  return `<h3 class="wh">${t('irpf_T', {y: year})}</h3>
+    <div class="form" style="margin-top:0"><label>${t('irpf_kids')}<select id="irpf-kids">${[0,1,2,3,4].map(n => `<option${n===kids?' selected':''}>${n}</option>`).join('')}</select></label>
+      <label>${t('irpf_kids3')}<select id="irpf-kids3">${[0,1,2,3,4].filter(n => n <= kids).map(n => `<option${n===under3?' selected':''}>${n}</option>`).join('')}</select></label></div>
+    <div class="mlist">
+      <div class="mrow"><div class="mh"><span>${t('irpf_owed')}</span><b class="num">${eur.format(x.cuota)}</b></div><div class="note num">${t('irpf_rate', {p: (x.cuota / x.G * 100).toFixed(1).replace('.', ',')})} · ${t('irpf_base', {b: eur0.format(x.base)})}</div></div>
+      <div class="mrow"><div class="mh"><span>${t('irpf_ret')}</span><b class="num">${eur.format(x.R)}</b></div><div class="note num">${t('irpf_retSplit', {a: eur.format(x.Rreal), b: eur.format(x.Rfut), p: String(s.irpf).replace('.', ',')})}</div></div>
+      <div class="mrow tot"><div class="mh"><span>${pay ? t('irpf_pay') : back ? t('irpf_back') : t('irpf_ok')}</span><b class="num" style="color:var(${pay ? '--warn' : '--pay'})">${pay || back ? eur.format(Math.abs(x.diff)) : '✓'}</b></div></div>
+    </div>
+    ${pay && x.need != null && x.Gfut > 500 ? `<p class="msg err">${t('irpf_raise', {p: Math.min(47, Math.ceil(x.need * 10) / 10).toFixed(1).replace('.', ',')})}</p>` : ''}
+    <p class="note">${t('irpf_note', {n: x.months})}</p>`;
+}
+document.addEventListener('change', e => {
+  if(e.target.id === 'irpf-kids' || e.target.id === 'irpf-kids3'){
+    state.settings[e.target.id === 'irpf-kids' ? 'kids' : 'kids3'] = +e.target.value;
+    if(state.settings.kids3 > state.settings.kids) state.settings.kids3 = state.settings.kids;
+    save(); renderYear(); return;
+  }
+  if(e.target.id === 'ui-theme' || e.target.id === 'ui-zoom'){
+    const u = uiPrefs(); u[e.target.id === 'ui-theme' ? 'theme' : 'zoom'] = e.target.id === 'ui-zoom' ? +e.target.value : e.target.value;
+    try{ localStorage.setItem('pr.ui', JSON.stringify(u)); }catch(err){}
+    applyUi(); return;
+  }
+});
+
+// ---------- display: theme and text size (kept per device) ----------
+function uiPrefs(){ try{ return JSON.parse(localStorage.getItem('pr.ui') || '{}') || {}; }catch(e){ return {}; } }
+function applyUi(){
+  const u = uiPrefs(), r = document.documentElement;
+  if(u.theme === 'light' || u.theme === 'dark') r.dataset.theme = u.theme; else delete r.dataset.theme;
+  if(u.zoom && u.zoom !== 100) r.style.setProperty('--uiz', u.zoom / 100); else r.style.removeProperty('--uiz');
+  const m = document.querySelector('meta[name=theme-color]');
+  if(m){ const dark = u.theme === 'dark' || (u.theme !== 'light' && !!window.matchMedia && matchMedia('(prefers-color-scheme: dark)').matches); m.content = dark ? '#161a2c' : '#f3f4f8'; }
+}
+function renderUiBox(){
+  const el = $('uiBox'); if(!el) return;
+  const u = uiPrefs(), th = u.theme || 'auto', z = u.zoom || 100;
+  el.innerHTML = `<h2 style="margin:0 0 6px">${t('ui_T')}</h2><div class="form" style="margin-top:4px">
+    <label>${t('ui_theme')}<select id="ui-theme">${['auto','light','dark'].map(v => `<option value="${v}"${v===th?' selected':''}>${t('ui_th_'+v)}</option>`).join('')}</select></label>
+    <label>${t('ui_zoom')}<select id="ui-zoom">${[[90,'ui_z_s'],[100,'ui_z_n'],[115,'ui_z_l'],[130,'ui_z_xl']].map(([v,k]) => `<option value="${v}"${v===z?' selected':''}>${t(k)}</option>`).join('')}</select></label></div>`;
+}
+applyUi();
+
+// ---------- home-screen shortcuts (Android): ?go=next | pdf | mm ----------
+setTimeout(() => {
+  let go = null; try{ go = new URLSearchParams(location.search).get('go'); }catch(e){}
+  if(!go) return;
+  try{ history.replaceState(history.state, '', location.pathname); }catch(e){}
+  if(go === 'next'){ setTab('roster'); const el = $('today'); if(el && !el.hidden) el.scrollIntoView({block:'start'}); }
+  else if(go === 'pdf'){ setTab('roster'); const i = $('pdfIn'); if(i) try{ i.click(); }catch(e){} }
+  else if(go === 'mm'){ if(typeof openTool === 'function'){ toolOpen = null; openTool('map'); if(typeof startMoving === 'function' && !mm) startMoving(); } }
+}, 400);
+
 </script>
 <script>
 const SEED = null;
 const SEED_SETTINGS = null;
-const APP_VERSION = '2026.11.10-2134';
+const APP_VERSION = '2026.11.10-2147';
 const IS_PWA_BUILD = true;
 const LS = 'payroster.v1';
 const KC = { sick:'--warn', flight:'--k-flight', deadhead:'--k-dh', training:'--k-train', standby:'--k-sby', reserve:'--k-sby', ground:'--k-ground', off:'--k-off', empty:'--k-off', other:'--k-ground' };
@@ -11851,7 +12322,7 @@ function render(){
   { const b = $('privBtn'); if(b && !b.innerHTML){ b.innerHTML = privIcon(); b.title = t(PRIV ? 'priv_show' : 'priv_hide'); b.setAttribute('aria-pressed', PRIV ? 'true' : 'false'); } }
   renderSetup();
   try{ renderInstall(); }catch(e){}
-  try{ renderToday(); renderChanges(ro); renderLicAlert(); renderLicTable(); renderBkRemind(); renderLockBox(); renderBaseWarn(ro); }catch(e){ console.warn(e); }
+  try{ renderToday(); renderChanges(ro); renderLicAlert(); renderLicTable(); renderBkRemind(); renderLockBox(); renderBaseWarn(ro); renderUiBox(); }catch(e){ console.warn(e); }
   if(ro.base && !s.baseSetByUser) s.base = ro.base;
   const w = $('rankWarn');
   if(s.configured && ro.rankNorm && ro.rankNorm!==s.rank){

@@ -9,8 +9,56 @@
   "background_color": "#0f1220",
   "theme_color": "#161a2c",
   "icons": [
-    { "src": "icons/icon4-192.png", "sizes": "192x192", "type": "image/png" },
-    { "src": "icons/icon4-512.png", "sizes": "512x512", "type": "image/png" },
-    { "src": "icons/icon4-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+    {
+      "src": "icons/icon4-192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "icons/icon4-512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    },
+    {
+      "src": "icons/icon4-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Próximo servicio",
+      "short_name": "Próximo",
+      "url": "./?go=next",
+      "icons": [
+        {
+          "src": "icons/icon4-192.png",
+          "sizes": "192x192"
+        }
+      ]
+    },
+    {
+      "name": "Subir PDF",
+      "short_name": "PDF",
+      "url": "./?go=pdf",
+      "icons": [
+        {
+          "src": "icons/icon4-192.png",
+          "sizes": "192x192"
+        }
+      ]
+    },
+    {
+      "name": "Moving map",
+      "short_name": "Moving map",
+      "url": "./?go=mm",
+      "icons": [
+        {
+          "src": "icons/icon4-192.png",
+          "sizes": "192x192"
+        }
+      ]
+    }
   ]
 }
