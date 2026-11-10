@@ -299,6 +299,8 @@ html.locked #lockScr{display:flex;position:fixed;inset:0;z-index:999;background:
 .m-trk{fill:none;stroke:var(--pay);stroke-width:2.5px;stroke-linecap:round;stroke-linejoin:round;vector-effect:non-scaling-stroke}
 .trkrow{display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap}
 .btn.sm{font-size:12.5px;padding:4px 10px}
+.mapsel{gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:8px}
+.mapsel select{max-width:100%}
 .td-lay{margin-top:10px;background:var(--sunk);border-radius:12px;padding:0 12px}
 .td-lay summary{padding:10px 0;cursor:pointer;font-size:14px;list-style:none}
 .td-lay summary::-webkit-details-marker{display:none}
@@ -1401,6 +1403,7 @@ var I18N = {
     mm_noLeg: 'No encuentro ningún vuelo en tus rosters para mostrar.',
     mm_note: 'El moving map usa el GPS del móvil, que funciona en modo avión sin internet. Pon el móvil cerca de una ventanilla. Es solo informativo, no para navegar.',
     mm_start: 'Moving map en vuelo',
+    "map_allTime": "Todo el tiempo",
     "sofar": "Hasta hoy llevas {a} de lo trabajado · con todo el roster, {b} de variable",
     "sofar_min": "(incluye mínimos garantizados)",
     "trk_title": "Trazas GPS guardadas",
@@ -1920,6 +1923,7 @@ var I18N = {
     mm_noLeg: 'No trobo cap vol als teus rosters per mostrar.',
     mm_note: 'El moving map fa servir el GPS del mòbil, que funciona en mode avió sense internet. Posa el mòbil a prop d’una finestreta. És només informatiu, no per navegar.',
     mm_start: 'Moving map en vol',
+    "map_allTime": "Tot el temps",
     "sofar": "Fins avui portes {a} del que has treballat · amb tot el roster, {b} de variable",
     "sofar_min": "(inclou mínims garantits)",
     "trk_title": "Traces GPS desades",
@@ -2439,6 +2443,7 @@ var I18N = {
     mm_noLeg: 'I can’t find a flight in your rosters to show.',
     mm_note: 'The moving map uses the phone’s GPS, which works in flight mode without internet. Keep the phone near a window. For information only, not for navigation.',
     mm_start: 'In-flight moving map',
+    "map_allTime": "All time",
     "sofar": "So far {a} from work done · with the whole roster, {b} variable pay",
     "sofar_min": "(includes minimum guarantees)",
     "trk_title": "Saved GPS traces",
@@ -2958,6 +2963,7 @@ var I18N = {
     mm_noLeg: 'Ich finde keinen Flug in deinen Dienstplänen.',
     mm_note: 'Die Moving Map nutzt das GPS des Handys, das im Flugmodus ohne Internet funktioniert. Halte das Handy nahe ans Fenster. Nur zur Information, nicht zur Navigation.',
     mm_start: 'Moving Map im Flug',
+    "map_allTime": "Gesamter Zeitraum",
     "sofar": "Bis heute {a} aus geleisteter Arbeit · mit dem ganzen Dienstplan {b} variabel",
     "sofar_min": "(inkl. garantierter Mindestbeträge)",
     "trk_title": "Gespeicherte GPS-Spuren",
@@ -3477,6 +3483,7 @@ var I18N = {
     mm_noLeg: 'Je ne trouve aucun vol dans tes plannings.',
     mm_note: 'La moving map utilise le GPS du téléphone, qui marche en mode avion sans internet. Garde le téléphone près d’un hublot. À titre indicatif, pas pour naviguer.',
     mm_start: 'Moving map en vol',
+    "map_allTime": "Depuis le début",
     "sofar": "Jusqu’à aujourd’hui {a} pour le travail fait · avec tout le planning, {b} de variable",
     "sofar_min": "(minimums garantis inclus)",
     "trk_title": "Traces GPS enregistrées",
@@ -3996,6 +4003,7 @@ var I18N = {
     mm_noLeg: 'Nem találok járatot a beosztásaidban.',
     mm_note: 'A moving map a telefon GPS-ét használja, ami repülő üzemmódban, internet nélkül is működik. Tartsd a telefont az ablak közelében. Csak tájékoztató, nem navigációra.',
     mm_start: 'Moving map repülés közben',
+    "map_allTime": "Teljes idő",
     "sofar": "Mai napig {a} az elvégzett munkából · a teljes beosztással {b} változó bér",
     "sofar_min": "(a garantált minimumokkal)",
     "trk_title": "Mentett GPS-nyomvonalak",
@@ -4515,6 +4523,7 @@ var I18N = {
     mm_noLeg: 'V tvojich rozpisoch nenachádzam žiadny let.',
     mm_note: 'Moving map používa GPS telefónu, ktoré funguje v režime lietadlo bez internetu. Drž telefón pri okne. Len informatívne, nie na navigáciu.',
     mm_start: 'Moving map počas letu',
+    "map_allTime": "Celé obdobie",
     "sofar": "Doteraz {a} za odvedenú prácu · s celým rozpisom {b} variabilnej mzdy",
     "sofar_min": "(vrátane garantovaných miním)",
     "trk_title": "Uložené GPS stopy",
@@ -5034,6 +5043,7 @@ var I18N = {
     mm_noLeg: 'V tvých rozpisech nenacházím žádný let.',
     mm_note: 'Moving map používá GPS telefonu, které funguje v režimu letadlo bez internetu. Drž telefon u okna. Jen informativní, ne k navigaci.',
     mm_start: 'Moving map během letu',
+    "map_allTime": "Celé období",
     "sofar": "Zatím {a} za odvedenou práci · s celým rozpisem {b} variabilní mzdy",
     "sofar_min": "(včetně garantovaných minim)",
     "trk_title": "Uložené GPS stopy",
@@ -5552,6 +5562,7 @@ var I18N = {
     "mm_noLeg": "Non trovo nessun volo nei tuoi roster.",
     "mm_note": "La moving map usa il GPS del telefono, che funziona in modalità aereo senza internet. Tieni il telefono vicino a un finestrino. Solo informativa, non per navigare.",
     "mm_start": "Moving map in volo",
+    "map_allTime": "Sempre",
     "sofar": "Finora {a} dal lavoro fatto · con tutto il roster, {b} di variabile",
     "sofar_min": "(minimi garantiti inclusi)",
     "trk_title": "Tracce GPS salvate",
@@ -6176,6 +6187,7 @@ var I18N = {
     "mm_noLeg": "Não encontro nenhum voo nas tuas escalas.",
     "mm_note": "O moving map usa o GPS do telemóvel, que funciona em modo de voo sem internet. Mantém o telemóvel junto a uma janela. É só informativo, não para navegar.",
     "mm_start": "Moving map em voo",
+    "map_allTime": "Todo o tempo",
     "sofar": "Até hoje levas {a} do trabalho feito · com a escala toda, {b} de variável",
     "sofar_min": "(inclui mínimos garantidos)",
     "trk_title": "Trajetos GPS guardados",
@@ -6800,6 +6812,7 @@ var I18N = {
     "mm_noLeg": "Nu găsesc niciun zbor în rosterele tale.",
     "mm_note": "Moving map folosește GPS-ul telefonului, care merge în modul avion fără internet. Ține telefonul lângă un hublou. Doar informativ, nu pentru navigație.",
     "mm_start": "Moving map în zbor",
+    "map_allTime": "Tot timpul",
     "sofar": "Până azi ai {a} din munca făcută · cu tot planul, {b} variabil",
     "sofar_min": "(inclusiv minimele garantate)",
     "trk_title": "Trasee GPS salvate",
@@ -10491,7 +10504,7 @@ const MAP = (() => {
 })();
 
 // ---------- map tool ----------
-let mapDay = null, mm = null;   // mm = moving map state
+let mapDay = null, mapMonth = null, mm = null;   // mapMonth: a month key or 'all'; mm = moving map state
 function monthLegs(ro, onlyDate){
   const c = PR.compute(ro, state.settings, state.extras), seen = {};
   for(const d of c.days){
@@ -10504,15 +10517,26 @@ function renderMap(){
   const ro = state.months[state.current];
   if(!ro){ pnl(hdr('map') + `<p class="msg">${t('startText')}</p>`); return; }
   if(mm){ renderMoving(); return; }
-  const c = PR.compute(ro, state.settings, state.extras);
-  const flDays = c.days.filter(d => d.legs.length);
+  // period: one saved month or all of them; inside a month, one day
+  const mks = Object.keys(state.months).sort().reverse();
+  const mk = mapMonth === 'all' ? 'all' : (mapMonth && state.months[mapMonth] ? mapMonth : state.current);
+  const allTime = mk === 'all', rm = allTime ? null : state.months[mk];
+  const flDays = rm ? PR.compute(rm, state.settings, state.extras).days.filter(d => d.legs.length) : [];
   const sel = mapDay && flDays.some(d => d.date === mapDay) ? mapDay : '';
-  const legs = monthLegs(ro, sel || null);
+  let legs;
+  if(allTime){ const seen = {};
+    for(const k of mks) for(const l of monthLegs(state.months[k])){ const id = l.dep + '-' + l.arr + (l.dh ? '*' : ''); if(seen[id]) seen[id].n += l.n; else seen[id] = Object.assign({}, l); }
+    legs = Object.values(seen); }
+  else legs = monthLegs(rm, sel || null);
   const km = legs.reduce((a, l) => a + kmBetween(l.dep, l.arr) * (l.dh ? 0 : l.n), 0);
-  const opts = `<option value="">${t('map_all',{m:monthName(ro.year, ro.month)})}</option>` + flDays.map(d => `<option value="${d.date}"${d.date===sel?' selected':''}>${d.day} · ${esc(d.route)}</option>`).join('');
+  const mOpts = `<option value="all"${allTime ? ' selected' : ''}>${t('map_allTime')}</option>` + mks.map(k => { const [y, m] = k.split('-').map(Number);
+    return `<option value="${k}"${k === mk ? ' selected' : ''}>${monthName(y, m, {month:'long', year:'numeric'})}</option>`; }).join('');
+  const dOpts = rm ? `<option value="">${t('map_all',{m:monthName(rm.year, rm.month)})}</option>` + flDays.map(d => `<option value="${d.date}"${d.date===sel?' selected':''}>${d.day} · ${esc(d.route)}</option>`).join('') : '';
   const missing = [...new Set(legs.flatMap(l => [l.dep, l.arr]))].filter(a => !AP[a]);
-  const trk = tracksOf(new Set(sel ? [sel] : ro.days.map(d => d.date)));
-  pnl(hdr('map', t('map_intro')) + `<label class="note">${t('map_show')} <select id="map-d">${opts}</select></label>
+  const trk = allTime ? Object.values(state.tracks || {}).filter(tr => tr.pts.length > 1).sort((a, b) => a.date.localeCompare(b.date))
+    : tracksOf(new Set(sel ? [sel] : rm.days.map(d => d.date)));
+  pnl(hdr('map', t('map_intro')) + `<div class="row mapsel"><label class="note">${t('map_show')} <select id="map-m">${mOpts}</select></label>
+    ${rm ? `<label class="note"><select id="map-d" aria-label="${esc(t('map_show'))}">${dOpts}</select></label>` : ''}</div>
     <div class="mapbox">${MAP.svg(legs, {tracks: trk.map(tr => tr.pts)})}</div>
     <p class="note">${t('map_stats', {n: legs.filter(l=>!l.dh).reduce((a,l)=>a+l.n,0), k: Math.round(km).toLocaleString(LOC)})}${missing.length ? ' · ' + t('map_noAp',{a: missing.join(', ')}) : ''}</p>
     <div class="row"><button class="btn" id="mm-go" type="button">✈ ${t('mm_start')}</button></div>
@@ -10670,6 +10694,7 @@ function renderMoving(){
   mmTimer = setInterval(() => { if(!mm || toolOpen !== 'map'){ clearInterval(mmTimer); if(mm && mm.g3){ mm.g3.dispose(); mm.g3 = null; } return; } renderMoving(); }, mm.sim ? 200 : (use3d ? 2000 : 5000));
 }
 document.addEventListener('change', e => { if(e.target.id === 'map-d'){ mapDay = e.target.value || null; renderMap(); }
+  if(e.target.id === 'map-m'){ mapMonth = e.target.value; mapDay = null; renderMap(); }
   if(e.target.id === 'mm-leg' && mm){ mm.leg = mm.dayLegs[+e.target.value]; mm.sim = 0; mm.pinned = true; renderMoving(); } });
 document.addEventListener('click', e => {
   const id = e.target.id;
@@ -10680,7 +10705,7 @@ document.addEventListener('click', e => {
   if(id === 'mm-follow' && mm){ mm.follow = !mm.follow; renderMoving(); return; }
   if((id === 'g3-globe' || id === 'g3-near') && mm){ mm.g3view = id === 'g3-near' ? 'near' : 'globe'; if(mm.g3) mm.g3.setView(mm.g3view);
     $('g3-globe').classList.toggle('on', mm.g3view === 'globe'); $('g3-near').classList.toggle('on', mm.g3view === 'near'); return; }
-  const md = e.target.closest('[data-mapday]'); if(md){ mapDay = md.dataset.mapday; toolOpen = null; openTool('map'); return; }
+  const md = e.target.closest('[data-mapday]'); if(md){ mapDay = md.dataset.mapday; mapMonth = mapDay.slice(0, 7); toolOpen = null; openTool('map'); return; }
 });
 
 // ---- Payroster+ (Nov 2026): GPS trace, layovers, month so far, swap with a colleague, install, settings by QR ----
@@ -11518,7 +11543,7 @@ document.addEventListener('click', e => { if(e.target.id === 'bwFix'){ state.set
 <script>
 const SEED = null;
 const SEED_SETTINGS = null;
-const APP_VERSION = '2026.11.10-1100';
+const APP_VERSION = '2026.11.10-1116';
 const IS_PWA_BUILD = true;
 const LS = 'payroster.v1';
 const KC = { sick:'--warn', flight:'--k-flight', deadhead:'--k-dh', training:'--k-train', standby:'--k-sby', reserve:'--k-sby', ground:'--k-ground', off:'--k-off', empty:'--k-off', other:'--k-ground' };
