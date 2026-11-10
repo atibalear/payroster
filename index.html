@@ -289,7 +289,7 @@ html.locked #lockScr{display:flex;position:fixed;inset:0;z-index:999;background:
 .cmp2 > div{min-width:0;overflow-wrap:anywhere}
 .mrow .mh .chip{margin-left:6px;font-size:11.5px}
 .famul{padding-left:18px;margin:6px 0} .famul li{margin:4px 0}
-.mapbox{margin:10px 0;border-radius:10px;overflow:hidden;border:1px solid var(--line)}
+.mapbox{position:relative;margin:10px 0;border-radius:10px;overflow:hidden;border:1px solid var(--line)}
 .mapsvg{display:block;width:100%;height:auto;aspect-ratio:4/3}
 .m-land{fill:var(--map-land);stroke:var(--map-border);stroke-width:.7px;stroke-linejoin:round;vector-effect:non-scaling-stroke}
 .m-grat{fill:none;stroke:var(--map-border);stroke-width:.5px;opacity:.35;vector-effect:non-scaling-stroke}
@@ -330,6 +330,7 @@ html.locked #lockScr{display:flex;position:fixed;inset:0;z-index:999;background:
 .g3-labels{position:absolute;inset:0;pointer-events:none}
 .g3-pin{position:absolute;left:0;top:0;margin:-14px 0 0 -6px;display:flex;align-items:center;gap:6px;padding:4px 10px 4px 6px;border-radius:999px;background:rgba(14,22,44,.72);color:#eef2ff;font:600 12px var(--f-body);white-space:nowrap;backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);border:1px solid rgba(255,255,255,.18)}
 .g3-pin b{color:#f2b84b;font-weight:700}
+.g3-pin.sm{padding:2px 7px 2px 4px;font-size:10.5px;gap:4px}
 .g3-dot{width:8px;height:8px;border-radius:50%;background:#f2b84b;box-shadow:0 0 0 3px rgba(242,184,75,.3)}
 .mm-zoom.on{border-color:var(--accent);color:var(--accent)}
 .mm-btns{position:absolute;right:8px;bottom:8px;display:flex;gap:6px;z-index:2}
@@ -9633,14 +9634,17 @@ function setTab(tab){
   document.body.dataset.tab = tab;
   document.querySelectorAll('[data-tabgo]').forEach(b => b.classList.toggle('on', b.dataset.tabgo === tab));
   try{ sessionStorage.setItem('pr.tab', tab); }catch(e){}
+  // the 3D route map only draws while it can be seen
+  if(typeof mapDispose === 'function' && toolOpen === 'map' && !mm){ if(tab !== 'tools') mapDispose(); else if(!mapG3 && !mapFlat && $('g3m')) renderMap(); }
 }
 function openTool(k){
   setTab('tools');
   toolOpen = (toolOpen===k && k!=='sim') ? null : k;
   renderToolbar();
   const p = $('toolPanel');
-  if(!toolOpen){ p.hidden = true; p.innerHTML = ''; return; }
+  if(!toolOpen){ if(typeof mapDispose === 'function') mapDispose(); p.hidden = true; p.innerHTML = ''; return; }
   p.hidden = false;
+  if(toolOpen !== 'map' && typeof mapDispose === 'function') mapDispose();
   TOOL_FN()[toolOpen]();
   p.scrollIntoView({block:'nearest'});
 }
@@ -10547,13 +10551,36 @@ function renderMap(){
   const missing = [...new Set(legs.flatMap(l => [l.dep, l.arr]))].filter(a => !AP[a]);
   const trk = allTime ? Object.values(state.tracks || {}).filter(tr => tr.pts.length > 1).sort((a, b) => a.date.localeCompare(b.date))
     : tracksOf(new Set(sel ? [sel] : rm.days.map(d => d.date)));
+  mapDispose();
+  const use3d = !mapFlat && /^https?:/.test(location.protocol);
+  const flatBox = `<div class="mapbox">${MAP.svg(legs, {tracks: trk.map(tr => tr.pts)})}${/^https?:/.test(location.protocol) ? `<div class="mm-btns"><button class="mm-zoom" id="map-3d" type="button">🌍 3D</button></div>` : ''}</div>`;
+  const box3d = `<div class="mapbox g3box"><div id="g3m" class="g3d"></div><div class="g3-load note" id="g3m-load">${t('g3_loading')}</div>
+      <div class="mm-btns"><button class="mm-zoom" id="map-2d" type="button">🗺 2D</button></div></div>`;
   pnl(hdr('map', t('map_intro')) + `<div class="row mapsel"><label class="note">${t('map_show')} <select id="map-m">${mOpts}</select></label>
     ${rm ? `<label class="note"><select id="map-d" aria-label="${esc(t('map_show'))}">${dOpts}</select></label>` : ''}</div>
-    <div class="mapbox">${MAP.svg(legs, {tracks: trk.map(tr => tr.pts)})}</div>
+    ${use3d ? box3d : flatBox}
     <p class="note">${t('map_stats', {n: legs.filter(l=>!l.dh).reduce((a,l)=>a+l.n,0), k: Math.round(km).toLocaleString(LOC)})}${missing.length ? ' · ' + t('map_noAp',{a: missing.join(', ')}) : ''}</p>
     <div class="row"><button class="btn" id="mm-go" type="button">✈ ${t('mm_start')}</button></div>
     <p class="note">${t('mm_note')}</p>${tracksHtml(trk)}`);
+  if(use3d) mapStart3d(legs, trk.map(tr => tr.pts));
 }
+// the route map on the 3D globe; the flat map stays as the fallback and as a choice
+let mapG3 = null, mapG3tok = null, mapFlat = false;
+function mapDispose(){ mapG3tok = null; if(mapG3){ try{ mapG3.dispose(); }catch(e){} mapG3 = null; } }
+async function mapStart3d(legs, tracks){
+  const tok = mapG3tok = {};
+  try{
+    if(!window.THREE) await loadScript('lib/three.min.js');
+    const box = $('g3m'); if(!box || mapG3tok !== tok || box.querySelector('canvas')) return;
+    const cv = document.createElement('canvas'); if(!(cv.getContext('webgl2') || cv.getContext('webgl'))) throw new Error('no webgl');
+    mapG3 = Globe3D(box); mapG3.setRoutes(legs, tracks);
+    const ld = $('g3m-load'); if(ld) ld.remove();
+  }catch(e){ console.warn('map 3d', e); if(mapG3tok === tok){ mapFlat = true; renderMap(); } }
+}
+document.addEventListener('click', e => {
+  if(e.target.id === 'map-2d'){ mapFlat = true; renderMap(); }
+  else if(e.target.id === 'map-3d'){ mapFlat = false; renderMap(); }
+});
 
 // ---------- moving map ----------
 function pickLeg(){
@@ -10572,6 +10599,7 @@ function allLegs(){
   return all.filter(l => l.type === 'flt');
 }
 function startMoving(){
+  mapDispose();
   const leg = pickLeg();
   if(!leg || !AP[leg.dep] || !AP[leg.arr]){ $('toolPanel').insertAdjacentHTML('beforeend', `<p class="msg err">${t('mm_noLeg')}</p>`); return; }
   mm = { leg, fix: null, err: null, track: [], sim: 0 };
@@ -11288,7 +11316,7 @@ function Globe3D(box){
   }
 
   // camera views: 'globe' (whole earth around the plane) and 'near' (chase camera)
-  let view = 'globe', yaw = 0, zoom = 1, cur = null, target = null, planeState = null;
+  let view = 'globe', yaw = 0, zoom = 1, cur = null, target = null, planeState = null, ov = false;
   const tmp = new T.Vector3();
   function frame(){
     if(!planeState) return;
@@ -11308,6 +11336,7 @@ function Globe3D(box){
     const back = fwd.clone().applyAxisAngle(up, yaw).multiplyScalar(-1);
     let cp, look;
     if(near){ cp = pos.clone().add(back.multiplyScalar(0.028 * zoom)).add(up.clone().multiplyScalar(0.016 * zoom)); look = pos.clone().add(fwd.clone().multiplyScalar(0.01)); }
+    else if(ov){ cp = up.clone().multiplyScalar(R + 0.95 * zoom).add(back.multiplyScalar(0.6 * zoom)); look = pos.clone().add(fwd.clone().multiplyScalar(0.05 * zoom)); }   // overview: higher, looking at the middle of the routes
     else { cp = up.clone().multiplyScalar(R + 0.55 * zoom).add(back.multiplyScalar(0.75 * zoom)); look = pos.clone().add(fwd.clone().multiplyScalar(0.12)); }
     target = { cp, look };
     if(!cur) cur = { cp: cp.clone(), look: look.clone() };
@@ -11340,8 +11369,41 @@ function Globe3D(box){
   el.addEventListener('touchend', () => { pinch = null; });
   const ro = new ResizeObserver(() => { renderer.setSize(W(), H()); camera.aspect = W() / H(); camera.updateProjectionMatrix(); }); ro.observe(box);
 
+  // overview: all the routes of a month (or of all time) at once, with GPS traces, no plane
+  let ovMeshes = [];
+  function arcOf(A, B){
+    const a = vec(A[0], A[1], 1), b = vec(B[0], B[1], 1), ang = a.angleTo(b), n = Math.max(16, Math.round(ang / rad * 2)), out = [];
+    const lift = 0.02 * Math.min(1, ang * 4);   // longer routes arch a little higher above the ground
+    for(let i = 0; i <= n; i++){ const f = i / n;
+      const p = a.clone().multiplyScalar(Math.sin((1-f)*ang)).add(b.clone().multiplyScalar(Math.sin(f*ang))).divideScalar(Math.sin(ang) || 1).normalize();
+      out.push(p.multiplyScalar(R * (1.0015 + lift * Math.sin(Math.PI * f)))); }
+    return out;
+  }
+  function setRoutes(legs, tracks){
+    ovMeshes.forEach(m => { scene.remove(m); m.geometry.dispose(); }); ovMeshes = [];
+    plane.visible = false; ov = true;
+    const max = Math.max(1, ...legs.map(l => l.n || 1));
+    const routeMat = new T.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.9 });
+    const dhMat = new T.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.35 });
+    const trkMat = new T.MeshBasicMaterial({ color: 0xf2b84b });
+    const codes = new Set();
+    for(const l of legs){ const A = AP[l.dep], B = AP[l.arr]; if(!A || !B) continue; codes.add(l.dep); codes.add(l.arr);
+      const m = tube(arcOf([A.lat, A.lon], [B.lat, B.lon]), l.dh ? dhMat : routeMat, 0.0016 + 0.0024 * (l.n || 1) / max); if(m) ovMeshes.push(m); }
+    for(const tr of tracks || []){ const m = tube(tr.map(q => vec(q[0], q[1], R * 1.003)), trkMat, 0.0026); if(m) ovMeshes.push(m); }
+    aps = [...codes].map(c => ({ code: c, name: AP[c].city, p: vec(AP[c].lat, AP[c].lon, R * 1.002) }));
+    const many = aps.length > 4;   // with many airports only the codes, so the pins don't cover each other
+    labels.innerHTML = aps.map((x, i) => `<div class="g3-pin${many ? ' sm' : ''}" data-i="${i}"><span class="g3-dot"></span>${many ? '' : esc(x.name || x.code) + ' '}<b>${many ? x.code : '(' + x.code + ')'}</b></div>`).join('');
+    // look at the middle of the routes, from far enough to see them all
+    const c = new T.Vector3(); aps.forEach(a => c.add(a.p.clone().normalize())); if(!aps.length) c.copy(vec(39.5, 2.7, 1)); c.normalize();
+    const lat = Math.asin(c.y) / rad, lon = Math.atan2(c.z, -c.x) / rad - 180;
+    const spread = Math.max(0.06, ...aps.map(a => a.p.clone().normalize().angleTo(c)));
+    view = 'globe'; yaw = 0; zoom = Math.min(2.5, Math.max(0.3, spread / rad / 16)); cur = null;
+    planeState = { lat, lon: ((lon + 540) % 360) - 180, hdg: 0 };
+    frame();
+  }
+
   return {
-    setRoute,
+    setRoute, setRoutes,
     update(st, done, nowMs){ planeState = st; earthMat.uniforms.sun.value.copy(sunDir(nowMs || Date.now())); setDone(done); frame(); },
     setView(v){ view = v; zoom = 1; yaw = 0; lastDone = -1; setDone(curDone); frame(); },
     get view(){ return view; },
@@ -11556,7 +11618,7 @@ document.addEventListener('click', e => { if(e.target.id === 'bwFix'){ state.set
 <script>
 const SEED = null;
 const SEED_SETTINGS = null;
-const APP_VERSION = '2026.11.10-1117';
+const APP_VERSION = '2026.11.10-1122';
 const IS_PWA_BUILD = true;
 const LS = 'payroster.v1';
 const KC = { sick:'--warn', flight:'--k-flight', deadhead:'--k-dh', training:'--k-train', standby:'--k-sby', reserve:'--k-sby', ground:'--k-ground', off:'--k-off', empty:'--k-off', other:'--k-ground' };
