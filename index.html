@@ -13,7 +13,7 @@
 <link rel="icon" href="icons/icon4-192.png">
 <style>:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0}img{max-width:100%}[hidden]{display:none!important}</style>
 <title>Payroster+</title>
-<script>try{if(localStorage.getItem('pr.lock'))document.documentElement.classList.add('locked');var u=JSON.parse(localStorage.getItem('pr.ui')||'{}');if(u.theme==='light'||u.theme==='dark')document.documentElement.dataset.theme=u.theme;if(u.zoom&&u.zoom!==100)document.documentElement.style.setProperty('--uiz',u.zoom/100)}catch(e){}</script>
+<script>try{if(localStorage.getItem('pr.lock'))document.documentElement.classList.add('locked');var u=JSON.parse(localStorage.getItem('pr.ui')||'{}');if(u.style!=='classic')document.documentElement.classList.add('glass');if(u.theme==='light'||u.theme==='dark')document.documentElement.dataset.theme=u.theme;if(u.zoom&&u.zoom!==100)document.documentElement.style.setProperty('--uiz',u.zoom/100)}catch(e){}</script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@75..100,500..800&family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
@@ -392,6 +392,53 @@ input[type=date]::-webkit-date-and-time-value{text-align:left}
 .confirm{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
 .sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
 @media (prefers-reduced-motion: reduce){*{scroll-behavior:auto!important;transition:none!important}}
+
+/* ===== Liquid Glass (default look; "Classic" in My details → Display turns it off) ===== */
+html.glass{
+  --glass:rgba(255,255,255,.56); --glass-hi:rgba(255,255,255,.85); --glass-brd:rgba(255,255,255,.75); --glass-in:rgba(255,255,255,.5);
+  --glass-shadow:0 10px 30px rgba(40,60,140,.10); --sunk:rgba(255,255,255,.55);
+  --mesh:radial-gradient(110% 60% at 0% 0%,rgba(122,168,255,.55),transparent 60%),radial-gradient(80% 55% at 100% 25%,rgba(178,139,255,.45),transparent 60%),radial-gradient(90% 60% at 20% 100%,rgba(95,224,192,.40),transparent 60%),radial-gradient(70% 50% at 100% 100%,rgba(255,190,140,.30),transparent 60%),#e8edfb;
+}
+@media (prefers-color-scheme: dark){ html.glass:not([data-theme="light"]){
+  --glass:rgba(30,35,58,.55); --glass-hi:rgba(255,255,255,.14); --glass-brd:rgba(255,255,255,.10); --glass-in:rgba(255,255,255,.06);
+  --glass-shadow:0 10px 30px rgba(0,0,0,.35); --sunk:rgba(255,255,255,.07);
+  --mesh:radial-gradient(110% 60% at 0% 0%,rgba(60,90,220,.45),transparent 60%),radial-gradient(80% 55% at 100% 25%,rgba(130,70,220,.35),transparent 60%),radial-gradient(90% 60% at 20% 100%,rgba(20,150,130,.30),transparent 60%),#0b0e1c; } }
+html.glass[data-theme="dark"]{
+  --glass:rgba(30,35,58,.55); --glass-hi:rgba(255,255,255,.14); --glass-brd:rgba(255,255,255,.10); --glass-in:rgba(255,255,255,.06);
+  --glass-shadow:0 10px 30px rgba(0,0,0,.35); --sunk:rgba(255,255,255,.07);
+  --mesh:radial-gradient(110% 60% at 0% 0%,rgba(60,90,220,.45),transparent 60%),radial-gradient(80% 55% at 100% 25%,rgba(130,70,220,.35),transparent 60%),radial-gradient(90% 60% at 20% 100%,rgba(20,150,130,.30),transparent 60%),#0b0e1c; }
+html.glass{background:var(--mesh)}
+html.glass::before{content:"";position:fixed;inset:0;z-index:-1;background:var(--mesh);pointer-events:none}
+html.glass body{background:transparent;font-family:-apple-system,"SF Pro Text",var(--f-body)}
+html.glass body::before{background:transparent;backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px)}
+html.glass .panel,html.glass .tile{background:var(--glass);border:1px solid var(--glass-brd);border-radius:26px;
+  backdrop-filter:blur(22px) saturate(1.8);-webkit-backdrop-filter:blur(22px) saturate(1.8);
+  box-shadow:inset 0 1px 0 var(--glass-hi),var(--glass-shadow)}
+html.glass .tile{border-radius:22px}
+html.glass .today{border-left:1px solid var(--glass-brd);box-shadow:inset 0 1px 0 var(--glass-hi),inset 4px 0 0 var(--accent),var(--glass-shadow)}
+html.glass .licalert{border-left:1px solid var(--glass-brd);box-shadow:inset 0 1px 0 var(--glass-hi),inset 4px 0 0 var(--warn),var(--glass-shadow)}
+html.glass .bar{background:transparent;border-bottom:0;padding-block:12px 8px}
+html.glass .bar::before{content:"";position:absolute;inset:0 calc(-1 * max(16px, env(safe-area-inset-left, 0px)));z-index:-1;
+  background:color-mix(in srgb,var(--glass) 70%,transparent);backdrop-filter:blur(20px) saturate(1.8);-webkit-backdrop-filter:blur(20px) saturate(1.8);
+  -webkit-mask:linear-gradient(#000 70%,transparent);mask:linear-gradient(#000 70%,transparent)}
+html.glass .iconbtn{white-space:nowrap;min-width:36px;background:var(--glass-in);border:1px solid var(--glass-brd);border-radius:999px;backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px)}
+html.glass .btn{border-radius:999px;padding:10px 18px;box-shadow:0 4px 14px color-mix(in srgb,var(--accent) 30%,transparent)}
+html.glass .btn.ghost{background:var(--glass-in);border:1px solid var(--glass-brd);box-shadow:none;color:var(--accent);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px)}
+html.glass input[type=number],html.glass input[type=text],html.glass input[type=date],html.glass select,html.glass textarea{background:var(--glass-in)!important;border:1px solid var(--glass-brd)!important;border-radius:12px!important}
+html.glass .chip{background:var(--glass-in);border:1px solid var(--glass-brd)}
+html.glass .td-st{border-radius:18px;background:var(--glass-in);border:1px solid var(--glass-brd)}
+html.glass .td-st.next{background:var(--accent);border-color:transparent;box-shadow:0 6px 18px color-mix(in srgb,var(--accent) 40%,transparent)}
+html.glass .td-rest,html.glass .restorebox{background:var(--glass-in);border-radius:18px}
+html.glass .cell{border-radius:12px}
+/* floating tab bar */
+html.glass .tabbar{left:max(14px, env(safe-area-inset-left, 0px));right:max(14px, env(safe-area-inset-right, 0px));bottom:calc(8px + env(safe-area-inset-bottom, 0px));
+  max-width:520px;margin:0 auto;padding:6px;border-radius:32px;border:1px solid var(--glass-brd);
+  background:var(--glass);backdrop-filter:blur(26px) saturate(1.9);-webkit-backdrop-filter:blur(26px) saturate(1.9);box-shadow:inset 0 1px 0 var(--glass-hi),0 12px 34px rgba(20,30,80,.18)}
+html.glass .tabbar button{border-radius:26px;padding:7px 4px;transition:background .2s,color .2s}
+html.glass .tabbar button.on{background:var(--glass-hi);color:var(--accent)}
+html.glass .wrap{padding-bottom:calc(100px + env(safe-area-inset-bottom, 0px))}
+html.glass .savewarn{bottom:calc(92px + env(safe-area-inset-bottom, 0px));border-radius:20px}
+@media (prefers-reduced-transparency: reduce){ html.glass .panel,html.glass .tile,html.glass .tabbar{backdrop-filter:none;-webkit-backdrop-filter:none;background:var(--surface)} }
 </style>
 
 </head>
@@ -1272,6 +1319,9 @@ var I18N = {
   names: { es: 'Español', ca: 'Català', en: 'English', de: 'Deutsch', fr: 'Français', it: 'Italiano', pt: 'Português', ro: 'Română', hu: 'Magyar', sk: 'Slovenčina', cs: 'Čeština' },
   locales: { es: 'es-ES', ca: 'ca-ES', en: 'en-GB', de: 'de-DE', fr: 'fr-FR', it: 'it-IT', pt: 'pt-PT', ro: 'ro-RO', hu: 'hu-HU', sk: 'sk-SK', cs: 'cs-CZ' },
   es: {
+    ui_st_classic: 'Clásico',
+    ui_st_glass: 'Cristal (iOS 26/27)',
+    ui_style: 'Diseño',
     unofficial: 'App no oficial: no es de Eurowings ni está avalada por la empresa. Es una estimación según el convenio; lo que vale es tu nómina.',
     rp_what: 'Problema',
     rp_copied: 'Informe copiado: pégalo en un mensaje o email.',
@@ -1836,6 +1886,9 @@ var I18N = {
     e_noPeriod: 'No encuentro el periodo del roster. ¿Es el «Individual duty plan» de IDP en PDF?'
   },
   ca: {
+    ui_st_classic: 'Clàssic',
+    ui_st_glass: 'Vidre (iOS 26/27)',
+    ui_style: 'Disseny',
     unofficial: 'App no oficial: no és d’Eurowings ni està avalada per l’empresa. És una estimació segons el conveni; el que val és la teva nòmina.',
     rp_what: 'Problema',
     rp_copied: 'Informe copiat: enganxa’l en un missatge o correu.',
@@ -2401,6 +2454,9 @@ var I18N = {
     e_noPeriod: 'No trobo el període del roster. És l’«Individual duty plan» d’IDP en PDF?'
   },
   en: {
+    ui_st_classic: 'Classic',
+    ui_st_glass: 'Glass (iOS 26/27)',
+    ui_style: 'Design',
     unofficial: 'Unofficial app: not made or endorsed by Eurowings. It is an estimate based on the agreement; your payslip is what counts.',
     rp_what: 'Problem',
     rp_copied: 'Report copied: paste it into a message or email.',
@@ -2966,6 +3022,9 @@ var I18N = {
     e_noPeriod: 'I can’t find the roster period. Is this the IDP “Individual duty plan” PDF?'
   },
   de: {
+    ui_st_classic: 'Klassisch',
+    ui_st_glass: 'Glas (iOS 26/27)',
+    ui_style: 'Design',
     unofficial: 'Inoffizielle App: nicht von Eurowings und nicht vom Unternehmen geprüft. Eine Schätzung nach dem Tarifvertrag; maßgeblich ist deine Abrechnung.',
     rp_what: 'Problem',
     rp_copied: 'Bericht kopiert: in eine Nachricht oder E-Mail einfügen.',
@@ -3531,6 +3590,9 @@ var I18N = {
     e_noPeriod: 'Ich finde den Zeitraum des Dienstplans nicht. Ist das der „Individual duty plan“ aus IDP als PDF?'
   },
   fr: {
+    ui_st_classic: 'Classique',
+    ui_st_glass: 'Verre (iOS 26/27)',
+    ui_style: 'Design',
     unofficial: 'App non officielle : ni faite ni approuvée par Eurowings. C’est une estimation selon la convention ; seul ton bulletin fait foi.',
     rp_what: 'Problème',
     rp_copied: 'Rapport copié : colle-le dans un message ou un e-mail.',
@@ -4096,6 +4158,9 @@ var I18N = {
     e_noPeriod: 'Je ne trouve pas la période du planning. Est-ce bien l’« Individual duty plan » d’IDP en PDF ?'
   },
   hu: {
+    ui_st_classic: 'Klasszikus',
+    ui_st_glass: 'Üveg (iOS 26/27)',
+    ui_style: 'Dizájn',
     unofficial: 'Nem hivatalos app: nem az Eurowings készítette és nem hagyta jóvá. A kollektív szerződés szerinti becslés; a bérjegyzéked számít.',
     rp_what: 'Probléma',
     rp_copied: 'Jelentés másolva: illeszd be egy üzenetbe vagy e-mailbe.',
@@ -4661,6 +4726,9 @@ var I18N = {
     e_noPeriod: 'Nem találom a beosztás időszakát. Ez az IDP „Individual duty plan” PDF-je?'
   },
   sk: {
+    ui_st_classic: 'Klasický',
+    ui_st_glass: 'Sklo (iOS 26/27)',
+    ui_style: 'Dizajn',
     unofficial: 'Neoficiálna aplikácia: nie je od Eurowings ani schválená firmou. Je to odhad podľa zmluvy; platí tvoja výplatná páska.',
     rp_what: 'Problém',
     rp_copied: 'Správa skopírovaná: vlož ju do správy alebo e-mailu.',
@@ -5226,6 +5294,9 @@ var I18N = {
     e_noPeriod: 'Nenachádzam obdobie rozpisu. Je to „Individual duty plan“ z IDP v PDF?'
   },
   cs: {
+    ui_st_classic: 'Klasický',
+    ui_st_glass: 'Sklo (iOS 26/27)',
+    ui_style: 'Design',
     unofficial: 'Neoficiální aplikace: není od Eurowings ani schválená firmou. Je to odhad podle smlouvy; platí tvoje výplatnice.',
     rp_what: 'Problém',
     rp_copied: 'Zpráva zkopírována: vlož ji do zprávy nebo e-mailu.',
@@ -5791,6 +5862,9 @@ var I18N = {
     e_noPeriod: 'Nenacházím období rozpisu. Je to „Individual duty plan“ z IDP v PDF?'
   },
   it: {
+    "ui_st_classic": "Classico",
+    "ui_st_glass": "Vetro (iOS 26/27)",
+    "ui_style": "Design",
     "unofficial": "App non ufficiale: non è di Eurowings né approvata dall’azienda. È una stima secondo il contratto; fa fede la tua busta paga.",
     "rp_what": "Problema",
     "rp_copied": "Report copiato: incollalo in un messaggio o email.",
@@ -6461,6 +6535,9 @@ var I18N = {
     "e_noPeriod": "Non trovo il periodo del turno. È l’«Individual duty plan» di IDP in PDF?"
   },
   pt: {
+    "ui_st_classic": "Clássico",
+    "ui_st_glass": "Vidro (iOS 26/27)",
+    "ui_style": "Design",
     "unofficial": "App não oficial: não é da Eurowings nem aprovada pela empresa. É uma estimativa segundo o acordo; o que conta é o teu recibo.",
     "rp_what": "Problema",
     "rp_copied": "Relatório copiado: cola-o numa mensagem ou email.",
@@ -7131,6 +7208,9 @@ var I18N = {
     "e_noPeriod": "Não encontro o período da escala. É o «Individual duty plan» do IDP em PDF?"
   },
   ro: {
+    "ui_st_classic": "Clasic",
+    "ui_st_glass": "Sticlă (iOS 26/27)",
+    "ui_style": "Design",
     "unofficial": "Aplicație neoficială: nu e de la Eurowings și nu e aprobată de companie. E o estimare conform contractului; contează fluturașul tău.",
     "rp_what": "Problemă",
     "rp_copied": "Raport copiat: lipește-l într-un mesaj sau e-mail.",
@@ -12218,8 +12298,8 @@ document.addEventListener('change', e => {
     if(state.settings.kids3 > state.settings.kids) state.settings.kids3 = state.settings.kids;
     save(); renderYear(); return;
   }
-  if(e.target.id === 'ui-theme' || e.target.id === 'ui-zoom'){
-    const u = uiPrefs(); u[e.target.id === 'ui-theme' ? 'theme' : 'zoom'] = e.target.id === 'ui-zoom' ? +e.target.value : e.target.value;
+  if(e.target.id === 'ui-theme' || e.target.id === 'ui-zoom' || e.target.id === 'ui-style'){
+    const u = uiPrefs(); u[e.target.id.slice(3)] = e.target.id === 'ui-zoom' ? +e.target.value : e.target.value;
     try{ localStorage.setItem('pr.ui', JSON.stringify(u)); }catch(err){}
     applyUi(); return;
   }
@@ -12230,6 +12310,7 @@ function uiPrefs(){ try{ return JSON.parse(localStorage.getItem('pr.ui') || '{}'
 function applyUi(){
   const u = uiPrefs(), r = document.documentElement;
   if(u.theme === 'light' || u.theme === 'dark') r.dataset.theme = u.theme; else delete r.dataset.theme;
+  r.classList.toggle('glass', u.style !== 'classic');
   if(u.zoom && u.zoom !== 100) r.style.setProperty('--uiz', u.zoom / 100); else r.style.removeProperty('--uiz');
   const m = document.querySelector('meta[name=theme-color]');
   if(m){ const dark = u.theme === 'dark' || (u.theme !== 'light' && !!window.matchMedia && matchMedia('(prefers-color-scheme: dark)').matches); m.content = dark ? '#161a2c' : '#f3f4f8'; }
@@ -12238,6 +12319,7 @@ function renderUiBox(){
   const el = $('uiBox'); if(!el) return;
   const u = uiPrefs(), th = u.theme || 'auto', z = u.zoom || 100;
   el.innerHTML = `<h2 style="margin:0 0 6px">${t('ui_T')}</h2><div class="form" style="margin-top:4px">
+    <label>${t('ui_style')}<select id="ui-style">${[['glass','ui_st_glass'],['classic','ui_st_classic']].map(([v,k]) => `<option value="${v}"${v===(u.style||'glass')?' selected':''}>${t(k)}</option>`).join('')}</select></label>
     <label>${t('ui_theme')}<select id="ui-theme">${['auto','light','dark'].map(v => `<option value="${v}"${v===th?' selected':''}>${t('ui_th_'+v)}</option>`).join('')}</select></label>
     <label>${t('ui_zoom')}<select id="ui-zoom">${[[90,'ui_z_s'],[100,'ui_z_n'],[115,'ui_z_l'],[130,'ui_z_xl']].map(([v,k]) => `<option value="${v}"${v===z?' selected':''}>${t(k)}</option>`).join('')}</select></label></div>`;
 }
@@ -12306,7 +12388,7 @@ document.addEventListener('click', async e => {
 <script>
 const SEED = null;
 const SEED_SETTINGS = null;
-const APP_VERSION = '2026.11.10-2207';
+const APP_VERSION = '2026.11.11-0635';
 const IS_PWA_BUILD = true;
 const LS = 'payroster.v1';
 const KC = { sick:'--warn', flight:'--k-flight', deadhead:'--k-dh', training:'--k-train', standby:'--k-sby', reserve:'--k-sby', ground:'--k-ground', off:'--k-off', empty:'--k-off', other:'--k-ground' };
