@@ -492,36 +492,56 @@ html.glass .stub{background:var(--glass-in);box-shadow:inset 0 0 0 1px var(--gla
 html.glass .stub::before,html.glass .stub::after{background:rgba(255,255,255,.7)}
 
 /* ===== day detail (modern) ===== */
-.detail.dx{padding:6px 12px 16px;gap:14px}
+:root{--card2:color-mix(in srgb,var(--accent) 5%,var(--surface));--card2-brd:color-mix(in srgb,var(--accent) 12%,transparent)}
+html.glass{--card2:rgba(255,255,255,.72);--card2-brd:rgba(255,255,255,.9)}
+@media (prefers-color-scheme: dark){ html:not([data-theme="light"]){--card2:color-mix(in srgb,var(--accent) 8%,var(--surface));--card2-brd:rgba(255,255,255,.07)} html.glass:not([data-theme="light"]){--card2:rgba(255,255,255,.06);--card2-brd:rgba(255,255,255,.10)} }
+html[data-theme="dark"]{--card2:color-mix(in srgb,var(--accent) 8%,var(--surface));--card2-brd:rgba(255,255,255,.07)}
+html.glass[data-theme="dark"]{--card2:rgba(255,255,255,.06);--card2-brd:rgba(255,255,255,.10)}
+.detail.dx{padding:6px 10px 16px;gap:16px}
 .dsec{display:grid;gap:8px}
-.dsec .dh{display:flex;justify-content:space-between;align-items:center;font-size:11.5px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.dsec .dh{display:flex;justify-content:space-between;align-items:center;font-size:11.5px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);padding:0 4px}
 .dsec .dh button{font:600 13px var(--f-body);letter-spacing:0;text-transform:none;color:var(--accent);background:none;border:0;padding:0;cursor:pointer}
-.dlegs{display:grid;gap:6px}
-.dleg{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:8px;padding:10px 12px;border-radius:16px;background:var(--sunk)}
-.dleg .ap b{display:block;font-size:20px;font-weight:800;letter-spacing:-.01em}.dleg .ap small{font-size:12.5px;color:var(--muted);font-variant-numeric:tabular-nums}
+.dlegs{display:grid;gap:8px}
+.dleg,.dtile,.dx .brk,.dx details.crewbox,.dx .extras{background:var(--card2);border:1px solid var(--card2-brd);border-radius:20px;box-shadow:0 1px 2px rgba(20,30,80,.05),0 6px 18px rgba(20,30,80,.05)}
+.dleg{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:8px;padding:12px 16px}
+.dleg .ap b{display:block;font-size:22px;font-weight:800;letter-spacing:-.01em;line-height:1.1}.dleg .ap small{font-size:13px;color:var(--muted);font-variant-numeric:tabular-nums}
 .dleg .ap.r{text-align:right}
-.dleg .mid{display:flex;flex-direction:column;align-items:center;gap:2px;font-size:11px;color:var(--muted);min-width:84px}
-.dleg .mid .ln{position:relative;width:100%;height:2px;margin:5px 0;background:repeating-linear-gradient(90deg,var(--muted) 0 3px,transparent 3px 6px);opacity:.7}
-.dleg .mid .ln::after{content:'✈︎';position:absolute;left:50%;top:50%;transform:translate(-50%,-55%);font-size:13px;color:var(--accent)}
-.dleg .mid .fn{font-family:var(--f-mono);font-weight:600;color:var(--ink)}
+.dleg .mid{display:flex;flex-direction:column;align-items:center;gap:2px;font-size:11.5px;color:var(--muted);min-width:90px}
+.dleg .mid .ln{position:relative;width:100%;height:2px;margin:6px 0;border-radius:2px;background:linear-gradient(90deg,transparent,var(--accent) 20%,var(--accent) 80%,transparent);opacity:.5}
+.dleg .mid .ln::after{content:'✈︎';position:absolute;left:50%;top:50%;transform:translate(-50%,-55%);font-size:14px;color:var(--accent);opacity:1}
+.dleg .mid .fn{font-family:var(--f-mono);font-weight:600;color:var(--ink);font-size:12px}
 .dleg.dh .ap b{color:var(--muted)}
 .dtiles{display:grid;grid-template-columns:1fr 1fr;gap:8px}
-.dtile{padding:10px 12px;border-radius:16px;background:var(--sunk);min-width:0}
-.dtile .k{font-size:11px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:var(--muted)}
-.dtile .v{font-size:20px;font-weight:800;font-variant-numeric:tabular-nums;margin-top:2px;white-space:nowrap}
-.dtile .v small{font-size:12px;font-weight:600;color:var(--muted)}
-.dtile .s{font-size:12px;color:var(--muted);margin-top:1px;line-height:1.3}
+.dtile{padding:12px 14px;min-width:0;display:flex;flex-direction:column;gap:3px}
+.dtile.wide{grid-column:1/-1}
+.dtile .k{display:flex;align-items:center;gap:6px;font-size:11px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:var(--muted)}
+.dtile .k svg{width:15px;height:15px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;flex:none}
+.dtile .v{font-size:24px;font-weight:800;letter-spacing:-.01em;font-variant-numeric:tabular-nums;white-space:nowrap;line-height:1.15}
+.dtile .v small{font-size:13px;font-weight:600;color:var(--muted)}
+.dtile .s{font-size:12px;color:var(--muted);line-height:1.3}
 .dtile.ok .v{color:var(--pay)}.dtile.bad .v{color:var(--warn)}
-.dtile input{width:64px;font-size:18px!important;font-weight:700;padding:2px 6px!important}
-html.glass .dleg,html.glass .dtile{background:var(--glass-in);box-shadow:inset 0 0 0 1px var(--glass-brd)}
-.dx .crew .m{border-radius:999px;padding:4px 10px}
+.dbar{height:5px;border-radius:3px;background:color-mix(in srgb,var(--muted) 18%,transparent);overflow:hidden;margin:3px 0 2px}
+.dbar i{display:block;height:100%;border-radius:3px;background:var(--pay)}
+.dbar.soft i{background:var(--accent);opacity:.6}.dbar.bad i{background:var(--warn)}
+.drow{flex-direction:row!important;align-items:center;justify-content:space-between;gap:10px}
+.step{display:flex;align-items:center;gap:2px;background:color-mix(in srgb,var(--muted) 12%,transparent);border-radius:999px;padding:3px}
+.step button{width:34px;height:34px;border-radius:50%;border:0;background:var(--surface);color:var(--accent);font:700 20px/1 var(--f-body);cursor:pointer;box-shadow:0 1px 3px rgba(0,0,0,.08)}
+.step input{width:46px;text-align:center;border:0!important;background:transparent!important;font:700 17px var(--f-body);color:var(--ink);padding:0!important;-moz-appearance:textfield}
+.step input::-webkit-outer-spin-button,.step input::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}
+.step span{font-size:12px;color:var(--muted);margin-right:4px}
+.dx details.crewbox{padding:12px 14px}
 .dx details.crewbox > summary{list-style:none;cursor:pointer}.dx details.crewbox > summary::-webkit-details-marker{display:none}
-.dx details.crewbox > summary .dh::after{content:'›';font-size:18px;transform:rotate(90deg);transition:transform .2s}
+.dx details.crewbox > summary .dh{padding:0}
+.dx details.crewbox > summary .dh::after{content:'›';font-size:20px;transform:rotate(90deg);transition:transform .2s;color:var(--muted)}
 .dx details.crewbox:not([open]) > summary .dh::after{transform:none}
-.dx .crew{margin-top:8px}
-.dx .brk{font-size:14px;gap:6px 12px}
-.dx .extras{border-radius:16px}
-html.glass .dx .extras{background:var(--glass-in);box-shadow:inset 0 0 0 1px var(--glass-brd)}
+.dx .crew{margin-top:10px}
+.dx .crew .m{border-radius:999px;padding:4px 10px;background:color-mix(in srgb,var(--muted) 12%,transparent)}
+.dx .crew .m.me{background:var(--accent-soft)}
+.dx .brk{font-size:14px;gap:8px 12px;padding:14px 16px}
+.dx .brk .t{font-size:16px;padding-top:8px}
+.dx .brk dd.t{color:var(--pay)}
+.dx .extras{padding:12px 14px}
+.dx .how{padding:0 4px}
 </style>
 
 </head>
@@ -11343,28 +11363,44 @@ function dayDetailTop(d, next){
         <span class="ap r"><b>${l.arr}</b><small>${localHM(b, l.arr)}</small></span></div>`; }).join('')}</div></div>`;
   }
   const tiles = [];
+  const IC = {
+    fdp: '<svg viewBox="0 0 24 24"><circle cx="12" cy="13" r="8"/><path d="M12 9v4l3 2M9 2h6"/></svg>',
+    disc: '<svg viewBox="0 0 24 24"><path d="M12 3v3M12 18v3M4.2 7.5l2.6 1.5M17.2 15l2.6 1.5M4.2 16.5l2.6-1.5M17.2 9l2.6-1.5"/><circle cx="12" cy="12" r="3"/></svg>',
+    rest: '<svg viewBox="0 0 24 24"><path d="M3 18v-6a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v6M3 15h18M7 10V7"/></svg>',
+    moon: '<svg viewBox="0 0 24 24"><path d="M20 14.5A8 8 0 1 1 9.5 4a6.5 6.5 0 0 0 10.5 10.5z"/></svg>',
+    delay: '<svg viewBox="0 0 24 24"><path d="M3 12a9 9 0 1 0 3-6.7M3 4v4h4"/><path d="M12 8v4l2.5 2.5"/></svg>' };
+  const bar = (v, max, cls) => `<div class="dbar ${cls||''}"><i style="width:${Math.max(3, Math.min(100, v/max*100)).toFixed(0)}%"></i></div>`;
   const fh = fdpHtml(d, next), F = fh ? fdpHtml.last : null;
   if(F){
-    tiles.push(`<div class="dtile ${F.fdp > F.max ? 'bad' : 'ok'}"><div class="k">FDP</div><div class="v">${hhmm(F.fdp)} <small>/ ${hhmm(F.max)} h</small></div><div class="s">${t('dx_fdpS', {n: F.sectors, st: esc(F.st)})}</div></div>`);
-    tiles.push(`<div class="dtile"><div class="k">${t('dx_disc')}</div><div class="v">${hhmm(F.disc)} <small>h</small></div><div class="s">${t('dx_discS', {t: F.discEnd})}</div></div>`);
+    const over = F.fdp > F.max;
+    tiles.push(`<div class="dtile ${over ? 'bad' : 'ok'}"><div class="k">${IC.fdp}FDP</div><div class="v">${hhmm(F.fdp)}<small> / ${hhmm(F.max)}</small></div>${bar(F.fdp, F.max, over ? 'bad' : '')}<div class="s">${t('dx_fdpS', {n: F.sectors, st: esc(F.st)})}</div></div>`);
+    tiles.push(`<div class="dtile"><div class="k">${IC.disc}${t('dx_disc')}</div><div class="v">${hhmm(F.disc)}<small> h</small></div>${bar(F.fdp, F.disc, 'soft')}<div class="s">${t('dx_discS', {t: F.discEnd})}</div></div>`);
   }
   const duties = allDuties(), i = (d.events||[]).some(e => e.type === 'ci') ? duties.findIndex(x => x.date === d.date) : -1;
   if(i >= 0 && duties[i].end){
     const x = duties[i], home = (x.endSt || base) === base && !x.hotel;
     const need = Math.max(x.end - x.start, (home ? 12 : 10) * 36e5), earliest = x.end + need, nx = duties[i+1], st = x.hotel || x.endSt || base;
     const got = nx ? nx.start - x.end : null;
-    tiles.push(`<div class="dtile"><div class="k">${t('dx_rest')}</div><div class="v">${hhmm(need/36e5)} <small>h</small></div><div class="s">${t('dx_restS', {d: localDay(earliest, st), t: localHM(earliest, st)})}</div></div>`);
-    if(got != null) tiles.push(`<div class="dtile ${got < need ? 'bad' : 'ok'}"><div class="k">${t('dx_got')}</div><div class="v">${got >= 36*36e5 ? durTxt(got).replace(/ 0 min$/, '') : hhmm(got/36e5) + ' <small>h</small>'}</div><div class="s">${t('dx_gotS')}</div></div>`);
+    tiles.push(`<div class="dtile"><div class="k">${IC.rest}${t('dx_rest')}</div><div class="v">${hhmm(need/36e5)}<small> h</small></div><div class="s">${t('dx_restS', {d: localDay(earliest, st), t: localHM(earliest, st)})}</div></div>`);
+    if(got != null) tiles.push(`<div class="dtile ${got < need ? 'bad' : 'ok'}"><div class="k">${IC.moon}${t('dx_got')}</div><div class="v">${got >= 36*36e5 ? durTxt(got).replace(/ 0 min$/, '') : hhmm(got/36e5) + '<small> h</small>'}</div>${bar(Math.min(got, need*1.5), need*1.5, got < need ? 'bad' : '')}<div class="s">${t('dx_gotS')}</div></div>`);
   }
   if(d.legs.length){
-    const v = d.delay || '';
-    tiles.push(`<div class="dtile"><div class="k">${t('dx_delay')}</div><div class="v"><input type="number" inputmode="numeric" min="0" step="5" data-delay="${d.date}" value="${v}" placeholder="0"> <small>min</small></div><div class="s">${d.delay > 30 ? `<span class="pos">${t('dl_paid', {h: hhmm(d.delayPaid)})}</span>` : d.delay > 0 ? t('dl_notPaid') : t('dx_delayS')}</div></div>`);
+    const v = +d.delay || 0;
+    tiles.push(`<div class="dtile wide drow"><div><div class="k">${IC.delay}${t('dx_delay')}</div><div class="s">${d.delay > 30 ? `<span class="pos">${t('dl_paid', {h: hhmm(d.delayPaid)})}</span>` : d.delay > 0 ? t('dl_notPaid') : t('dx_delayS')}</div></div>
+      <div class="step"><button type="button" data-dstep="${d.date}" data-n="-5" aria-label="−5">−</button><input type="number" inputmode="numeric" min="0" step="5" data-delay="${d.date}" value="${v || ''}" placeholder="0"><span>min</span><button type="button" data-dstep="${d.date}" data-n="5" aria-label="+5">+</button></div></div>`);
   }
   if(tiles.length) out += `<div class="dtiles">${tiles.join('')}</div>`;
   const more = (fh || '') + (i >= 0 ? restHtml(d) : '');
   if(more) out += `<details class="how"><summary>${t('dx_easa')}</summary>${more}</details>`;
   return out;
 }
+
+document.addEventListener('click', e => {
+  const b = e.target.closest('[data-dstep]'); if(!b) return;
+  const k = b.dataset.dstep, x = state.extras[k] = state.extras[k] || {}, v = Math.max(0, (+x.delay || 0) + (+b.dataset.n));
+  if(v > 0) x.delay = v; else delete x.delay;
+  save(); render();
+});
 
 // ---- Route map and in-flight moving map (offline: country outlines + airports are inside the app) ----
 
@@ -12796,7 +12832,7 @@ document.addEventListener('click', e => {
 <script>
 const SEED = null;
 const SEED_SETTINGS = null;
-const APP_VERSION = '2026.11.11-1847';
+const APP_VERSION = '2026.11.11-1853';
 const IS_PWA_BUILD = true;
 const LS = 'payroster.v1';
 const KC = { sick:'--warn', flight:'--k-flight', deadhead:'--k-dh', training:'--k-train', standby:'--k-sby', reserve:'--k-sby', ground:'--k-ground', off:'--k-off', empty:'--k-off', other:'--k-ground' };
