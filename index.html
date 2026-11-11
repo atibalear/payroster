@@ -460,15 +460,68 @@ html.glass .today{box-shadow:inset 0 1px 0 var(--glass-hi),var(--glass-shadow)}
 .td-nx .d{font-weight:700;text-transform:capitalize;white-space:nowrap}.td-nx .r{color:var(--muted);font-size:14px;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .td-nx .k{width:10px;height:10px;border-radius:50%}
 html.glass .td-nx{background:var(--glass-in);border:1px solid var(--glass-brd)}
-/* week strip */
-.weekstrip{display:grid;grid-template-columns:repeat(7,1fr);gap:4px}
-.wk{display:flex;flex-direction:column;align-items:center;gap:2px;padding:8px 0 6px;border:0;border-radius:16px;background:transparent;color:var(--ink);font:inherit;cursor:pointer;min-width:0}
-.wk .wd{font-size:11px;font-weight:600;color:var(--muted);text-transform:capitalize}
-.wk b{font-size:18px;font-weight:700;font-variant-numeric:tabular-nums}
-.wk i{width:18px;height:4px;border-radius:2px}
-.wk .kn{font-size:9.5px;font-weight:700;color:var(--muted);letter-spacing:.02em;text-transform:uppercase;max-width:100%;overflow:hidden}
-.wk.on{background:var(--accent);color:#fff}.wk.on i{background:#fff!important}.wk.on .wd,.wk.on .kn{color:rgba(255,255,255,.85)}
-html.glass .wk{background:var(--glass-in);border:1px solid var(--glass-brd)}html.glass .wk.on{background:var(--accent);border-color:transparent}
+/* week route */
+.weekstrip{position:relative;display:grid;grid-template-columns:repeat(7,1fr);padding:10px 4px 8px;border-radius:24px;background:var(--surface);border:1px solid var(--line)}
+html.glass .weekstrip{background:var(--glass);border:1px solid var(--glass-brd);backdrop-filter:blur(22px) saturate(1.8);-webkit-backdrop-filter:blur(22px) saturate(1.8);box-shadow:inset 0 1px 0 var(--glass-hi),var(--glass-shadow)}
+.wr-line{position:absolute;left:calc(100%/14 + 4px);right:calc(100%/14 + 4px);top:37px;display:grid;grid-template-columns:repeat(6,1fr);pointer-events:none}
+.wr-line i{height:2px;margin:0 9px;background:repeating-linear-gradient(90deg,var(--muted) 0 3px,transparent 3px 7px);opacity:.45}
+.wr-line i.on{background:#e8b41f;opacity:1;height:3px;border-radius:2px}
+.wr{position:relative;display:flex;flex-direction:column;align-items:center;gap:3px;border:0;background:none;color:var(--ink);font:inherit;cursor:pointer;padding:0;min-width:0}
+.wr .wl{height:13px;font-size:10px;font-weight:800;letter-spacing:.04em;color:var(--muted);max-width:100%;overflow:hidden}
+.wr .wn{width:16px;height:16px;border-radius:50%;display:grid;place-items:center;font-size:10px;line-height:1;color:#fff;background:var(--k);border:2px solid var(--k)}
+.wr .wn.fly{width:22px;height:22px;margin:-3px 0;background:#e8b41f;border-color:#e8b41f;color:#2a1d00;font-size:12px}
+.wr .wn.off{background:var(--surface);border-color:var(--k-off)}
+html.glass .wr .wn.off{background:transparent}
+.wr .wn.none{background:transparent;border-color:transparent}
+.wr .wd{display:flex;flex-direction:column;align-items:center;font-size:10.5px;font-weight:600;color:var(--muted);text-transform:uppercase;line-height:1.1;margin-top:2px}
+.wr .wd b{font-size:15px;color:var(--ink);font-variant-numeric:tabular-nums}
+.wr.now .wd b{color:var(--accent)}
+.wr.now .wn{box-shadow:0 0 0 3px var(--surface),0 0 0 5px var(--accent)}
+html.glass .wr.now .wn{box-shadow:0 0 0 3px rgba(255,255,255,.6),0 0 0 5px var(--accent)}
+/* boarding-pass stubs */
+.stubs{display:flex;gap:10px;overflow-x:auto;scroll-snap-type:x mandatory;padding:6px 2px 4px;margin:0 -2px;scrollbar-width:none}
+.stubs::-webkit-scrollbar{display:none}
+.stub{flex:0 0 212px;width:212px;scroll-snap-align:start;display:flex;align-items:stretch;border:0;padding:0;border-radius:16px;background:var(--sunk);color:var(--ink);font:inherit;cursor:pointer;text-align:left;position:relative;overflow:hidden;max-width:230px}
+html.glass .stub{background:var(--glass-in);box-shadow:inset 0 0 0 1px var(--glass-brd)}
+.stub .sbd{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:8px 12px;background:var(--k);color:#fff;min-width:54px}
+.stub .sbd b{font-size:20px;line-height:1}.stub .sbd small{font-size:10.5px;font-weight:700;text-transform:uppercase;opacity:.9;margin-top:2px}
+.stub .sbr{flex:1;display:flex;flex-direction:column;justify-content:center;padding:8px 14px 8px 12px;border-left:2px dashed color-mix(in srgb,var(--ink) 18%,transparent);min-width:0}
+.stub .sbr b{font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.stub .sbr small{font-size:12px;color:var(--muted)}
+.stub::before,.stub::after{content:"";position:absolute;left:52px;width:10px;height:10px;border-radius:50%;background:var(--surface)}
+.stub::before{top:-5px}.stub::after{bottom:-5px}
+html.glass .stub::before,html.glass .stub::after{background:rgba(255,255,255,.7)}
+
+/* ===== day detail (modern) ===== */
+.detail.dx{padding:6px 12px 16px;gap:14px}
+.dsec{display:grid;gap:8px}
+.dsec .dh{display:flex;justify-content:space-between;align-items:center;font-size:11.5px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.dsec .dh button{font:600 13px var(--f-body);letter-spacing:0;text-transform:none;color:var(--accent);background:none;border:0;padding:0;cursor:pointer}
+.dlegs{display:grid;gap:6px}
+.dleg{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:8px;padding:10px 12px;border-radius:16px;background:var(--sunk)}
+.dleg .ap b{display:block;font-size:20px;font-weight:800;letter-spacing:-.01em}.dleg .ap small{font-size:12.5px;color:var(--muted);font-variant-numeric:tabular-nums}
+.dleg .ap.r{text-align:right}
+.dleg .mid{display:flex;flex-direction:column;align-items:center;gap:2px;font-size:11px;color:var(--muted);min-width:84px}
+.dleg .mid .ln{position:relative;width:100%;height:2px;margin:5px 0;background:repeating-linear-gradient(90deg,var(--muted) 0 3px,transparent 3px 6px);opacity:.7}
+.dleg .mid .ln::after{content:'✈︎';position:absolute;left:50%;top:50%;transform:translate(-50%,-55%);font-size:13px;color:var(--accent)}
+.dleg .mid .fn{font-family:var(--f-mono);font-weight:600;color:var(--ink)}
+.dleg.dh .ap b{color:var(--muted)}
+.dtiles{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.dtile{padding:10px 12px;border-radius:16px;background:var(--sunk);min-width:0}
+.dtile .k{font-size:11px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:var(--muted)}
+.dtile .v{font-size:20px;font-weight:800;font-variant-numeric:tabular-nums;margin-top:2px;white-space:nowrap}
+.dtile .v small{font-size:12px;font-weight:600;color:var(--muted)}
+.dtile .s{font-size:12px;color:var(--muted);margin-top:1px;line-height:1.3}
+.dtile.ok .v{color:var(--pay)}.dtile.bad .v{color:var(--warn)}
+.dtile input{width:64px;font-size:18px!important;font-weight:700;padding:2px 6px!important}
+html.glass .dleg,html.glass .dtile{background:var(--glass-in);box-shadow:inset 0 0 0 1px var(--glass-brd)}
+.dx .crew .m{border-radius:999px;padding:4px 10px}
+.dx details.crewbox > summary{list-style:none;cursor:pointer}.dx details.crewbox > summary::-webkit-details-marker{display:none}
+.dx details.crewbox > summary .dh::after{content:'›';font-size:18px;transform:rotate(90deg);transition:transform .2s}
+.dx details.crewbox:not([open]) > summary .dh::after{transform:none}
+.dx .crew{margin-top:8px}
+.dx .brk{font-size:14px;gap:6px 12px}
+.dx .extras{border-radius:16px}
+html.glass .dx .extras{background:var(--glass-in);box-shadow:inset 0 0 0 1px var(--glass-brd)}
 </style>
 
 </head>
@@ -1350,6 +1403,18 @@ var I18N = {
   names: { es: 'Español', ca: 'Català', en: 'English', de: 'Deutsch', fr: 'Français', it: 'Italiano', pt: 'Português', ro: 'Română', hu: 'Magyar', sk: 'Slovenčina', cs: 'Čeština' },
   locales: { es: 'es-ES', ca: 'ca-ES', en: 'en-GB', de: 'de-DE', fr: 'fr-FR', it: 'it-IT', pt: 'pt-PT', ro: 'ro-RO', hu: 'hu-HU', sk: 'sk-SK', cs: 'cs-CZ' },
   es: {
+    dx_easa: 'Detalles EASA (FTL)',
+    dx_delayS: 'más de 30 min cuenta para el FDP pagado',
+    dx_delay: 'Retraso a la llegada',
+    dx_gotS: 'hasta la siguiente firma',
+    dx_got: 'Descanso real',
+    dx_restS: 'puedes volver a firmar desde {d} {t}',
+    dx_rest: 'Descanso mínimo',
+    dx_discS: '+2 h del comandante · calzos hasta las {t}',
+    dx_disc: 'Con discreción',
+    dx_fdpS: 'programado / máximo · {n} tramos · firma en {st}',
+    dx_flights: 'Vuelos · hora local',
+    dx_pay: 'Lo que ganas este día',
     sky_today: 'Hoy',
     sky_tmw: 'Mañana',
     sky_later: 'Después',
@@ -1923,6 +1988,18 @@ var I18N = {
     e_noPeriod: 'No encuentro el periodo del roster. ¿Es el «Individual duty plan» de IDP en PDF?'
   },
   ca: {
+    dx_easa: 'Detalls EASA (FTL)',
+    dx_delayS: 'més de 30 min compta per al FDP pagat',
+    dx_delay: 'Retard a l’arribada',
+    dx_gotS: 'fins a la propera firma',
+    dx_got: 'Descans real',
+    dx_restS: 'pots tornar a signar des de {d} {t}',
+    dx_rest: 'Descans mínim',
+    dx_discS: '+2 h del comandant · calços fins a les {t}',
+    dx_disc: 'Amb discreció',
+    dx_fdpS: 'programat / màxim · {n} trams · firma a {st}',
+    dx_flights: 'Vols · hora local',
+    dx_pay: 'El que guanyes aquest dia',
     sky_today: 'Avui',
     sky_tmw: 'Demà',
     sky_later: 'Després',
@@ -2497,6 +2574,18 @@ var I18N = {
     e_noPeriod: 'No trobo el període del roster. És l’«Individual duty plan» d’IDP en PDF?'
   },
   en: {
+    dx_easa: 'EASA details (FTL)',
+    dx_delayS: 'over 30 min counts for paid FDP',
+    dx_delay: 'Arrival delay',
+    dx_gotS: 'until the next check-in',
+    dx_got: 'Actual rest',
+    dx_restS: 'next check-in from {d} {t}',
+    dx_rest: 'Minimum rest',
+    dx_discS: '+2 h commander · on-blocks by {t}',
+    dx_disc: 'With discretion',
+    dx_fdpS: 'scheduled / maximum · {n} sectors · check-in {st}',
+    dx_flights: 'Flights · local time',
+    dx_pay: 'What you earn this day',
     sky_today: 'Today',
     sky_tmw: 'Tomorrow',
     sky_later: 'Coming up',
@@ -3071,6 +3160,18 @@ var I18N = {
     e_noPeriod: 'I can’t find the roster period. Is this the IDP “Individual duty plan” PDF?'
   },
   de: {
+    dx_easa: 'EASA-Details (FTL)',
+    dx_delayS: 'über 30 min zählt für bezahlte FDP',
+    dx_delay: 'Verspätung bei Ankunft',
+    dx_gotS: 'bis zum nächsten Check-in',
+    dx_got: 'Tatsächliche Ruhe',
+    dx_restS: 'nächster Check-in ab {d} {t}',
+    dx_rest: 'Mindestruhezeit',
+    dx_discS: '+2 h Kommandant · On-Block bis {t}',
+    dx_disc: 'Mit Discretion',
+    dx_fdpS: 'geplant / maximal · {n} Sektoren · Check-in {st}',
+    dx_flights: 'Flüge · Ortszeit',
+    dx_pay: 'Das verdienst du an diesem Tag',
     sky_today: 'Heute',
     sky_tmw: 'Morgen',
     sky_later: 'Danach',
@@ -3645,6 +3746,18 @@ var I18N = {
     e_noPeriod: 'Ich finde den Zeitraum des Dienstplans nicht. Ist das der „Individual duty plan“ aus IDP als PDF?'
   },
   fr: {
+    dx_easa: 'Détails EASA (FTL)',
+    dx_delayS: 'plus de 30 min compte pour le FDP payé',
+    dx_delay: 'Retard à l’arrivée',
+    dx_gotS: 'jusqu’au prochain check-in',
+    dx_got: 'Repos réel',
+    dx_restS: 'prochain check-in dès {d} {t}',
+    dx_rest: 'Repos minimum',
+    dx_discS: '+2 h commandant · sur cales avant {t}',
+    dx_disc: 'Avec discrétion',
+    dx_fdpS: 'prévu / maximum · {n} étapes · check-in {st}',
+    dx_flights: 'Vols · heure locale',
+    dx_pay: 'Ce que tu gagnes ce jour',
     sky_today: 'Auj.',
     sky_tmw: 'Demain',
     sky_later: 'Ensuite',
@@ -4219,6 +4332,18 @@ var I18N = {
     e_noPeriod: 'Je ne trouve pas la période du planning. Est-ce bien l’« Individual duty plan » d’IDP en PDF ?'
   },
   hu: {
+    dx_easa: 'EASA részletek (FTL)',
+    dx_delayS: '30 perc felett számít a fizetett FDP-be',
+    dx_delay: 'Késés érkezéskor',
+    dx_gotS: 'a következő bejelentkezésig',
+    dx_got: 'Tényleges pihenő',
+    dx_restS: 'következő bejelentkezés: {d} {t}',
+    dx_rest: 'Minimális pihenő',
+    dx_discS: '+2 óra kapitányi · blokk {t}-ig',
+    dx_disc: 'Diszkrécióval',
+    dx_fdpS: 'tervezett / maximum · {n} szektor · bejelentkezés {st}',
+    dx_flights: 'Járatok · helyi idő',
+    dx_pay: 'Ennyit keresel ezen a napon',
     sky_today: 'Ma',
     sky_tmw: 'Holnap',
     sky_later: 'Ezután',
@@ -4793,6 +4918,18 @@ var I18N = {
     e_noPeriod: 'Nem találom a beosztás időszakát. Ez az IDP „Individual duty plan” PDF-je?'
   },
   sk: {
+    dx_easa: 'Podrobnosti EASA (FTL)',
+    dx_delayS: 'nad 30 min sa počíta do plateného FDP',
+    dx_delay: 'Meškanie pri prílete',
+    dx_gotS: 'do ďalšieho check-inu',
+    dx_got: 'Skutočný odpočinok',
+    dx_restS: 'ďalší check-in od {d} {t}',
+    dx_rest: 'Minimálny odpočinok',
+    dx_discS: '+2 h kapitán · na blokoch do {t}',
+    dx_disc: 'S diskréciou',
+    dx_fdpS: 'plánované / maximum · {n} úsekov · check-in {st}',
+    dx_flights: 'Lety · miestny čas',
+    dx_pay: 'Čo zarobíš v tento deň',
     sky_today: 'Dnes',
     sky_tmw: 'Zajtra',
     sky_later: 'Potom',
@@ -5367,6 +5504,18 @@ var I18N = {
     e_noPeriod: 'Nenachádzam obdobie rozpisu. Je to „Individual duty plan“ z IDP v PDF?'
   },
   cs: {
+    dx_easa: 'Podrobnosti EASA (FTL)',
+    dx_delayS: 'nad 30 min se počítá do placeného FDP',
+    dx_delay: 'Zpoždění při příletu',
+    dx_gotS: 'do dalšího check-inu',
+    dx_got: 'Skutečný odpočinek',
+    dx_restS: 'další check-in od {d} {t}',
+    dx_rest: 'Minimální odpočinek',
+    dx_discS: '+2 h kapitán · na blocích do {t}',
+    dx_disc: 'S diskrecí',
+    dx_fdpS: 'plánované / maximum · {n} úseků · check-in {st}',
+    dx_flights: 'Lety · místní čas',
+    dx_pay: 'Co vyděláš v tento den',
     sky_today: 'Dnes',
     sky_tmw: 'Zítra',
     sky_later: 'Potom',
@@ -5941,6 +6090,18 @@ var I18N = {
     e_noPeriod: 'Nenacházím období rozpisu. Je to „Individual duty plan“ z IDP v PDF?'
   },
   it: {
+    "dx_easa": "Dettagli EASA (FTL)",
+    "dx_delayS": "oltre 30 min conta per l’FDP pagato",
+    "dx_delay": "Ritardo all’arrivo",
+    "dx_gotS": "fino al prossimo check-in",
+    "dx_got": "Riposo reale",
+    "dx_restS": "prossimo check-in dalle {d} {t}",
+    "dx_rest": "Riposo minimo",
+    "dx_discS": "+2 h comandante · blocchi entro le {t}",
+    "dx_disc": "Con discrezionalità",
+    "dx_fdpS": "programmato / massimo · {n} tratte · check-in {st}",
+    "dx_flights": "Voli · ora locale",
+    "dx_pay": "Quanto guadagni oggi",
     "sky_today": "Oggi",
     "sky_tmw": "Domani",
     "sky_later": "Poi",
@@ -6620,6 +6781,18 @@ var I18N = {
     "e_noPeriod": "Non trovo il periodo del turno. È l’«Individual duty plan» di IDP in PDF?"
   },
   pt: {
+    "dx_easa": "Detalhes EASA (FTL)",
+    "dx_delayS": "mais de 30 min conta para o FDP pago",
+    "dx_delay": "Atraso na chegada",
+    "dx_gotS": "até à próxima apresentação",
+    "dx_got": "Descanso real",
+    "dx_restS": "próxima apresentação a partir de {d} {t}",
+    "dx_rest": "Descanso mínimo",
+    "dx_discS": "+2 h do comandante · calços até às {t}",
+    "dx_disc": "Com discrição",
+    "dx_fdpS": "programado / máximo · {n} etapas · apresentação {st}",
+    "dx_flights": "Voos · hora local",
+    "dx_pay": "O que ganhas neste dia",
     "sky_today": "Hoje",
     "sky_tmw": "Amanhã",
     "sky_later": "Depois",
@@ -7299,6 +7472,18 @@ var I18N = {
     "e_noPeriod": "Não encontro o período da escala. É o «Individual duty plan» do IDP em PDF?"
   },
   ro: {
+    "dx_easa": "Detalii EASA (FTL)",
+    "dx_delayS": "peste 30 min contează pentru FDP plătit",
+    "dx_delay": "Întârziere la sosire",
+    "dx_gotS": "până la următoarea prezentare",
+    "dx_got": "Odihnă reală",
+    "dx_restS": "următoarea prezentare de la {d} {t}",
+    "dx_rest": "Odihnă minimă",
+    "dx_discS": "+2 h comandant · la cală până la {t}",
+    "dx_disc": "Cu discreție",
+    "dx_fdpS": "programat / maxim · {n} segmente · prezentare {st}",
+    "dx_flights": "Zboruri · ora locală",
+    "dx_pay": "Cât câștigi în această zi",
     "sky_today": "Azi",
     "sky_tmw": "Mâine",
     "sky_later": "Urmează",
@@ -11145,6 +11330,42 @@ document.addEventListener('click', e => {
   }
 });
 
+// ---------- day detail: legs as cards + key numbers as tiles; the long EASA text folds away ----------
+function dayDetailTop(d, next){
+  const base = state.settings.base || 'PMI';
+  let out = '';
+  if(d.legs.length){
+    out += `<div class="dsec"><div class="dh"><span>${t('dx_flights')}</span><button type="button" data-mapday="${d.date}">🗺 ${t('map_btn')}</button></div><div class="dlegs">${d.legs.map(l => {
+      const a = utcAt(d.date, l.t1); let b = utcAt(d.date, l.t2); if(+l.t2 < +l.t1) b += 864e5;
+      const bl = (b - a) / 36e5;
+      return `<div class="dleg${l.type==='dh'?' dh':''}"><span class="ap"><b>${l.dep}</b><small>${localHM(a, l.dep)}</small></span>
+        <span class="mid"><span class="fn">${l.type==='dh'?'DH ':''}${esc(l.flight)}</span><span class="ln"></span><span>${hhmm(bl)} h</span></span>
+        <span class="ap r"><b>${l.arr}</b><small>${localHM(b, l.arr)}</small></span></div>`; }).join('')}</div></div>`;
+  }
+  const tiles = [];
+  const fh = fdpHtml(d, next), F = fh ? fdpHtml.last : null;
+  if(F){
+    tiles.push(`<div class="dtile ${F.fdp > F.max ? 'bad' : 'ok'}"><div class="k">FDP</div><div class="v">${hhmm(F.fdp)} <small>/ ${hhmm(F.max)} h</small></div><div class="s">${t('dx_fdpS', {n: F.sectors, st: esc(F.st)})}</div></div>`);
+    tiles.push(`<div class="dtile"><div class="k">${t('dx_disc')}</div><div class="v">${hhmm(F.disc)} <small>h</small></div><div class="s">${t('dx_discS', {t: F.discEnd})}</div></div>`);
+  }
+  const duties = allDuties(), i = (d.events||[]).some(e => e.type === 'ci') ? duties.findIndex(x => x.date === d.date) : -1;
+  if(i >= 0 && duties[i].end){
+    const x = duties[i], home = (x.endSt || base) === base && !x.hotel;
+    const need = Math.max(x.end - x.start, (home ? 12 : 10) * 36e5), earliest = x.end + need, nx = duties[i+1], st = x.hotel || x.endSt || base;
+    const got = nx ? nx.start - x.end : null;
+    tiles.push(`<div class="dtile"><div class="k">${t('dx_rest')}</div><div class="v">${hhmm(need/36e5)} <small>h</small></div><div class="s">${t('dx_restS', {d: localDay(earliest, st), t: localHM(earliest, st)})}</div></div>`);
+    if(got != null) tiles.push(`<div class="dtile ${got < need ? 'bad' : 'ok'}"><div class="k">${t('dx_got')}</div><div class="v">${got >= 36*36e5 ? durTxt(got).replace(/ 0 min$/, '') : hhmm(got/36e5) + ' <small>h</small>'}</div><div class="s">${t('dx_gotS')}</div></div>`);
+  }
+  if(d.legs.length){
+    const v = d.delay || '';
+    tiles.push(`<div class="dtile"><div class="k">${t('dx_delay')}</div><div class="v"><input type="number" inputmode="numeric" min="0" step="5" data-delay="${d.date}" value="${v}" placeholder="0"> <small>min</small></div><div class="s">${d.delay > 30 ? `<span class="pos">${t('dl_paid', {h: hhmm(d.delayPaid)})}</span>` : d.delay > 0 ? t('dl_notPaid') : t('dx_delayS')}</div></div>`);
+  }
+  if(tiles.length) out += `<div class="dtiles">${tiles.join('')}</div>`;
+  const more = (fh || '') + (i >= 0 ? restHtml(d) : '');
+  if(more) out += `<details class="how"><summary>${t('dx_easa')}</summary>${more}</details>`;
+  return out;
+}
+
 // ---- Route map and in-flight moving map (offline: country outlines + airports are inside the app) ----
 
 const MAP = (() => {
@@ -12530,15 +12751,19 @@ function skyHtml(x, cur, pk, now, legs, st){
     ${arc}</div>`;
 }
 // tomorrow + the next few duties, one line each (tap opens the day)
+// the next few duties as little boarding-pass stubs you can swipe through
 function upcomingHtml(x, duties){
-  const i = duties.indexOf(x), nx = duties.slice(i + 1, i + 4);
+  const i = duties.indexOf(x), nx = duties.slice(i + 1, i + 5);
   if(!nx.length) return '';
   const tmw = (() => { const d = new Date(); d.setDate(d.getDate() + 1); return d.toISOString().slice(0,10); })();
-  return `<div class="td-next"><div class="eyebrow">${t('sky_later')}</div>${nx.map(d => {
-    const lab = d.date === tmw ? t('sky_tmw') : new Date(d.date + 'T12:00').toLocaleDateString(LOC, {weekday:'short', day:'numeric', month:'short'});
-    return `<button type="button" class="td-nx" data-wk="${d.date}"><span class="d">${lab}</span><span class="r">${localHM(d.start, d.st || state.settings.base)} · ${esc(d.route || kind(d.kind).n)}</span><span class="k" style="background:var(${kind(d.kind).c})"></span></button>`; }).join('')}</div>`;
+  return `<div class="td-next"><div class="eyebrow">${t('sky_later')}</div><div class="stubs">${nx.map(d => {
+    const dt = new Date(d.date + 'T12:00'), wd = d.date === tmw ? t('sky_tmw') : dt.toLocaleDateString(LOC, {weekday:'short'});
+    const r = (d.route || kind(d.kind).n), st = d.st || state.settings.base;
+    return `<button type="button" class="stub" data-wk="${d.date}" style="--k:var(${kind(d.kind).c})">
+      <span class="sbd"><b>${dt.getDate()}</b><small>${wd}</small></span>
+      <span class="sbr"><b>${esc(r)}</b><small>${t('td_ci')} ${localHM(d.start, st)}</small></span></button>`; }).join('')}</div></div>`;
 }
-// week strip at the top of the roster: 7 days from today, coloured by the kind of day
+// the week as a route: one stop per day on a line, gold where you work, today ringed
 const WK_SHORT = { deadhead:'DH', standby:'SBY', reserve:'RES', training:'TRN', ground:'GND', sick:'KCC' };
 function renderWeek(){
   const el = $('weekStrip'); if(!el) return;
@@ -12550,9 +12775,14 @@ function renderWeek(){
   }
   if(!days.some(d => kinds[d])){ el.hidden = true; return; }
   el.hidden = false;
-  el.innerHTML = days.map((d, i) => { const k = kinds[d], kk = k ? kind(k.kind) : null, dt = new Date(d + 'T12:00');
-    return `<button type="button" class="wk${i === 0 ? ' on' : ''}" data-wk="${d}"><span class="wd">${i === 0 ? t('sky_today') : dt.toLocaleDateString(LOC, {weekday:'short'})}</span><b>${dt.getDate()}</b>
-      <i style="background:${kk ? 'var(' + kk.c + ')' : 'transparent'}"></i><span class="kn">${k ? esc(k.kind === 'flight' && k.route ? (k.route.split(/[–-]/)[1] || '') : (WK_SHORT[k.kind] || kk.n).slice(0, 6)) : ''}</span></button>`; }).join('');
+  const work = k => k && !['off','empty'].includes(k.kind);
+  el.innerHTML = `<div class="wr-line">${days.slice(0, 6).map((d, i) => `<i class="${work(kinds[d]) && work(kinds[days[i+1]]) ? 'on' : ''}"></i>`).join('')}</div>` +
+    days.map((d, i) => { const k = kinds[d], dt = new Date(d + 'T12:00');
+      const lab = !k ? '' : k.kind === 'flight' && k.route ? (k.route.split(/[–-]/)[1] || '') : (WK_SHORT[k.kind] || '');
+      const cls = !k ? 'none' : k.kind === 'flight' ? 'fly' : ['off','empty'].includes(k.kind) ? 'off' : k.kind === 'sick' ? 'sick' : 'duty';
+      return `<button type="button" class="wr${i === 0 ? ' now' : ''}" data-wk="${d}" style="--k:var(${k ? kind(k.kind).c : '--k-off'})">
+        <span class="wl">${esc(lab)}</span><span class="wn ${cls}">${cls === 'fly' ? '✈︎' : ''}</span>
+        <span class="wd">${dt.toLocaleDateString(LOC, {weekday:'narrow'})}<b>${dt.getDate()}</b></span></button>`; }).join('');
 }
 document.addEventListener('click', e => {
   const w = e.target.closest('[data-wk]'); if(!w) return;
@@ -12566,7 +12796,7 @@ document.addEventListener('click', e => {
 <script>
 const SEED = null;
 const SEED_SETTINGS = null;
-const APP_VERSION = '2026.11.11-1838';
+const APP_VERSION = '2026.11.11-1847';
 const IS_PWA_BUILD = true;
 const LS = 'payroster.v1';
 const KC = { sick:'--warn', flight:'--k-flight', deadhead:'--k-dh', training:'--k-train', standby:'--k-sby', reserve:'--k-sby', ground:'--k-ground', off:'--k-off', empty:'--k-off', other:'--k-ground' };
@@ -12916,7 +13146,8 @@ function renderDays(c, ro){
     const k = kind(d.kind);
     const wd = new Date(d.date+'T12:00').toLocaleDateString(LOC,{weekday:'short'}).replace('.','');
     const main = d.route ? d.route : (d.label || k.n);
-    const times = d.ci ? `${t4(d.ci)}${d.co?'–'+t4(d.co):''}` : '';
+    const ciMs = d.ci ? utcAt(d.date, d.ci) : 0, coMs = d.co ? utcAt(d.date, d.co) + (+d.co < +d.ci ? 864e5 : 0) : 0;
+    const times = d.ci ? `${localHM(ciMs, d.startLoc || state.settings.base)}${d.co?'–'+localHM(coMs, d.endLoc || d.startLoc || state.settings.base):''}` : '';
     const tier = d.H>0 ? t('tierN',{n:d.tierEnd>c.rates.limits[1]?3:d.tierEnd>c.rates.limits[0]?2:1}) : '';
     const legs = d.legs.length ? `<div class="legs">${d.legs.map(l=>`<span class="${l.type==='dh'?'dhl':''}">${l.type==='dh'?'DH ':''}${esc(l.flight)}</span><span>${l.dep}</span><span>${t4(l.t1)}</span><span>${t4(l.t2)}</span><span>${l.arr}</span>`).join('')}</div>` : '';
     const ex = state.extras[d.date]||{};
@@ -12928,10 +13159,10 @@ function renderDays(c, ro){
           <div class="m"><span class="tag" style="--kc:var(${k.c})"><i></i>${k.n}</span>${times?`<span class="mono">${times}</span>`:''}${d.hotel?`<span>${t('nightIn',{st:d.hotel})}</span>`:''}</div></div>
         <div class="amt"><div class="v${d.total>0.005?'':' zero'}">${d.total>0.005?eur.format(d.total):'0 €'}</div>${d.H?`<div class="h">${hhmm(d.H)} h</div>`:''}</div>
       </summary>
-      <div class="detail">
-        ${legs}
-        ${d.legs.length ? `<button class="btn ghost mapbtn" type="button" data-mapday="${d.date}">🗺 ${t('map_btn')}</button>` : ''}${fdpHtml(d, c.days[di+1])}${delayHtml(d)}${d.ci && (d.events||[]).some(e=>e.type==='ci') ? restHtml(d) : ''}
+      <div class="detail dx">
+        ${dayDetailTop(d, c.days[di+1])}
         ${crewHtml(d, state.months[state.current] && state.months[state.current].crew)}
+        <div class="dsec"><div class="dh">${t('dx_pay')}</div>
         <dl class="brk">
           ${d.H?`<dt>${t('payHours',{f:hhmm(d.F),a:hhmm(d.A)})}${d.absence?t('absenceCredit'):''} · ${tier} · ${n2.format(d.hourRate)} €/h</dt><dd>${eur.format(d.hourPay)}</dd>`:''}
           ${d.dieta?`<dt>${t('d_'+d.dietaType)}</dt><dd>${eur.format(d.dieta)}</dd>`:''}
@@ -12941,7 +13172,7 @@ function renderDays(c, ro){
           ${d.extraFix?`<dt>${t('buyDefer')}${d.autoBuy && !d.buyManual && d.buyWhy ? ' · '+buyWhyText(d) : ''}</dt><dd>${eur.format(d.extraFix)}</dd>`:''}
           ${d.sales?`<dt>${t('sales')}</dt><dd>${eur.format(d.sales)}</dd>`:''}
           <dt class="t">${t('dayTotal')}</dt><dd class="t">${eur.format(d.total)}</dd>
-        </dl>
+        </dl></div>
         <div class="extras" data-date="${d.date}">
           ${d.kind==='flight'?`<label>${t('salesEur')} <input type="number" step="0.01" min="0" id="s-${d.date}" data-f="sales" value="${ex.sales||''}" placeholder="0,00"></label>`:''}
           ${offish?`<label>${t('dayBought')} <select id="b-${d.date}" data-f="buy"><option value="">${t('buyAuto',{v: d.autoBuy==='full'?t('full'):d.autoBuy==='half'?t('half'):t('no')})}${d.buyWhy?' · '+buyWhyText(d):''}</option><option value="none"${ex.buy==='none'?' selected':''}>${t('no')}</option><option value="full"${ex.buy==='full'?' selected':''}>${t('full')}</option><option value="half"${ex.buy==='half'?' selected':''}>${t('half')}</option></select></label>`:''}
@@ -13303,6 +13534,7 @@ function fdpHtml(d, next){
   const fdp = fdpMin/60;
   const cls = fdp > disc ? 'over' : fdp > max ? 'over' : '';
   const utcEnd = (toMin(ci.t1) + Math.round(disc*60)) % 1440;
+  fdpHtml.last = { max, disc, fdp, sectors, startL, st, discEnd: hm2s(startL+disc) };
   return `<div class="fdpl">
     <div>${t('fdp_lim',{m:hhmm(max),s:sectors,t:hm2s(startL),st:esc(st)})}</div>
     <div>${t('fdp_disc',{m:hhmm(disc),e:hm2s(startL+disc),u:hm2s(utcEnd/60)})}</div>
@@ -13316,10 +13548,11 @@ function crewHtml(d, me){
   const ev = (d.gcrew||[]).filter(e=>e.names && e.names.length);
   if(!legs.length && !ev.length) return '';
   const meKey = (me||'').trim().toLowerCase();
-  return `<div class="crew"><div class="eyebrow">${t('crewT')}${d.crewInherited?` <span style="text-transform:none;letter-spacing:0">${t('crewInh')}</span>`:''}</div>
+  const nPeople = new Set(legs.flatMap(l => l.members.map(m => m.name))).size + ev.reduce((a, e) => a + e.names.length, 0);
+  return `<details class="crewbox dsec"><summary><div class="dh"><span>${t('crewT')} · ${nPeople}${d.crewInherited?` <span style="text-transform:none;letter-spacing:0">${t('crewInh')}</span>`:''}</span></div></summary><div class="crew">
     ${legs.map(l=>`<div class="leg"><span class="lh">${esc(l.flight)} ${esc(l.dep)}–${esc(l.arr)}</span><div class="mem">${l.members.map(m=>`<span class="m${m.name.trim().toLowerCase()===meKey?' me':''}"><b>${esc(m.role)}</b>${esc(m.name)}</span>`).join('')}</div></div>`).join('')}
     ${ev.map(e=>`<details><summary>${esc(e.code)}${e.st?' · '+esc(e.st):''} · ${t('eventPeople',{n:e.names.length})}</summary><div class="names">${e.names.map(n=>`<div>${esc(n)}</div>`).join('')}</div></details>`).join('')}
-  </div>`;
+  </div></details>`;
 }
 
 // ---- sharing: the roster travels inside the link (after #), never through a server ----
