@@ -577,6 +577,19 @@ html.glass .wrap,.wrap{padding-bottom:calc(84px + env(safe-area-inset-bottom, 0p
 html{min-height:100%}
 body{min-height:100vh;min-height:100lvh}
 html.glass::before{bottom:auto;height:100vh;height:100lvh}
+
+/* month picker */
+.tabbar .mlabel{cursor:pointer;-webkit-user-select:none;user-select:none;-webkit-touch-callout:none;border-radius:10px;padding:4px 6px}
+.tabbar .mlabel:active{background:color-mix(in srgb,var(--accent) 12%,transparent)}
+.mpick{position:fixed;left:max(12px, env(safe-area-inset-left, 0px));bottom:calc(env(safe-area-inset-bottom, 0px) * .45 + 74px);z-index:40;width:min(330px, calc(100vw - 24px));max-height:55vh;overflow:auto;
+  padding:12px;border-radius:24px;background:var(--surface);border:1px solid var(--line);box-shadow:0 18px 50px rgba(20,30,80,.25)}
+html.glass .mpick{background:var(--glass);border-color:var(--glass-brd);backdrop-filter:blur(28px) saturate(1.9);-webkit-backdrop-filter:blur(28px) saturate(1.9)}
+.mp-y{font-weight:800;font-size:15px;margin:4px 6px 6px}
+.mp-g{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-bottom:8px}
+.mp-m{height:40px;border-radius:14px;border:0;font:600 14px var(--f-body);text-transform:capitalize;background:color-mix(in srgb,var(--muted) 12%,transparent);color:var(--ink);cursor:pointer}
+.mp-m:disabled{opacity:.3;cursor:default;background:transparent}
+.mp-m.now{box-shadow:inset 0 0 0 2px var(--accent)}
+.mp-m.sel{background:var(--accent);color:#fff}
 </style>
 
 </head>
@@ -12927,11 +12940,40 @@ document.addEventListener('visibilitychange', () => { if(document.visibilityStat
 
 document.addEventListener('change', e => { if(e.target.id === 'ui-nick'){ state.settings.nick = e.target.value.trim(); save(); renderGreeting(); } });
 
+// ---------- month picker: tap (or long-press) the month in the bottom bar ----------
+function openMonthPicker(){
+  let pk = $('mPick');
+  if(pk && !pk.hidden){ pk.hidden = true; return; }
+  if(!pk){ pk = document.createElement('div'); pk.id = 'mPick'; pk.className = 'mpick'; document.body.appendChild(pk); }
+  const have = new Set(Object.keys(state.months)), ys = [...new Set([...have].map(k => +k.slice(0,4)))].sort();
+  if(!ys.length){ return; }
+  const cur = state.current, nowK = todayISO().slice(0,7);
+  pk.innerHTML = ys.reverse().map(y => `<div class="mp-y">${y}</div><div class="mp-g">${[...Array(12)].map((_, i) => {
+      const k = y + '-' + String(i+1).padStart(2,'0'), on = have.has(k);
+      return `<button type="button" class="mp-m${k === cur ? ' sel' : ''}${k === nowK ? ' now' : ''}"${on ? ` data-mpick="${k}"` : ' disabled'}>${new Date(y, i, 1).toLocaleDateString(LOC, {month:'short'}).replace('.', '')}</button>`; }).join('')}</div>`).join('');
+  pk.hidden = false;
+}
+setTimeout(function(){
+  const lab = document.getElementById('mLabel'); if(!lab) return;
+  lab.setAttribute('role', 'button'); lab.tabIndex = 0;
+  lab.addEventListener('click', openMonthPicker);
+  let tm = null;
+  lab.addEventListener('touchstart', () => { tm = setTimeout(() => { tm = null; openMonthPicker(); }, 450); }, {passive: true});
+  ['touchend','touchmove','touchcancel'].forEach(ev => lab.addEventListener(ev, () => { if(tm){ clearTimeout(tm); tm = null; } }, {passive: true}));
+  lab.addEventListener('contextmenu', e => e.preventDefault());
+}, 0);
+document.addEventListener('click', e => {
+  const m = e.target.closest('[data-mpick]');
+  if(m){ state.current = m.dataset.mpick; save(); render(); if(typeof refreshTool === 'function') refreshTool(); $('mPick').hidden = true; return; }
+  const pk = $('mPick');
+  if(pk && !pk.hidden && !e.target.closest('#mPick') && !e.target.closest('#mLabel')) pk.hidden = true;
+});
+
 </script>
 <script>
 const SEED = null;
 const SEED_SETTINGS = null;
-const APP_VERSION = '2026.11.12-0512';
+const APP_VERSION = '2026.11.12-0526';
 const IS_PWA_BUILD = true;
 const LS = 'payroster.v1';
 const KC = { sick:'--warn', flight:'--k-flight', deadhead:'--k-dh', training:'--k-train', standby:'--k-sby', reserve:'--k-sby', ground:'--k-ground', off:'--k-off', empty:'--k-off', other:'--k-ground' };
