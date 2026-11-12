@@ -648,6 +648,32 @@ html.glass .sheet{background:var(--glass);backdrop-filter:blur(30px) saturate(1.
 .sheet button i{font-style:normal;width:34px;height:34px;border-radius:11px;display:grid;place-items:center;background:var(--clay);box-shadow:var(--clay-sh);font-size:17px}
 .sheet .sh-x{justify-content:center;margin-top:4px;background:color-mix(in srgb,var(--muted) 12%,transparent)}
 @keyframes sheetUp{from{transform:translateY(30px);opacity:0}to{transform:none;opacity:1}}
+.elist{display:grid;gap:10px}.erow{background:var(--card2);border-radius:16px;padding:10px 12px}
+.erow .mh{display:flex;justify-content:space-between;gap:10px;align-items:baseline}
+.ebar{height:8px;border-radius:4px;background:color-mix(in srgb,var(--fg,currentColor) 10%,transparent);margin:7px 0 5px;overflow:hidden}
+.ebar i{display:block;height:100%;border-radius:4px;background:var(--pay)}.ebar.m i{background:var(--accent)}
+.etips{margin:0;padding-left:20px;display:grid;gap:8px;line-height:1.45}
+
+/* meter tiles: title + value, a bar, one plain line under it */
+.mgT{font-size:14.5px;font-weight:600;color:var(--muted);margin:18px 4px 8px}
+.mg{background:var(--card2);border:1px solid var(--card2-brd);border-radius:22px;padding:2px 16px}
+html.glass .mg{background:var(--clay,var(--card2));box-shadow:var(--clay-sh,none)}
+.mr{padding:13px 0}.mr+.mr{border-top:1px solid var(--line)}
+.mr .mh{display:flex;justify-content:space-between;align-items:baseline;gap:10px}
+.mr .mt{font-size:16.5px;font-weight:600;min-width:0}
+.mr .mv{color:var(--muted);font-size:14.5px;white-space:nowrap;font-variant-numeric:tabular-nums}
+.mbar{position:relative;height:9px;border-radius:5px;background:var(--sunk);margin:9px 0 7px;overflow:hidden;display:flex}
+.mbar>i{display:block;height:100%;border-radius:5px;background:var(--accent);transition:width .5s}
+.mbar.seg>i{border-radius:0}.mbar.seg>i:last-child{border-radius:0 5px 5px 0}
+.mr.ok .mbar>i{background:var(--pay)}.mr.warn .mbar>i{background:var(--k-train,#e0a030)}.mr.over .mbar>i{background:#d9534f}
+.mr.over .mv{color:#d9534f;font-weight:600}
+.mr .ms{font-size:13px;color:var(--muted);line-height:1.4}
+
+.toolcats{display:grid;gap:18px}
+.tcat h3{margin:0 4px 2px;font-size:17px}.tcat p{margin:0 4px 10px;font-size:13px;color:var(--muted)}
+.seg{display:flex;gap:4px;padding:4px;border-radius:16px;background:var(--sunk);flex-wrap:wrap}
+.seg button{flex:1 1 0;min-width:0;border:0;background:transparent;color:var(--muted);font:600 13.5px/1.2 var(--f-body);padding:9px 6px;border-radius:12px;cursor:pointer}
+.seg button.on{background:var(--surface);color:var(--ink);box-shadow:0 1px 4px rgba(0,0,0,.14)}
 </style>
 
 </head>
@@ -688,7 +714,7 @@ html.glass .sheet{background:var(--glass);backdrop-filter:blur(30px) saturate(1.
 
   <section data-tab="tools">
     <h2 data-i18n="toolsT" class="tools-h"></h2>
-    <div class="toolgrid" id="toolbar"></div>
+    <div class="toolcats" id="toolbar"></div>
     <button type="button" class="toolback" id="toolBack">‹ <span data-i18n="toolsT"></span></button>
     <div class="panel" id="toolPanel" hidden style="margin-top:10px"></div>
   </section>
@@ -1530,6 +1556,57 @@ var I18N = {
   names: { es: 'Español', ca: 'Català', en: 'English', de: 'Deutsch', fr: 'Français', it: 'Italiano', pt: 'Português', ro: 'Română', hu: 'Magyar', sk: 'Slovenčina', cs: 'Čeština' },
   locales: { es: 'es-ES', ca: 'ca-ES', en: 'en-GB', de: 'de-DE', fr: 'fr-FR', it: 'it-IT', pt: 'pt-PT', ro: 'ro-RO', hu: 'hu-HU', sk: 'sk-SK', cs: 'cs-CZ' },
   es: {
+    fam_iA: 'Adopción: 6 semanas seguidas desde la resolución y el resto por semanas en los 12 meses siguientes. Si adoptas al hijo de tu cónyuge, el Tribunal Supremo reconoce tu prestación aunque el otro progenitor ya cobrara la suya y vivierais juntos desde el nacimiento (STS 997/2022).',
+    fam_lactNoKid: 'Pon la fecha de nacimiento del niño para saber si tienes lactancia.',
+    fam_lactNo: 'No hay lactancia: el niño cumple 9 meses el {d}, antes de que vuelvas.',
+    fam_lateA: 'Algún bloque termina más de 12 meses después de la resolución. Solo 2 semanas se pueden coger hasta que el niño cumpla 8 años.',
+    fam_blkNoteA: 'Las semanas que no coges seguidas puedes repartirlas por semanas en los 12 meses siguientes a la resolución. Te quedan {n} por planificar.',
+    fam_weeksA: 'Semanas seguidas desde la resolución',
+    fam_child: 'Fecha de nacimiento del niño (para la lactancia)',
+    fam_resol: 'Fecha de la resolución de adopción (o prevista)',
+    fam_rh_adopt: 'Adopción, guarda o acogimiento: el permiso cuenta desde la resolución (judicial o administrativa), no desde el nacimiento. Si está en curso, pon la fecha prevista.',
+    fam_rh_other: '6 semanas seguidas desde el nacimiento. Si la filiación se reconoce después por sentencia, cuenta desde la sentencia firme.',
+    fam_rh_mother: 'Las 6 primeras semanas van seguidas justo después del parto (puedes empezar hasta 4 semanas antes).',
+    fam_r_adopt: 'Adoptivo',
+    fam_r_other: 'Padre / otro progenitor',
+    fam_r_mother: 'Madre',
+    fam_roleT: 'Quién eres',
+    tc_meS: 'Vacaciones, permisos, caducidades, compañeros y copia de seguridad.',
+    tc_me: 'Yo y mi familia',
+    tc_moneyS: 'Revisa la nómina, mira cómo ganar más y simula cambios.',
+    tc_money: 'Mi dinero',
+    tc_flyS: 'Mapa, escalas, calendario y tus límites de horas y fatiga.',
+    tc_fly: 'Vuelos y descanso',
+    mt_vac: 'Vacaciones',
+    mt_of: '{a} de {b}',
+    mt_used: '{p} % usado',
+    mt_hours: 'Horas de servicio',
+    earn_note: 'Cuenta horas, dietas y firmas tempranas de tus rosters con tu configuración. No incluye el plus de formador, ventas ni días comprados. Es una orientación, no una garantía.',
+    earn_t_month: 'Tu mejor mes fue {a}: {as} con {ad} días y {an} noches fuera. El peor, {b}: {bs} con {bd} días.',
+    earn_t_buy: 'Si la empresa te compra un día libre (OFF_BEZ) cobras un 9 % extra de tu base.',
+    earn_t_buyHad: 'Te han comprado {n} días libres ({s}). Aceptarlos suma bastante.',
+    earn_t_sb: 'Una imaginaria en casa deja unos {a}; un día de vuelo con dieta, {b}. Si te activan, cobras como vuelo.',
+    earn_t_dh: 'Un posicionamiento con noche deja {v} con solo {h} h de servicio: de lo mejor por hora.',
+    earn_t_early: 'Cada firma temprana suma {v}. Este año has tenido {n} ({s}).',
+    earn_t_tier: 'El precio de la hora sube con las horas del mes: has cobrado desde {a} hasta {b} por hora. Los meses cargados pagan mucho mejor cada hora extra.',
+    earn_t_night: 'Una noche fuera paga {a} de dieta frente a {b} de un ida y vuelta: {d} más por el mismo día. Pide rotaciones con pernocta.',
+    earn_h_top: 'Tus 5 mejores días de vuelo',
+    earn_h_months: 'Mes a mes (variable, sin formador)',
+    earn_h_tips: 'Dónde está el potencial',
+    earn_h_types: 'Lo que deja cada tipo de día (media)',
+    earn_mLine: '{d} días de servicio · {n} noches fuera · {h} h · {p} por día',
+    earn_perH: '{v} por hora · {h} h de media',
+    earn_c_gr: 'Suelo / curso en base',
+    earn_c_od: 'Otros con dieta de día',
+    earn_c_on: 'Otros con noche fuera',
+    earn_c_sb: 'Imaginaria / reserva en casa',
+    earn_c_dd: 'Posicionamiento en el día',
+    earn_c_dn: 'Posicionamiento con noche',
+    earn_c_f0: 'Vuelo sin dieta',
+    earn_c_fd: 'Vuelo ida y vuelta',
+    earn_c_fn: 'Vuelo con noche fuera',
+    earn_intro: 'Qué tipo de días te dejan más dinero, con tus propios rosters del año. Sin contar el plus de formador.',
+    tool_earn: 'Ganar más',
     qa_crew: 'Tripulación',
     qa_rest: 'Descanso',
     close: 'Cerrar',
@@ -1843,7 +1920,7 @@ var I18N = {
     fam_wk: '{n} semanas',
     fam_weeks: 'Semanas seguidas desde el parto',
     fam_birth: 'Fecha de nacimiento (o prevista)',
-    fam_intro: 'Cuánto cobrarías durante el permiso por nacimiento y hasta cuándo tienes lactancia. Vale para la madre y para el otro progenitor.',
+    fam_intro: 'Cuánto cobrarías durante el permiso por nacimiento o adopción y hasta cuándo tienes lactancia. Para madre, padre u otro progenitor y progenitor adoptivo.',
     cmp_sum: '{b} días libres los dos · {s} volando juntos · {a} libre solo tú · {o} libre solo la otra persona.',
     cmp_them: 'Compañero',
     cmp_me: 'Yo',
@@ -2133,6 +2210,57 @@ var I18N = {
     e_noPeriod: 'No encuentro el periodo del roster. ¿Es el «Individual duty plan» de IDP en PDF?'
   },
   ca: {
+    fam_iA: 'Adopció: 6 setmanes seguides des de la resolució i la resta per setmanes en els 12 mesos següents. Si adoptes el fill del teu cònjuge, el Tribunal Suprem reconeix la teva prestació encara que l’altre progenitor ja cobrés la seva i hi visquéssiu des del naixement (STS 997/2022).',
+    fam_lactNoKid: 'Posa la data de naixement de l’infant per saber si tens lactància.',
+    fam_lactNo: 'No hi ha lactància: l’infant fa 9 mesos el {d}, abans que tornis.',
+    fam_lateA: 'Algun bloc acaba més de 12 mesos després de la resolució. Només 2 setmanes es poden agafar fins que l’infant faci 8 anys.',
+    fam_blkNoteA: 'Les setmanes que no agafes seguides les pots repartir per setmanes en els 12 mesos següents a la resolució. Te’n queden {n} per planificar.',
+    fam_weeksA: 'Setmanes seguides des de la resolució',
+    fam_child: 'Data de naixement de l’infant (per a la lactància)',
+    fam_resol: 'Data de la resolució d’adopció (o prevista)',
+    fam_rh_adopt: 'Adopció, guarda o acolliment: el permís compta des de la resolució (judicial o administrativa), no des del naixement. Si està en curs, posa la data prevista.',
+    fam_rh_other: '6 setmanes seguides des del naixement. Si la filiació es reconeix després per sentència, compta des de la sentència ferma.',
+    fam_rh_mother: 'Les 6 primeres setmanes van seguides just després del part (pots començar fins a 4 setmanes abans).',
+    fam_r_adopt: 'Adoptiu',
+    fam_r_other: 'Pare / altre progenitor',
+    fam_r_mother: 'Mare',
+    fam_roleT: 'Qui ets',
+    tc_meS: 'Vacances, permisos, caducitats, companys i còpia de seguretat.',
+    tc_me: 'Jo i la meva família',
+    tc_moneyS: 'Revisa la nòmina, mira com guanyar més i simula canvis.',
+    tc_money: 'Els meus diners',
+    tc_flyS: 'Mapa, escales, calendari i els teus límits d’hores i fatiga.',
+    tc_fly: 'Vols i descans',
+    mt_vac: 'Vacances',
+    mt_of: '{a} de {b}',
+    mt_used: '{p} % usat',
+    mt_hours: 'Hores de servei',
+    earn_note: 'Compta hores, dietes i signatures d’hora dels teus rosters amb la teva configuració. No inclou el plus de formador, vendes ni dies comprats. És una orientació, no una garantia.',
+    earn_t_month: 'El teu millor mes va ser {a}: {as} amb {ad} dies i {an} nits fora. El pitjor, {b}: {bs} amb {bd} dies.',
+    earn_t_buy: 'Si l’empresa et compra un dia lliure (OFF_BEZ) cobres un 9 % extra de la teva base.',
+    earn_t_buyHad: 'T’han comprat {n} dies lliures ({s}). Acceptar-los suma força.',
+    earn_t_sb: 'Una imaginària a casa deixa uns {a}; un dia de vol amb dieta, {b}. Si t’activen, cobres com a vol.',
+    earn_t_dh: 'Un posicionament amb nit deixa {v} amb només {h} h de servei: dels millors per hora.',
+    earn_t_early: 'Cada signatura d’hora suma {v}. Enguany n’has tingut {n} ({s}).',
+    earn_t_tier: 'El preu de l’hora puja amb les hores del mes: has cobrat de {a} a {b} per hora. Els mesos carregats paguen molt millor cada hora extra.',
+    earn_t_night: 'Una nit fora paga {a} de dieta enfront de {b} d’una anada i tornada: {d} més pel mateix dia. Demana rotacions amb pernocta.',
+    earn_h_top: 'Els teus 5 millors dies de vol',
+    earn_h_months: 'Mes a mes (variable, sense formador)',
+    earn_h_tips: 'On hi ha potencial',
+    earn_h_types: 'El que deixa cada tipus de dia (mitjana)',
+    earn_mLine: '{d} dies de servei · {n} nits fora · {h} h · {p} per dia',
+    earn_perH: '{v} per hora · {h} h de mitjana',
+    earn_c_gr: 'Terra / curs a base',
+    earn_c_od: 'Altres amb dieta de dia',
+    earn_c_on: 'Altres amb nit fora',
+    earn_c_sb: 'Imaginària / reserva a casa',
+    earn_c_dd: 'Posicionament en el dia',
+    earn_c_dn: 'Posicionament amb nit',
+    earn_c_f0: 'Vol sense dieta',
+    earn_c_fd: 'Vol anada i tornada',
+    earn_c_fn: 'Vol amb nit fora',
+    earn_intro: 'Quins dies et deixen més diners, amb els teus rosters de l’any. Sense comptar el plus de formador.',
+    tool_earn: 'Guanyar més',
     qa_crew: 'Tripulació',
     qa_rest: 'Descans',
     close: 'Tancar',
@@ -2447,7 +2575,7 @@ var I18N = {
     fam_wk: '{n} setmanes',
     fam_weeks: 'Setmanes seguides des del part',
     fam_birth: 'Data de naixement (o prevista)',
-    fam_intro: 'Quant cobraries durant el permís per naixement i fins quan tens lactància. Val per a la mare i per a l’altre progenitor.',
+    fam_intro: 'Quant cobraries durant el permís per naixement o adopció i fins quan tens lactància. Per a mare, pare o altre progenitor i progenitor adoptiu.',
     cmp_sum: '{b} dies lliures tots dos · {s} volant junts · {a} lliure només tu · {o} lliure només l’altra persona.',
     cmp_them: 'Company',
     cmp_me: 'Jo',
@@ -2737,6 +2865,57 @@ var I18N = {
     e_noPeriod: 'No trobo el període del roster. És l’«Individual duty plan» d’IDP en PDF?'
   },
   en: {
+    fam_iA: 'Adoption: 6 weeks in one go from the decision, the rest week by week over the next 12 months. If you adopt your spouse’s child, the Spanish Supreme Court grants your benefit even if the other parent already received theirs and you have lived together since the birth (STS 997/2022).',
+    fam_lactNoKid: 'Enter the child’s date of birth to see whether you get nursing leave.',
+    fam_lactNo: 'No nursing leave: the child turns 9 months on {d}, before you return.',
+    fam_lateA: 'A block ends more than 12 months after the decision. Only 2 weeks can be taken until the child turns 8.',
+    fam_blkNoteA: 'Weeks you don’t take in one go can be spread week by week over the 12 months after the decision. {n} left to plan.',
+    fam_weeksA: 'Weeks in one go from the decision',
+    fam_child: 'Child’s date of birth (for nursing leave)',
+    fam_resol: 'Date of the adoption decision (or expected)',
+    fam_rh_adopt: 'Adoption, guardianship or foster care: the leave counts from the decision (court or administrative), not from the birth. If it is still in progress, enter the expected date.',
+    fam_rh_other: '6 weeks in one go from the birth. If parenthood is recognised later by a court, it counts from the final judgment.',
+    fam_rh_mother: 'The first 6 weeks are taken in one go right after the birth (you can start up to 4 weeks before).',
+    fam_r_adopt: 'Adoptive',
+    fam_r_other: 'Father / other parent',
+    fam_r_mother: 'Mother',
+    fam_roleT: 'Who you are',
+    tc_meS: 'Vacation, leave, expiry dates, colleagues and backup.',
+    tc_me: 'Me & my family',
+    tc_moneyS: 'Check your payslip, see how to earn more and simulate changes.',
+    tc_money: 'My money',
+    tc_flyS: 'Map, layovers, calendar and your hour and fatigue limits.',
+    tc_fly: 'Flights & rest',
+    mt_vac: 'Vacation',
+    mt_of: '{a} of {b}',
+    mt_used: '{p} % used',
+    mt_hours: 'Duty hours',
+    earn_note: 'Counts hours, per diems and early check-ins from your rosters with your settings. Trainer pay, sales and bought days are not included. A guide, not a guarantee.',
+    earn_t_month: 'Your best month was {a}: {as} with {ad} days and {an} nights away. The weakest, {b}: {bs} with {bd} days.',
+    earn_t_buy: 'If the company buys a day off (OFF_BEZ) you get an extra 9 % of your base.',
+    earn_t_buyHad: 'The company bought {n} days off from you ({s}). Accepting them adds up.',
+    earn_t_sb: 'Standby at home pays about {a}; a flight day with per diem {b}. If you are called out, you are paid as a flight.',
+    earn_t_dh: 'A deadhead with a night pays {v} for only {h} h of duty: one of the best per hour.',
+    earn_t_early: 'Each early check-in adds {v}. This year you had {n} ({s}).',
+    earn_t_tier: 'The hourly rate rises with the month’s hours: you earned from {a} to {b} per hour. Busy months pay every extra hour much better.',
+    earn_t_night: 'A night away pays {a} per diem against {b} for a day return: {d} more for the same day. Bid for rotations with a night stop.',
+    earn_h_top: 'Your 5 best flight days',
+    earn_h_months: 'Month by month (variable, no trainer pay)',
+    earn_h_tips: 'Where the potential is',
+    earn_h_types: 'What each kind of day pays (average)',
+    earn_mLine: '{d} duty days · {n} nights away · {h} h · {p} per day',
+    earn_perH: '{v} per hour · {h} h on average',
+    earn_c_gr: 'Ground / course at base',
+    earn_c_od: 'Other with day per diem',
+    earn_c_on: 'Other with night away',
+    earn_c_sb: 'Standby / reserve at home',
+    earn_c_dd: 'Deadhead same day',
+    earn_c_dn: 'Deadhead with night',
+    earn_c_f0: 'Flight without per diem',
+    earn_c_fd: 'Flight day return',
+    earn_c_fn: 'Flight with night away',
+    earn_intro: 'Which kind of days pay you most, from your own rosters this year. Trainer pay left out.',
+    tool_earn: 'Earn more',
     qa_crew: 'Crew',
     qa_rest: 'Rest',
     close: 'Close',
@@ -3051,7 +3230,7 @@ var I18N = {
     fam_wk: '{n} weeks',
     fam_weeks: 'Weeks taken straight after the birth',
     fam_birth: 'Birth date (or due date)',
-    fam_intro: 'What you would get during birth leave and when breastfeeding leave ends. For the mother and for the other parent.',
+    fam_intro: 'What you would get during birth or adoption leave, and how long nursing leave lasts. For mother, father or other parent, and adoptive parent.',
     cmp_sum: '{b} days both off · {s} flying together · {a} only you off · {o} only the other person off.',
     cmp_them: 'Colleague',
     cmp_me: 'Me',
@@ -3341,6 +3520,57 @@ var I18N = {
     e_noPeriod: 'I can’t find the roster period. Is this the IDP “Individual duty plan” PDF?'
   },
   de: {
+    fam_iA: 'Adoption: 6 Wochen am Stück ab dem Beschluss, der Rest wochenweise in den 12 Monaten danach. Adoptierst du das Kind deines Ehepartners, gewährt der spanische Oberste Gerichtshof deine Leistung, auch wenn der andere Elternteil seine schon bekam und ihr seit der Geburt zusammenlebt (STS 997/2022).',
+    fam_lactNoKid: 'Gib das Geburtsdatum des Kindes ein, um zu sehen, ob du Stillzeit hast.',
+    fam_lactNo: 'Keine Stillzeit: Das Kind wird am {d} 9 Monate alt, bevor du zurück bist.',
+    fam_lateA: 'Ein Block endet mehr als 12 Monate nach dem Beschluss. Nur 2 Wochen gehen bis zum 8. Geburtstag des Kindes.',
+    fam_blkNoteA: 'Wochen, die du nicht am Stück nimmst, kannst du wochenweise in den 12 Monaten nach dem Beschluss verteilen. Noch {n} zu planen.',
+    fam_weeksA: 'Wochen am Stück ab dem Beschluss',
+    fam_child: 'Geburtsdatum des Kindes (für die Stillzeit)',
+    fam_resol: 'Datum des Adoptionsbeschlusses (oder erwartet)',
+    fam_rh_adopt: 'Adoption, Pflege oder Vormundschaft: Die Freistellung zählt ab dem Beschluss (Gericht oder Behörde), nicht ab der Geburt. Läuft es noch, trag das erwartete Datum ein.',
+    fam_rh_other: '6 Wochen am Stück ab Geburt. Wird die Elternschaft später per Urteil anerkannt, zählt das rechtskräftige Urteil.',
+    fam_rh_mother: 'Die ersten 6 Wochen am Stück direkt nach der Geburt (Beginn bis zu 4 Wochen vorher möglich).',
+    fam_r_adopt: 'Adoptiv',
+    fam_r_other: 'Vater / anderer Elternteil',
+    fam_r_mother: 'Mutter',
+    fam_roleT: 'Wer du bist',
+    tc_meS: 'Urlaub, Elternzeit, Fristen, Kollegen und Sicherung.',
+    tc_me: 'Ich & Familie',
+    tc_moneyS: 'Gehaltszettel prüfen, mehr verdienen und Änderungen durchspielen.',
+    tc_money: 'Mein Geld',
+    tc_flyS: 'Karte, Layover, Kalender und deine Stunden- und Müdigkeitsgrenzen.',
+    tc_fly: 'Flüge & Ruhe',
+    mt_vac: 'Urlaub',
+    mt_of: '{a} von {b}',
+    mt_used: '{p} % genutzt',
+    mt_hours: 'Dienststunden',
+    earn_note: 'Zählt Stunden, Spesen und frühe Check-ins aus deinen Rostern mit deinen Einstellungen. Ohne Trainerzulage, Verkauf und abgekaufte Tage. Eine Orientierung, keine Garantie.',
+    earn_t_month: 'Dein bester Monat war {a}: {as} mit {ad} Tagen und {an} Nächten weg. Der schwächste, {b}: {bs} mit {bd} Tagen.',
+    earn_t_buy: 'Kauft dir die Firma einen freien Tag ab (OFF_BEZ), bekommst du 9 % deiner Basis extra.',
+    earn_t_buyHad: 'Die Firma hat dir {n} freie Tage abgekauft ({s}). Annehmen lohnt sich.',
+    earn_t_sb: 'Standby zu Hause bringt etwa {a}; ein Flugtag mit Spesen {b}. Wirst du aktiviert, wird er wie ein Flug bezahlt.',
+    earn_t_dh: 'Eine Positionierung mit Nacht bringt {v} bei nur {h} h Dienst: pro Stunde mit das Beste.',
+    earn_t_early: 'Jeder frühe Check-in bringt {v}. Dieses Jahr hattest du {n} ({s}).',
+    earn_t_tier: 'Der Stundensatz steigt mit den Stunden im Monat: du hattest {a} bis {b} pro Stunde. Volle Monate zahlen jede weitere Stunde viel besser.',
+    earn_t_night: 'Eine Nacht weg bringt {a} Spesen gegenüber {b} bei hin und zurück: {d} mehr für denselben Tag. Wünsch dir Umläufe mit Übernachtung.',
+    earn_h_top: 'Deine 5 besten Flugtage',
+    earn_h_months: 'Monat für Monat (variabel, ohne Trainer)',
+    earn_h_tips: 'Wo das Potenzial liegt',
+    earn_h_types: 'Was jede Art von Tag bringt (Ø)',
+    earn_mLine: '{d} Diensttage · {n} Nächte weg · {h} h · {p} pro Tag',
+    earn_perH: '{v} pro Stunde · Ø {h} h',
+    earn_c_gr: 'Boden / Kurs an der Base',
+    earn_c_od: 'Sonstiges mit Tagesspesen',
+    earn_c_on: 'Sonstiges mit Nacht',
+    earn_c_sb: 'Standby / Reserve zu Hause',
+    earn_c_dd: 'Positionierung am Tag',
+    earn_c_dn: 'Positionierung mit Nacht',
+    earn_c_f0: 'Flug ohne Spesen',
+    earn_c_fd: 'Flug hin und zurück',
+    earn_c_fn: 'Flug mit Übernachtung',
+    earn_intro: 'Welche Tage dir am meisten bringen, aus deinen eigenen Rostern dieses Jahres. Ohne Trainerzulage.',
+    tool_earn: 'Mehr verdienen',
     qa_crew: 'Crew',
     qa_rest: 'Ruhe',
     close: 'Schließen',
@@ -3655,7 +3885,7 @@ var I18N = {
     fam_wk: '{n} Wochen',
     fam_weeks: 'Wochen direkt nach der Geburt',
     fam_birth: 'Geburtsdatum (oder Termin)',
-    fam_intro: 'Was du während der Geburtsfreistellung bekommst und wie lange die Stillzeit läuft. Für die Mutter und den anderen Elternteil.',
+    fam_intro: 'Was du während der Geburts- oder Adoptionsfreistellung bekommst und wie lange die Stillzeit dauert. Für Mutter, Vater oder anderen Elternteil und Adoptivelternteil.',
     cmp_sum: '{b} Tage beide frei · {s} gemeinsam fliegen · {a} nur du frei · {o} nur die andere Person frei.',
     cmp_them: 'Kollege',
     cmp_me: 'Ich',
@@ -3945,6 +4175,57 @@ var I18N = {
     e_noPeriod: 'Ich finde den Zeitraum des Dienstplans nicht. Ist das der „Individual duty plan“ aus IDP als PDF?'
   },
   fr: {
+    fam_iA: 'Adoption : 6 semaines d’un bloc dès la décision, le reste par semaine dans les 12 mois suivants. Si tu adoptes l’enfant de ton conjoint, la Cour suprême espagnole reconnaît ta prestation même si l’autre parent a déjà touché la sienne et que vous viviez ensemble depuis la naissance (STS 997/2022).',
+    fam_lactNoKid: 'Indique la date de naissance de l’enfant pour savoir si tu as l’allaitement.',
+    fam_lactNo: 'Pas d’allaitement : l’enfant a 9 mois le {d}, avant ton retour.',
+    fam_lateA: 'Un bloc finit plus de 12 mois après la décision. Seules 2 semaines peuvent se prendre jusqu’aux 8 ans de l’enfant.',
+    fam_blkNoteA: 'Les semaines que tu ne prends pas d’un bloc peuvent être réparties par semaine dans les 12 mois suivant la décision. Il t’en reste {n} à planifier.',
+    fam_weeksA: 'Semaines d’un bloc depuis la décision',
+    fam_child: 'Date de naissance de l’enfant (pour l’allaitement)',
+    fam_resol: 'Date de la décision d’adoption (ou prévue)',
+    fam_rh_adopt: 'Adoption, garde ou accueil : le congé compte depuis la décision (judiciaire ou administrative), pas depuis la naissance. Si c’est en cours, mets la date prévue.',
+    fam_rh_other: '6 semaines d’un bloc dès la naissance. Si la filiation est reconnue plus tard par jugement, on compte depuis le jugement définitif.',
+    fam_rh_mother: 'Les 6 premières semaines se prennent d’un bloc juste après l’accouchement (début possible jusqu’à 4 semaines avant).',
+    fam_r_adopt: 'Adoptif',
+    fam_r_other: 'Père / autre parent',
+    fam_r_mother: 'Mère',
+    fam_roleT: 'Qui tu es',
+    tc_meS: 'Congés, permis, échéances, collègues et sauvegarde.',
+    tc_me: 'Moi & ma famille',
+    tc_moneyS: 'Vérifie ta fiche de paie, vois comment gagner plus et simule des changements.',
+    tc_money: 'Mon argent',
+    tc_flyS: 'Carte, escales, calendrier et tes limites d’heures et de fatigue.',
+    tc_fly: 'Vols & repos',
+    mt_vac: 'Congés',
+    mt_of: '{a} sur {b}',
+    mt_used: '{p} % utilisé',
+    mt_hours: 'Heures de service',
+    earn_note: 'Compte heures, indemnités et prises de service tôt de tes plannings avec tes réglages. Sans prime de formateur, ventes ni jours rachetés. Une indication, pas une garantie.',
+    earn_t_month: 'Ton meilleur mois : {a}, {as} avec {ad} jours et {an} nuits dehors. Le plus faible : {b}, {bs} avec {bd} jours.',
+    earn_t_buy: 'Si la compagnie rachète un jour de repos (OFF_BEZ), tu touches 9 % de ta base en plus.',
+    earn_t_buyHad: 'La compagnie t’a racheté {n} jours de repos ({s}). Les accepter rapporte.',
+    earn_t_sb: 'Une réserve à domicile rapporte environ {a} ; un jour de vol avec indemnité {b}. Si on t’active, c’est payé comme un vol.',
+    earn_t_dh: 'Une mise en place avec nuit rapporte {v} pour seulement {h} h de service : parmi les meilleurs à l’heure.',
+    earn_t_early: 'Chaque prise de service tôt rapporte {v}. Cette année : {n} ({s}).',
+    earn_t_tier: 'Le taux horaire monte avec les heures du mois : de {a} à {b} par heure. Les mois chargés paient beaucoup mieux chaque heure en plus.',
+    earn_t_night: 'Une nuit dehors paie {a} d’indemnité contre {b} pour un aller-retour : {d} de plus pour le même jour. Demande des rotations avec découcher.',
+    earn_h_top: 'Tes 5 meilleurs jours de vol',
+    earn_h_months: 'Mois par mois (variable, sans formateur)',
+    earn_h_tips: 'Où est le potentiel',
+    earn_h_types: 'Ce que rapporte chaque type de jour (moyenne)',
+    earn_mLine: '{d} jours de service · {n} nuits dehors · {h} h · {p} par jour',
+    earn_perH: '{v} par heure · {h} h en moyenne',
+    earn_c_gr: 'Sol / cours à la base',
+    earn_c_od: 'Autre avec indemnité de jour',
+    earn_c_on: 'Autre avec nuit dehors',
+    earn_c_sb: 'Réserve à domicile',
+    earn_c_dd: 'Mise en place dans la journée',
+    earn_c_dn: 'Mise en place avec nuit',
+    earn_c_f0: 'Vol sans indemnité',
+    earn_c_fd: 'Vol aller-retour',
+    earn_c_fn: 'Vol avec nuit dehors',
+    earn_intro: 'Quels jours te rapportent le plus, d’après tes plannings de l’année. Sans la prime de formateur.',
+    tool_earn: 'Gagner plus',
     qa_crew: 'Équipage',
     qa_rest: 'Repos',
     close: 'Fermer',
@@ -4259,7 +4540,7 @@ var I18N = {
     fam_wk: '{n} semaines',
     fam_weeks: 'Semaines prises dès la naissance',
     fam_birth: 'Date de naissance (ou prévue)',
-    fam_intro: 'Ce que tu toucherais pendant le congé de naissance et jusqu’à quand dure l’allaitement. Pour la mère et pour l’autre parent.',
+    fam_intro: 'Ce que tu toucherais pendant le congé de naissance ou d’adoption, et jusqu’à quand dure l’allaitement. Pour mère, père ou autre parent et parent adoptif.',
     cmp_sum: '{b} jours de repos ensemble · {s} en vol ensemble · {a} repos toi seul · {o} repos l’autre personne seule.',
     cmp_them: 'Collègue',
     cmp_me: 'Moi',
@@ -4549,6 +4830,57 @@ var I18N = {
     e_noPeriod: 'Je ne trouve pas la période du planning. Est-ce bien l’« Individual duty plan » d’IDP en PDF ?'
   },
   hu: {
+    fam_iA: 'Örökbefogadás: 6 hét egyben a határozattól, a többi hetenként a következő 12 hónapban. Ha a házastársad gyermekét fogadod örökbe, a spanyol Legfelsőbb Bíróság elismeri az ellátásodat akkor is, ha a másik szülő már megkapta a sajátját, és a születés óta együtt éltek (STS 997/2022).',
+    fam_lactNoKid: 'Add meg a gyermek születési dátumát, hogy lásd, jár-e szoptatási kedvezmény.',
+    fam_lactNo: 'Nincs szoptatási kedvezmény: a gyermek {d}-án/én lesz 9 hónapos, mielőtt visszatérsz.',
+    fam_lateA: 'Egy blokk a határozat után több mint 12 hónappal ér véget. Csak 2 hét vehető ki a gyermek 8 éves koráig.',
+    fam_blkNoteA: 'Amit nem veszel ki egyben, hetenként oszthatod el a határozatot követő 12 hónapban. Még {n} hét van hátra.',
+    fam_weeksA: 'Hetek egyben a határozattól',
+    fam_child: 'A gyermek születési dátuma (a szoptatási kedvezményhez)',
+    fam_resol: 'Az örökbefogadási határozat dátuma (vagy várható)',
+    fam_rh_adopt: 'Örökbefogadás, gyámság vagy nevelőszülőség: a szabadság a határozattól (bírósági vagy hatósági) számít, nem a születéstől. Ha folyamatban van, add meg a várható dátumot.',
+    fam_rh_other: '6 hét egyben a születéstől. Ha a szülőséget később ítélet ismeri el, a jogerős ítélettől számít.',
+    fam_rh_mother: 'Az első 6 hét egyben, közvetlenül a szülés után (legfeljebb 4 héttel előtte kezdheted).',
+    fam_r_adopt: 'Örökbefogadó',
+    fam_r_other: 'Apa / másik szülő',
+    fam_r_mother: 'Anya',
+    fam_roleT: 'Ki vagy',
+    tc_meS: 'Szabadság, távollétek, lejáratok, kollégák és mentés.',
+    tc_me: 'Én és a családom',
+    tc_moneyS: 'Ellenőrizd a bérjegyzéket, nézd meg, hogyan kereshetsz többet, és szimulálj.',
+    tc_money: 'A pénzem',
+    tc_flyS: 'Térkép, kinti éjszakák, naptár, valamint óra- és fáradtsági korlátaid.',
+    tc_fly: 'Járatok és pihenő',
+    mt_vac: 'Szabadság',
+    mt_of: '{a} / {b}',
+    mt_used: '{p} % felhasználva',
+    mt_hours: 'Szolgálati órák',
+    earn_note: 'Órákat, napidíjat és korai bejelentkezéseket számol a rostereidből a beállításaiddal. Oktatói pótlék, eladás és megvett napok nélkül. Tájékoztató, nem garancia.',
+    earn_t_month: 'A legjobb hónapod: {a}, {as} {ad} nappal és {an} kinti éjszakával. A leggyengébb: {b}, {bs} {bd} nappal.',
+    earn_t_buy: 'Ha a cég megveszi egy szabadnapodat (OFF_BEZ), az alapod 9 %-át kapod pluszban.',
+    earn_t_buyHad: 'A cég {n} szabadnapot vett meg tőled ({s}). Megéri elfogadni.',
+    earn_t_sb: 'Az otthoni készenlét kb. {a}; egy repülős nap napidíjjal {b}. Ha behívnak, járatként fizetik.',
+    earn_t_dh: 'Egy éjszakás pozícionálás {v}-t hoz csak {h} ó szolgálatért: óránként az egyik legjobb.',
+    earn_t_early: 'Minden korai bejelentkezés {v}. Idén {n} volt ({s}).',
+    earn_t_tier: 'Az órabér nő a havi órákkal: {a} és {b} között kaptál óránként. A teli hónapok minden plusz órát jobban fizetnek.',
+    earn_t_night: 'Egy kinti éjszaka {a} napidíjat fizet, egy oda-vissza {b}-t: ugyanazért a napért {d}-val több. Kérj éjszakázós fordulókat.',
+    earn_h_top: 'A legjobb 5 repülős napod',
+    earn_h_months: 'Hónapról hónapra (változó, oktató nélkül)',
+    earn_h_tips: 'Hol a lehetőség',
+    earn_h_types: 'Mennyit hoz egy-egy naptípus (átlag)',
+    earn_mLine: '{d} szolgálati nap · {n} éjszaka kint · {h} ó · {p} naponta',
+    earn_perH: '{v} óránként · átlag {h} ó',
+    earn_c_gr: 'Földi / tanfolyam a bázison',
+    earn_c_od: 'Egyéb nappali napidíjjal',
+    earn_c_on: 'Egyéb éjszakával kint',
+    earn_c_sb: 'Készenlét / tartalék otthon',
+    earn_c_dd: 'Pozícionálás aznap',
+    earn_c_dn: 'Pozícionálás éjszakával',
+    earn_c_f0: 'Járat napidíj nélkül',
+    earn_c_fd: 'Oda-vissza járat',
+    earn_c_fn: 'Járat éjszakával kint',
+    earn_intro: 'Mely napok hozzák a legtöbbet, az idei saját rostereid alapján. Oktatói pótlék nélkül.',
+    tool_earn: 'Keress többet',
     qa_crew: 'Személyzet',
     qa_rest: 'Pihenő',
     close: 'Bezárás',
@@ -4863,7 +5195,7 @@ var I18N = {
     fam_wk: '{n} hét',
     fam_weeks: 'Hetek egyben a születéstől',
     fam_birth: 'Születés dátuma (vagy várható)',
-    fam_intro: 'Mennyit kapnál a születési szabadság alatt, és meddig jár a szoptatási kedvezmény. Az anyának és a másik szülőnek is.',
+    fam_intro: 'Mennyit kapnál a születési vagy örökbefogadási szabadság alatt, és meddig jár a szoptatási kedvezmény. Anyának, apának vagy másik szülőnek és örökbefogadó szülőnek.',
     cmp_sum: '{b} nap mindketten szabadok · {s} együtt repültök · {a} csak te szabad · {o} csak a másik szabad.',
     cmp_them: 'Kolléga',
     cmp_me: 'Én',
@@ -5153,6 +5485,57 @@ var I18N = {
     e_noPeriod: 'Nem találom a beosztás időszakát. Ez az IDP „Individual duty plan” PDF-je?'
   },
   sk: {
+    fam_iA: 'Adopcia: 6 týždňov naraz od rozhodnutia, zvyšok po týždňoch v nasledujúcich 12 mesiacoch. Ak adoptuješ dieťa manžela, španielsky Najvyšší súd uznáva tvoju dávku, aj keď druhý rodič už svoju dostal a žijete spolu od narodenia (STS 997/2022).',
+    fam_lactNoKid: 'Zadaj dátum narodenia dieťaťa, aby si videl, či máš nárok na dojčenie.',
+    fam_lactNo: 'Bez dojčenia: dieťa bude mať 9 mesiacov {d}, skôr než sa vrátiš.',
+    fam_lateA: 'Niektorý blok končí viac ako 12 mesiacov po rozhodnutí. Len 2 týždne sa dajú vybrať do 8 rokov dieťaťa.',
+    fam_blkNoteA: 'Týždne, ktoré nevyberieš naraz, môžeš rozložiť po týždňoch do 12 mesiacov po rozhodnutí. Ostáva {n} na plánovanie.',
+    fam_weeksA: 'Týždne naraz od rozhodnutia',
+    fam_child: 'Dátum narodenia dieťaťa (pre dojčenie)',
+    fam_resol: 'Dátum rozhodnutia o adopcii (alebo očakávaný)',
+    fam_rh_adopt: 'Adopcia, starostlivosť alebo pestúnstvo: voľno sa počíta od rozhodnutia (súdneho alebo úradného), nie od narodenia. Ak ešte prebieha, zadaj očakávaný dátum.',
+    fam_rh_other: '6 týždňov naraz od narodenia. Ak sa rodičovstvo uzná neskôr rozsudkom, počíta sa od právoplatného rozsudku.',
+    fam_rh_mother: 'Prvých 6 týždňov naraz hneď po pôrode (môžeš začať až 4 týždne pred).',
+    fam_r_adopt: 'Adoptívny',
+    fam_r_other: 'Otec / iný rodič',
+    fam_r_mother: 'Matka',
+    fam_roleT: 'Kto si',
+    tc_meS: 'Dovolenka, voľno, platnosti, kolegovia a záloha.',
+    tc_me: 'Ja a rodina',
+    tc_moneyS: 'Skontroluj výplatnú pásku, pozri, ako zarobiť viac, a simuluj zmeny.',
+    tc_money: 'Moje peniaze',
+    tc_flyS: 'Mapa, prenocovania, kalendár a tvoje limity hodín a únavy.',
+    tc_fly: 'Lety a odpočinok',
+    mt_vac: 'Dovolenka',
+    mt_of: '{a} z {b}',
+    mt_used: '{p} % využité',
+    mt_hours: 'Hodiny služby',
+    earn_note: 'Počíta hodiny, diéty a skoré check-iny z tvojich rozpisov s tvojimi nastaveniami. Bez príplatku inštruktora, predaja a odkúpených dní. Orientačne, nie záruka.',
+    earn_t_month: 'Tvoj najlepší mesiac: {a}, {as} s {ad} dňami a {an} nocami vonku. Najslabší: {b}, {bs} s {bd} dňami.',
+    earn_t_buy: 'Ak firma odkúpi voľný deň (OFF_BEZ), dostaneš navyše 9 % základu.',
+    earn_t_buyHad: 'Firma od teba odkúpila {n} voľných dní ({s}). Oplatí sa prijať.',
+    earn_t_sb: 'Pohotovosť doma prinesie asi {a}; letový deň s diétou {b}. Ak ťa aktivujú, platí sa ako let.',
+    earn_t_dh: 'Presun s nocou prinesie {v} za len {h} h služby: jedno z najlepších za hodinu.',
+    earn_t_early: 'Každý skorý check-in prinesie {v}. Tento rok si mal {n} ({s}).',
+    earn_t_tier: 'Hodinová sadzba rastie s hodinami v mesiaci: mal si od {a} do {b} za hodinu. Plné mesiace platia každú hodinu navyše oveľa lepšie.',
+    earn_t_night: 'Noc vonku platí {a} diét oproti {b} pri tam a späť: o {d} viac za ten istý deň. Žiadaj rotácie s prenocovaním.',
+    earn_h_top: 'Tvojich 5 najlepších letových dní',
+    earn_h_months: 'Mesiac po mesiaci (variabilné, bez inštruktora)',
+    earn_h_tips: 'Kde je potenciál',
+    earn_h_types: 'Čo prinesie každý typ dňa (priemer)',
+    earn_mLine: '{d} dní služby · {n} nocí vonku · {h} h · {p} za deň',
+    earn_perH: '{v} za hodinu · priemerne {h} h',
+    earn_c_gr: 'Zem / kurz na základni',
+    earn_c_od: 'Iné s dennou diétou',
+    earn_c_on: 'Iné s nocou vonku',
+    earn_c_sb: 'Pohotovosť / rezerva doma',
+    earn_c_dd: 'Presun v ten istý deň',
+    earn_c_dn: 'Presun s nocou',
+    earn_c_f0: 'Let bez diét',
+    earn_c_fd: 'Let tam a späť',
+    earn_c_fn: 'Let s nocou vonku',
+    earn_intro: 'Ktoré dni ti prinesú najviac, z tvojich vlastných rozpisov tohto roka. Bez príplatku inštruktora.',
+    tool_earn: 'Zarob viac',
     qa_crew: 'Posádka',
     qa_rest: 'Odpočinok',
     close: 'Zavrieť',
@@ -5467,7 +5850,7 @@ var I18N = {
     fam_wk: '{n} týždňov',
     fam_weeks: 'Týždne hneď po pôrode',
     fam_birth: 'Dátum narodenia (alebo predpokladaný)',
-    fam_intro: 'Koľko by si dostal/a počas rodičovskej dovolenky pri narodení a dokedy máš dojčenie. Pre matku aj druhého rodiča.',
+    fam_intro: 'Koľko by si dostal počas voľna pri narodení alebo adopcii a dokedy máš dojčenie. Pre matku, otca alebo iného rodiča a adoptívneho rodiča.',
     cmp_sum: '{b} dní voľno obaja · {s} spolu v lietadle · {a} voľno len ty · {o} voľno len druhá osoba.',
     cmp_them: 'Kolega',
     cmp_me: 'Ja',
@@ -5757,6 +6140,57 @@ var I18N = {
     e_noPeriod: 'Nenachádzam obdobie rozpisu. Je to „Individual duty plan“ z IDP v PDF?'
   },
   cs: {
+    fam_iA: 'Adopce: 6 týdnů vcelku od rozhodnutí, zbytek po týdnech v následujících 12 měsících. Pokud adoptuješ dítě manžela, španělský Nejvyšší soud uznává tvou dávku, i když druhý rodič už svou dostal a žijete spolu od narození (STS 997/2022).',
+    fam_lactNoKid: 'Zadej datum narození dítěte, abys viděl, zda máš nárok na kojení.',
+    fam_lactNo: 'Bez kojení: dítěti bude 9 měsíců {d}, dřív než se vrátíš.',
+    fam_lateA: 'Některý blok končí víc než 12 měsíců po rozhodnutí. Jen 2 týdny lze vybrat do 8 let dítěte.',
+    fam_blkNoteA: 'Týdny, které nevybereš vcelku, můžeš rozložit po týdnech do 12 měsíců po rozhodnutí. Zbývá {n} k naplánování.',
+    fam_weeksA: 'Týdny vcelku od rozhodnutí',
+    fam_child: 'Datum narození dítěte (pro kojení)',
+    fam_resol: 'Datum rozhodnutí o adopci (nebo očekávané)',
+    fam_rh_adopt: 'Adopce, péče nebo pěstounství: volno se počítá od rozhodnutí (soudního nebo úředního), ne od narození. Pokud ještě běží, zadej očekávané datum.',
+    fam_rh_other: '6 týdnů vcelku od narození. Pokud se rodičovství uzná později rozsudkem, počítá se od pravomocného rozsudku.',
+    fam_rh_mother: 'Prvních 6 týdnů vcelku hned po porodu (můžeš začít až 4 týdny předem).',
+    fam_r_adopt: 'Adoptivní',
+    fam_r_other: 'Otec / jiný rodič',
+    fam_r_mother: 'Matka',
+    fam_roleT: 'Kdo jsi',
+    tc_meS: 'Dovolená, volno, platnosti, kolegové a záloha.',
+    tc_me: 'Já a rodina',
+    tc_moneyS: 'Zkontroluj výplatní pásku, podívej se, jak vydělat víc, a simuluj změny.',
+    tc_money: 'Moje peníze',
+    tc_flyS: 'Mapa, přespání, kalendář a tvé limity hodin a únavy.',
+    tc_fly: 'Lety a odpočinek',
+    mt_vac: 'Dovolená',
+    mt_of: '{a} z {b}',
+    mt_used: '{p} % využito',
+    mt_hours: 'Hodiny služby',
+    earn_note: 'Počítá hodiny, diety a časné check-iny z tvých rozpisů s tvým nastavením. Bez příplatku instruktora, prodeje a odkoupených dní. Orientačně, ne záruka.',
+    earn_t_month: 'Tvůj nejlepší měsíc: {a}, {as} s {ad} dny a {an} nocemi venku. Nejslabší: {b}, {bs} s {bd} dny.',
+    earn_t_buy: 'Když firma odkoupí volný den (OFF_BEZ), dostaneš navíc 9 % základu.',
+    earn_t_buyHad: 'Firma od tebe odkoupila {n} volných dní ({s}). Vyplatí se přijmout.',
+    earn_t_sb: 'Pohotovost doma přinese asi {a}; letový den s dietou {b}. Když tě aktivují, platí se jako let.',
+    earn_t_dh: 'Přesun s nocí přinese {v} za jen {h} h služby: jedno z nejlepších za hodinu.',
+    earn_t_early: 'Každý časný check-in přinese {v}. Letos jsi měl {n} ({s}).',
+    earn_t_tier: 'Hodinová sazba roste s hodinami v měsíci: měl jsi od {a} do {b} za hodinu. Plné měsíce platí každou hodinu navíc mnohem lépe.',
+    earn_t_night: 'Noc venku platí {a} diet oproti {b} u tam a zpět: o {d} víc za stejný den. Žádej rotace s přespáním.',
+    earn_h_top: 'Tvých 5 nejlepších letových dní',
+    earn_h_months: 'Měsíc po měsíci (variabilní, bez instruktora)',
+    earn_h_tips: 'Kde je potenciál',
+    earn_h_types: 'Co vydělá každý typ dne (průměr)',
+    earn_mLine: '{d} dní služby · {n} nocí venku · {h} h · {p} za den',
+    earn_perH: '{v} za hodinu · průměrně {h} h',
+    earn_c_gr: 'Zem / kurz na základně',
+    earn_c_od: 'Jiné s denní dietou',
+    earn_c_on: 'Jiné s nocí venku',
+    earn_c_sb: 'Pohotovost / rezerva doma',
+    earn_c_dd: 'Přesun tentýž den',
+    earn_c_dn: 'Přesun s nocí',
+    earn_c_f0: 'Let bez diet',
+    earn_c_fd: 'Let tam a zpět',
+    earn_c_fn: 'Let s nocí venku',
+    earn_intro: 'Které dny ti vydělají nejvíc, z tvých vlastních rozpisů letošního roku. Bez příplatku instruktora.',
+    tool_earn: 'Vydělej víc',
     qa_crew: 'Posádka',
     qa_rest: 'Odpočinek',
     close: 'Zavřít',
@@ -6071,7 +6505,7 @@ var I18N = {
     fam_wk: '{n} týdnů',
     fam_weeks: 'Týdny hned po porodu',
     fam_birth: 'Datum narození (nebo předpokládané)',
-    fam_intro: 'Kolik bys dostal/a během volna při narození a dokdy máš kojení. Pro matku i druhého rodiče.',
+    fam_intro: 'Kolik bys dostal během volna při narození nebo adopci a do kdy máš kojení. Pro matku, otce nebo jiného rodiče a adoptivního rodiče.',
     cmp_sum: '{b} dní volno oba · {s} spolu v letadle · {a} volno jen ty · {o} volno jen druhá osoba.',
     cmp_them: 'Kolega',
     cmp_me: 'Já',
@@ -6361,6 +6795,57 @@ var I18N = {
     e_noPeriod: 'Nenacházím období rozpisu. Je to „Individual duty plan“ z IDP v PDF?'
   },
   it: {
+    "fam_iA": "Adozione: 6 settimane di fila dalla decisione, il resto a settimane nei 12 mesi successivi. Se adotti il figlio del tuo coniuge, la Corte suprema spagnola riconosce la tua prestazione anche se l’altro genitore ha già ricevuto la sua e vivete insieme dalla nascita (STS 997/2022).",
+    "fam_lactNoKid": "Inserisci la data di nascita del bambino per sapere se hai l’allattamento.",
+    "fam_lactNo": "Niente allattamento: il bambino compie 9 mesi il {d}, prima del tuo rientro.",
+    "fam_lateA": "Un blocco finisce più di 12 mesi dopo la decisione. Solo 2 settimane si possono prendere fino agli 8 anni del bambino.",
+    "fam_blkNoteA": "Le settimane che non prendi di fila puoi distribuirle a settimane nei 12 mesi dopo la decisione. Ne restano {n} da pianificare.",
+    "fam_weeksA": "Settimane di fila dalla decisione",
+    "fam_child": "Data di nascita del bambino (per l’allattamento)",
+    "fam_resol": "Data della decisione di adozione (o prevista)",
+    "fam_rh_adopt": "Adozione, affidamento o tutela: il congedo conta dalla decisione (giudiziaria o amministrativa), non dalla nascita. Se è in corso, metti la data prevista.",
+    "fam_rh_other": "6 settimane di fila dalla nascita. Se la filiazione è riconosciuta dopo con sentenza, conta dalla sentenza definitiva.",
+    "fam_rh_mother": "Le prime 6 settimane si prendono di fila subito dopo il parto (puoi iniziare fino a 4 settimane prima).",
+    "fam_r_adopt": "Adottivo",
+    "fam_r_other": "Padre / altro genitore",
+    "fam_r_mother": "Madre",
+    "fam_roleT": "Chi sei",
+    "tc_meS": "Ferie, congedi, scadenze, colleghi e backup.",
+    "tc_me": "Io e la mia famiglia",
+    "tc_moneyS": "Controlla la busta paga, scopri come guadagnare di più e simula cambi.",
+    "tc_money": "I miei soldi",
+    "tc_flyS": "Mappa, scali, calendario e i tuoi limiti di ore e fatica.",
+    "tc_fly": "Voli e riposo",
+    "mt_vac": "Ferie",
+    "mt_of": "{a} su {b}",
+    "mt_used": "{p} % usato",
+    "mt_hours": "Ore di servizio",
+    "earn_note": "Conta ore, diarie e check-in presto dai tuoi roster con le tue impostazioni. Esclusi indennità di istruttore, vendite e giorni comprati. Un’indicazione, non una garanzia.",
+    "earn_t_month": "Il tuo mese migliore: {a}, {as} con {ad} giorni e {an} notti fuori. Il più debole: {b}, {bs} con {bd} giorni.",
+    "earn_t_buy": "Se l’azienda ti compra un giorno libero (OFF_BEZ) ricevi il 9 % in più della tua base.",
+    "earn_t_buyHad": "L’azienda ti ha comprato {n} giorni liberi ({s}). Accettarli conviene.",
+    "earn_t_sb": "Una riserva a casa rende circa {a}; un giorno di volo con diaria {b}. Se ti attivano, è pagato come volo.",
+    "earn_t_dh": "Un posizionamento con notte rende {v} con solo {h} h di servizio: tra i migliori all’ora.",
+    "earn_t_early": "Ogni check-in presto vale {v}. Quest’anno ne hai avuti {n} ({s}).",
+    "earn_t_tier": "La tariffa oraria sale con le ore del mese: da {a} a {b} all’ora. I mesi pieni pagano molto meglio ogni ora in più.",
+    "earn_t_night": "Una notte fuori paga {a} di diaria contro {b} di un andata e ritorno: {d} in più per lo stesso giorno. Chiedi rotazioni con pernottamento.",
+    "earn_h_top": "I tuoi 5 migliori giorni di volo",
+    "earn_h_months": "Mese per mese (variabile, senza istruttore)",
+    "earn_h_tips": "Dov’è il potenziale",
+    "earn_h_types": "Quanto rende ogni tipo di giorno (media)",
+    "earn_mLine": "{d} giorni di servizio · {n} notti fuori · {h} h · {p} al giorno",
+    "earn_perH": "{v} all’ora · {h} h in media",
+    "earn_c_gr": "Terra / corso in base",
+    "earn_c_od": "Altro con diaria di giorno",
+    "earn_c_on": "Altro con notte fuori",
+    "earn_c_sb": "Riserva a casa",
+    "earn_c_dd": "Posizionamento in giornata",
+    "earn_c_dn": "Posizionamento con notte",
+    "earn_c_f0": "Volo senza diaria",
+    "earn_c_fd": "Volo andata e ritorno",
+    "earn_c_fn": "Volo con notte fuori",
+    "earn_intro": "Quali giorni ti fanno guadagnare di più, dai tuoi roster dell’anno. Senza l’indennità di istruttore.",
+    "tool_earn": "Guadagnare di più",
     "qa_crew": "Equipaggio",
     "qa_rest": "Riposo",
     "close": "Chiudi",
@@ -6674,7 +7159,7 @@ var I18N = {
     "fam_wk": "{n} settimane",
     "fam_weeks": "Settimane di fila dal parto",
     "fam_birth": "Data di nascita (o prevista)",
-    "fam_intro": "Quanto prenderesti durante il congedo di nascita e fino a quando hai l’allattamento. Vale per la madre e per l’altro genitore.",
+    "fam_intro": "Quanto prenderesti durante il congedo per nascita o adozione e fino a quando hai l’allattamento. Per madre, padre o altro genitore e genitore adottivo.",
     "cmp_sum": "{b} giorni liberi entrambi · {s} in volo insieme · {a} libero solo tu · {o} libera solo l’altra persona.",
     "cmp_them": "Collega",
     "cmp_me": "Io",
@@ -7070,6 +7555,57 @@ var I18N = {
     "e_noPeriod": "Non trovo il periodo del turno. È l’«Individual duty plan» di IDP in PDF?"
   },
   pt: {
+    "fam_iA": "Adoção: 6 semanas seguidas desde a decisão e o resto por semanas nos 12 meses seguintes. Se adotares o filho do teu cônjuge, o Supremo espanhol reconhece a tua prestação mesmo que o outro progenitor já tenha recebido a sua e vivam juntos desde o nascimento (STS 997/2022).",
+    "fam_lactNoKid": "Põe a data de nascimento da criança para saber se tens amamentação.",
+    "fam_lactNo": "Sem amamentação: a criança faz 9 meses a {d}, antes de voltares.",
+    "fam_lateA": "Algum bloco termina mais de 12 meses após a decisão. Só 2 semanas se podem tirar até a criança fazer 8 anos.",
+    "fam_blkNoteA": "As semanas que não tiras seguidas podes repartir por semanas nos 12 meses após a decisão. Faltam {n} por planear.",
+    "fam_weeksA": "Semanas seguidas desde a decisão",
+    "fam_child": "Data de nascimento da criança (para a amamentação)",
+    "fam_resol": "Data da decisão de adoção (ou prevista)",
+    "fam_rh_adopt": "Adoção, guarda ou acolhimento: a licença conta desde a decisão (judicial ou administrativa), não desde o nascimento. Se estiver em curso, põe a data prevista.",
+    "fam_rh_other": "6 semanas seguidas desde o nascimento. Se a filiação for reconhecida depois por sentença, conta desde a sentença transitada.",
+    "fam_rh_mother": "As 6 primeiras semanas são seguidas logo após o parto (podes começar até 4 semanas antes).",
+    "fam_r_adopt": "Adotivo",
+    "fam_r_other": "Pai / outro progenitor",
+    "fam_r_mother": "Mãe",
+    "fam_roleT": "Quem és",
+    "tc_meS": "Férias, licenças, validades, colegas e cópia de segurança.",
+    "tc_me": "Eu e a família",
+    "tc_moneyS": "Revê o recibo, vê como ganhar mais e simula mudanças.",
+    "tc_money": "O meu dinheiro",
+    "tc_flyS": "Mapa, escalas, calendário e os teus limites de horas e fadiga.",
+    "tc_fly": "Voos e descanso",
+    "mt_vac": "Férias",
+    "mt_of": "{a} de {b}",
+    "mt_used": "{p} % usado",
+    "mt_hours": "Horas de serviço",
+    "earn_note": "Conta horas, ajudas e apresentações cedo das tuas escalas com as tuas definições. Sem suplemento de formador, vendas nem dias comprados. Uma orientação, não uma garantia.",
+    "earn_t_month": "O teu melhor mês: {a}, {as} com {ad} dias e {an} noites fora. O mais fraco: {b}, {bs} com {bd} dias.",
+    "earn_t_buy": "Se a empresa te comprar uma folga (OFF_BEZ) recebes mais 9 % da tua base.",
+    "earn_t_buyHad": "A empresa comprou-te {n} dias de folga ({s}). Aceitar compensa.",
+    "earn_t_sb": "Uma reserva em casa rende cerca de {a}; um dia de voo com ajuda {b}. Se te ativarem, é pago como voo.",
+    "earn_t_dh": "Um posicionamento com noite rende {v} com só {h} h de serviço: dos melhores por hora.",
+    "earn_t_early": "Cada apresentação cedo soma {v}. Este ano tiveste {n} ({s}).",
+    "earn_t_tier": "O valor da hora sobe com as horas do mês: de {a} a {b} por hora. Meses cheios pagam muito melhor cada hora extra.",
+    "earn_t_night": "Uma noite fora paga {a} de ajuda contra {b} de um ida e volta: {d} a mais pelo mesmo dia. Pede rotações com pernoita.",
+    "earn_h_top": "Os teus 5 melhores dias de voo",
+    "earn_h_months": "Mês a mês (variável, sem formador)",
+    "earn_h_tips": "Onde está o potencial",
+    "earn_h_types": "Quanto rende cada tipo de dia (média)",
+    "earn_mLine": "{d} dias de serviço · {n} noites fora · {h} h · {p} por dia",
+    "earn_perH": "{v} por hora · {h} h em média",
+    "earn_c_gr": "Terra / curso na base",
+    "earn_c_od": "Outros com ajuda de dia",
+    "earn_c_on": "Outros com noite fora",
+    "earn_c_sb": "Reserva em casa",
+    "earn_c_dd": "Posicionamento no dia",
+    "earn_c_dn": "Posicionamento com noite",
+    "earn_c_f0": "Voo sem ajudas de custo",
+    "earn_c_fd": "Voo ida e volta",
+    "earn_c_fn": "Voo com noite fora",
+    "earn_intro": "Que dias te rendem mais, a partir das tuas escalas do ano. Sem o suplemento de formador.",
+    "tool_earn": "Ganhar mais",
     "qa_crew": "Tripulação",
     "qa_rest": "Descanso",
     "close": "Fechar",
@@ -7383,7 +7919,7 @@ var I18N = {
     "fam_wk": "{n} semanas",
     "fam_weeks": "Semanas seguidas desde o parto",
     "fam_birth": "Data de nascimento (ou prevista)",
-    "fam_intro": "Quanto receberias durante a licença por nascimento e até quando tens amamentação. Serve para a mãe e para o outro progenitor.",
+    "fam_intro": "Quanto receberias durante a licença por nascimento ou adoção e até quando tens amamentação. Para mãe, pai ou outro progenitor e progenitor adotivo.",
     "cmp_sum": "{b} dias de folga os dois · {s} a voar juntos · {a} folga só tu · {o} folga só a outra pessoa.",
     "cmp_them": "Colega",
     "cmp_me": "Eu",
@@ -7779,6 +8315,57 @@ var I18N = {
     "e_noPeriod": "Não encontro o período da escala. É o «Individual duty plan» do IDP em PDF?"
   },
   ro: {
+    "fam_iA": "Adopție: 6 săptămâni continuu de la hotărâre, restul pe săptămâni în următoarele 12 luni. Dacă adopți copilul soțului, Curtea Supremă spaniolă îți recunoaște prestația chiar dacă celălalt părinte a primit-o deja și locuiți împreună de la naștere (STS 997/2022).",
+    "fam_lactNoKid": "Pune data nașterii copilului ca să vezi dacă ai alăptare.",
+    "fam_lactNo": "Fără alăptare: copilul împlinește 9 luni pe {d}, înainte să te întorci.",
+    "fam_lateA": "Un bloc se termină la peste 12 luni după hotărâre. Doar 2 săptămâni se pot lua până la 8 ani ai copilului.",
+    "fam_blkNoteA": "Săptămânile pe care nu le iei continuu le poți împărți pe săptămâni în cele 12 luni de după hotărâre. Mai ai {n} de planificat.",
+    "fam_weeksA": "Săptămâni continue de la hotărâre",
+    "fam_child": "Data nașterii copilului (pentru alăptare)",
+    "fam_resol": "Data hotărârii de adopție (sau estimată)",
+    "fam_rh_adopt": "Adopție, custodie sau plasament: concediul se numără de la hotărâre (judecătorească sau administrativă), nu de la naștere. Dacă e în curs, pune data estimată.",
+    "fam_rh_other": "6 săptămâni continuu de la naștere. Dacă filiația e recunoscută ulterior prin sentință, se numără de la sentința definitivă.",
+    "fam_rh_mother": "Primele 6 săptămâni se iau continuu imediat după naștere (poți începe cu până la 4 săptămâni înainte).",
+    "fam_r_adopt": "Adoptiv",
+    "fam_r_other": "Tată / alt părinte",
+    "fam_r_mother": "Mamă",
+    "fam_roleT": "Cine ești",
+    "tc_meS": "Concediu, permisiuni, expirări, colegi și copie de siguranță.",
+    "tc_me": "Eu și familia",
+    "tc_moneyS": "Verifică fluturașul, vezi cum câștigi mai mult și simulează schimbări.",
+    "tc_money": "Banii mei",
+    "tc_flyS": "Hartă, escale, calendar și limitele tale de ore și oboseală.",
+    "tc_fly": "Zboruri și odihnă",
+    "mt_vac": "Concediu",
+    "mt_of": "{a} din {b}",
+    "mt_used": "{p} % folosit",
+    "mt_hours": "Ore de serviciu",
+    "earn_note": "Numără ore, diurne și check-in-uri devreme din rosterele tale cu setările tale. Fără spor de instructor, vânzări sau zile cumpărate. O orientare, nu o garanție.",
+    "earn_t_month": "Cea mai bună lună: {a}, {as} cu {ad} zile și {an} nopți afară. Cea mai slabă: {b}, {bs} cu {bd} zile.",
+    "earn_t_buy": "Dacă firma îți cumpără o zi liberă (OFF_BEZ) primești 9 % în plus din bază.",
+    "earn_t_buyHad": "Compania ți-a cumpărat {n} zile libere ({s}). Merită să accepți.",
+    "earn_t_sb": "Rezerva acasă aduce cam {a}; o zi de zbor cu diurnă {b}. Dacă ești activat, se plătește ca zbor.",
+    "earn_t_dh": "O poziționare cu noapte aduce {v} pentru doar {h} h de serviciu: printre cele mai bune pe oră.",
+    "earn_t_early": "Fiecare check-in devreme aduce {v}. Anul acesta ai avut {n} ({s}).",
+    "earn_t_tier": "Tariful orar crește cu orele lunii: ai avut de la {a} la {b} pe oră. Lunile pline plătesc mult mai bine fiecare oră în plus.",
+    "earn_t_night": "O noapte afară plătește {a} diurnă față de {b} la dus-întors: {d} în plus pentru aceeași zi. Cere rotații cu înnoptare.",
+    "earn_h_top": "Cele mai bune 5 zile de zbor",
+    "earn_h_months": "Lună de lună (variabil, fără instructor)",
+    "earn_h_tips": "Unde e potențialul",
+    "earn_h_types": "Cât aduce fiecare tip de zi (medie)",
+    "earn_mLine": "{d} zile de serviciu · {n} nopți afară · {h} h · {p} pe zi",
+    "earn_perH": "{v} pe oră · {h} h în medie",
+    "earn_c_gr": "Sol / curs la bază",
+    "earn_c_od": "Altele cu diurnă de zi",
+    "earn_c_on": "Altele cu noapte afară",
+    "earn_c_sb": "Rezervă acasă",
+    "earn_c_dd": "Poziționare în aceeași zi",
+    "earn_c_dn": "Poziționare cu noapte",
+    "earn_c_f0": "Zbor fără diurnă",
+    "earn_c_fd": "Zbor dus-întors",
+    "earn_c_fn": "Zbor cu noapte afară",
+    "earn_intro": "Ce zile îți aduc cei mai mulți bani, din rosterele tale de anul acesta. Fără sporul de instructor.",
+    "tool_earn": "Câștigă mai mult",
     "qa_crew": "Echipaj",
     "qa_rest": "Odihnă",
     "close": "Închide",
@@ -8092,7 +8679,7 @@ var I18N = {
     "fam_wk": "{n} săptămâni",
     "fam_weeks": "Săptămâni la rând de la naștere",
     "fam_birth": "Data nașterii (sau estimată)",
-    "fam_intro": "Cât ai primi în concediul de naștere și până când ai alăptare. Pentru mamă și pentru celălalt părinte.",
+    "fam_intro": "Cât ai primi în concediul pentru naștere sau adopție și până când ai alăptare. Pentru mamă, tată sau alt părinte și părinte adoptiv.",
     "cmp_sum": "{b} zile libere amândoi · {s} zburând împreună · {a} liber doar tu · {o} liberă doar cealaltă persoană.",
     "cmp_them": "Coleg",
     "cmp_me": "Eu",
@@ -10797,13 +11384,15 @@ var qrcode = function() {
 // ---- Payroster tools: payslip check, what-if, calendar, FTL, days off, year summary, backup ----
 // Shares the page's globals (state, t, eur, n2, hhmm, PR, monthName, key, prevKey, save, render…).
 
-const TOOLS = ['map','lay','check','sim','cal','ftl','fat','vac','lic','sales','year','wrap','cmp','fam','backup'];
+const TOOLS = ['map','lay','check','sim','earn','cal','ftl','fat','vac','lic','sales','year','wrap','cmp','fam','backup'];
 let toolOpen = null, simDate = null;
+const TOOL_CATS = [['fly', ['map','lay','cal','ftl','fat']], ['money', ['check','earn','sim','year','sales','wrap']], ['me', ['vac','fam','lic','cmp','backup']]];
 
 const TOOL_ICON = {
   map:'<path d="M9 4 3.5 6v14L9 18l6 2 5.5-2V4L15 6 9 4z"/><path d="M9 4v14M15 6v14"/>',
   lay:'<rect x="4" y="7.5" width="16" height="12" rx="2.5"/><path d="M9 7.5V5.5a1.5 1.5 0 0 1 1.5-1.5h3A1.5 1.5 0 0 1 15 5.5v2M4 12.5h16M10.5 12.5v1.5h3v-1.5"/>',
   check:'<path d="M7 3.5h8l3.5 3.5v13.5h-11.5z"/><path d="M14.5 3.5V7h4"/><path d="m9.5 13.5 2 2 4-4.5"/>',
+  earn:'<circle cx="12" cy="12" r="8.5"/><path d="M15 9.2a3.6 3.6 0 1 0 0 5.6M7.5 11h5M7.5 13.2h5"/>',
   sim:'<path d="M4 18 9.5 12l3.5 3.5L20 8"/><path d="M15 8h5v5"/>',
   cal:'<rect x="3.5" y="5" width="17" height="15" rx="2.5"/><path d="M3.5 10h17M8 3v4M16 3v4"/><path d="M12 13v4M10 15h4"/>',
   ftl:'<circle cx="12" cy="13" r="7.5"/><path d="M12 9v4l2.5 2.5M9.5 2.5h5"/>',
@@ -10819,7 +11408,11 @@ const TOOL_ICON = {
 };
 function renderToolbar(){
   const bar = $('toolbar'); if(!bar) return;
-  bar.innerHTML = TOOLS.map(k => `<button class="tile${toolOpen===k?' on':''}" type="button" data-tool="${k}"><svg viewBox="0 0 24 24">${TOOL_ICON[k]||''}</svg>${t('tool_'+k)}</button>`).join('');
+  const tile = k => `<button class="tile${toolOpen===k?' on':''}" type="button" data-tool="${k}"><svg viewBox="0 0 24 24">${TOOL_ICON[k]||''}</svg>${t('tool_'+k)}</button>`;
+  const seen = new Set(TOOL_CATS.flatMap(c => c[1]));
+  const cats = TOOL_CATS.map(c => [c[0], c[1].filter(k => TOOLS.includes(k))]);
+  const rest = TOOLS.filter(k => !seen.has(k)); if(rest.length) cats[cats.length-1][1].push(...rest);
+  bar.innerHTML = cats.filter(c => c[1].length).map(([c, ks]) => `<div class="tcat"><h3>${t('tc_'+c)}</h3><p>${t('tc_'+c+'S')}</p><div class="toolgrid">${ks.map(tile).join('')}</div></div>`).join('');
 }
 function setTab(tab){
   document.body.dataset.tab = tab;
@@ -10848,7 +11441,7 @@ function closeTool(){
 }
 window.addEventListener('popstate', () => { if(toolOpen) closeTool(); });
 function refreshTool(){ if(toolOpen) TOOL_FN()[toolOpen](); }
-const TOOL_FN = () => ({check:renderCheck, sim:renderSim, cal:renderCal, ftl:renderFtl, vac:renderVac, year:renderYear, wrap:renderWrap, map:renderMap, lay:renderLay, lic:renderLic, fat:renderFat, sales:renderSales, cmp:renderCmp, fam:renderFam, backup:renderBackup});
+const TOOL_FN = () => ({check:renderCheck, sim:renderSim, earn:renderEarn, cal:renderCal, ftl:renderFtl, vac:renderVac, year:renderYear, wrap:renderWrap, map:renderMap, lay:renderLay, lic:renderLic, fat:renderFat, sales:renderSales, cmp:renderCmp, fam:renderFam, backup:renderBackup});
 const pnl = html => { $('toolPanel').innerHTML = html; };
 const hdr = (k, sub) => `<div class="eyebrow">${t('tool_'+k)}</div>${sub?`<p class="note" style="margin:6px 0 12px">${sub}</p>`:''}`;
 const fmtH = h => hhmm(Math.max(0,h||0));
@@ -11172,7 +11765,8 @@ function renderVac(){
   const perTxt = per.map(p=>{ const n = Math.round((Date.parse(p.b)-Date.parse(p.a))/864e5)+1;
     return `<span class="chip c-vac">${p.a===p.b ? dshort(p.a) : dshort(p.a)+' – '+dshort(p.b)} <b>${n}</b></span>`; }).join('');
   pnl(hdr('vac', t('vac_intro',{y:year})) +
-    `<p class="msg${over>0?' err':''}">${t('vac_sum',{u:tot.vac,e:have,l:Math.max(0,have-tot.vac)})}${over>0?' '+t('vac_over',{x:over,e:have}):''}${ent.known?'':' '+t('vac_noJoined')}</p>
+    `<div class="mg" style="margin-bottom:12px">${meterRow({t:t('mt_vac'), v:t('mt_of', {a:tot.vac, b:have}), p:have ? tot.vac/have*100 : 0, tone:over>0?'over':'ok',
+      s:t('vac_sum',{u:tot.vac,e:have,l:Math.max(0,have-tot.vac)})+(over>0?' '+t('vac_over',{x:over,e:have}):'')+(ent.known?'':' '+t('vac_noJoined'))})}</div>
     <label class="note salesm" style="margin:0 0 10px"><span>${t('vac_carry',{y:year-1,e:ent.days})}</span><input type="text" inputmode="numeric" id="vac-carry" data-y="${year}" value="${carry||''}" placeholder="0"></label>
     ${per.length ? `<div class="mrow"><div class="mh">${t('vac_periods')}</div><div class="chips">${perTxt}</div></div>` : ''}
     ${sickDays.length ? `<div class="mrow"><div class="mh">${t('vac_sickT', {n: sickDays.length})}</div><div class="chips">${sickTxt}</div><p class="note" style="margin:6px 0 0">${t('vac_sickNote')}</p></div>` : ''}
@@ -11587,18 +12181,22 @@ function famLeaveDays(f){
 }
 function renderFam(){
   const f = state.fam = state.fam || {};
+  const role = f.role || 'other', ad = role === 'adopt';
   const birth = f.birth || '', weeks = Math.min(17, Math.max(6, +f.weeks || 17));
   f.blocks = (f.blocks||[]).filter(b => b && b.w > 0);
   const used = weeks + f.blocks.reduce((a, b) => a + (+b.w||0), 0), left = Math.max(0, 17 - used);
   const blkRows = f.blocks.map((bl, i) => `<div class="fam-blk"><label>${t('fam_blkStart')}<input type="date" data-famblk="${i}" data-f="s" value="${esc(bl.s||'')}"></label>
       <label>${t('fam_blkW')}<select data-famblk="${i}" data-f="w">${[...Array(Math.max(+bl.w||1, (+bl.w||0) + left))].map((_, j) => j+1).map(w => `<option value="${w}"${w===+bl.w?' selected':''}>${t('fam_wk',{n:w})}</option>`).join('')}</select></label>
       <button class="btn ghost" type="button" data-famdel="${i}">✕</button></div>`).join('');
-  const form = `<div class="form" style="margin-top:0">
-      <label>${t('fam_birth')}<input type="date" id="fam-birth" value="${esc(birth)}"></label>
-      <label>${t('fam_weeks')}<select id="fam-weeks">${[6,7,8,9,10,11,12,13,14,15,16,17].filter(w => w <= 17 - (used - weeks)).map(w => `<option value="${w}"${w===weeks?' selected':''}>${t('fam_wk',{n:w})}</option>`).join('')}</select></label>
+  const form = `<div class="seg famrole" role="group" aria-label="${t('fam_roleT')}">${['mother','other','adopt'].map(r => `<button type="button" data-famrole="${r}" class="${r === role ? 'on' : ''}" aria-pressed="${r === role}">${t('fam_r_'+r)}</button>`).join('')}</div>
+    <p class="note" style="margin:6px 0 10px">${t('fam_rh_'+role)}</p>
+    <div class="form" style="margin-top:0">
+      <label>${t(ad ? 'fam_resol' : 'fam_birth')}<input type="date" id="fam-birth" value="${esc(birth)}"></label>
+      ${ad ? `<label>${t('fam_child')}<input type="date" id="fam-child" value="${esc(f.child||'')}"></label>` : ''}
+      <label>${t(ad ? 'fam_weeksA' : 'fam_weeks')}<select id="fam-weeks">${[6,7,8,9,10,11,12,13,14,15,16,17].filter(w => w <= 17 - (used - weeks)).map(w => `<option value="${w}"${w===weeks?' selected':''}>${t('fam_wk',{n:w})}</option>`).join('')}</select></label>
       <label>${t('fam_base')}<input type="text" inputmode="decimal" id="fam-base" value="${f.base ? f.base : ''}" placeholder="auto"></label>
     </div>
-    ${birth ? `<h3 class="wh">${t('fam_blkT')}</h3><p class="note" style="margin-top:0">${t('fam_blkNote', {n: left})}</p>${blkRows}
+    ${birth ? `<h3 class="wh">${t('fam_blkT')}</h3><p class="note" style="margin-top:0">${t(ad ? 'fam_blkNoteA' : 'fam_blkNote', {n: left})}</p>${blkRows}
       ${left > 0 ? `<button class="btn ghost" id="fam-add" type="button">＋ ${t('fam_blkAdd')}</button>` : ''}` : ''}
     <div style="margin-top:10px"><button class="btn" id="fam-save" type="button">${t('fam_calc')}</button></div>`;
   if(!birth){ pnl(hdr('fam', t('fam_intro')) + form + famInfo()); return; }
@@ -11624,7 +12222,7 @@ function renderFam(){
     for(let i = 0, y = by[0], m = by[1]; i < 12; i++, [y, m] = nextYM(y, m)){ const N = monthNormal(y, m); if(N.src !== 'avg') list.push({ y, m, v: N.v }); }
     list.sort((a, b) => a.v - b.v).slice(0, 3).forEach(x => cheap.push(nm(x.y, x.m, {month:'long'})));
   }
-  const d9 = new Date(Date.parse(birth+'T12:00')); d9.setMonth(d9.getMonth() + 9);
+  const kid = ad ? f.child : birth, d9 = new Date(Date.parse((kid || birth)+'T12:00')); d9.setMonth(d9.getMonth() + 9);
   const back = new Date(Date.parse(lastDay+'T12:00') + 864e5);
   let wd = 0; for(let x = back.getTime(); x < d9.getTime(); x += 864e5){ const g = new Date(x).getDay(); if(g && g < 6) wd++; }
   const lact = Math.round(wd / 8);
@@ -11635,15 +12233,15 @@ function renderFam(){
     <div class="tablewrap"><table class="slip famt"><tr class="sec"><td>${t('fam_month')}</td><td>${t('fam_days')}</td><td>INSS</td><td>Eurowings</td><td>${t('fam_total')}</td></tr>${rows.join('')}</table></div>
     ${totN ? `<p class="note">${t('fam_vs', {n: eur.format(totN / Math.max(1, rows.length)), t: eur.format(tot), d: (tot-totN>=0?'+':'') + eur.format(tot - totN)})} ${anyLy ? t('fam_seasonal') : ''}</p>` : `<p class="note">${t('fam_noNormal')}</p>`}
     ${cheap.length ? `<p class="msg">💡 ${t('fam_cheap', {m: cheap.join(', ')})}</p>` : ''}
-    ${late ? `<p class="msg err">${t('fam_late')}</p>` : ''}
+    ${late ? `<p class="msg err">${t(ad ? 'fam_lateA' : 'fam_late')}</p>` : ''}
     ${left > 0 ? `<p class="note">${t('fam_rest', {n: left, d: new Date(Date.parse(birth+'T12:00') + 365*864e5).toLocaleDateString(LOC)})}</p>` : ''}
     <h3 class="wh">${t('fam_lactT')}</h3>
-    <p class="note">${t('fam_lact', {d: d9.toLocaleDateString(LOC), b: back.toLocaleDateString(LOC), n: lact})}</p>
+    <p class="note">${ad && !kid ? t('fam_lactNoKid') : back >= d9 ? t('fam_lactNo', {d: d9.toLocaleDateString(LOC)}) : t('fam_lact', {d: d9.toLocaleDateString(LOC), b: back.toLocaleDateString(LOC), n: lact})}</p>
     ${famInfo()}`);
 }
 function famInfo(){
   return `<h3 class="wh">${t('fam_infoT')}</h3><ul class="note famul">
-    <li>${t('fam_i1')}</li><li>${t('fam_i2')}</li><li>${t('fam_i3')}</li><li>${t('fam_i4')}</li><li>${t('fam_i5')}</li></ul>
+    <li>${t('fam_i1')}</li><li>${t('fam_i2')}</li><li>${t('fam_i3')}</li><li>${t('fam_i4')}</li><li>${t('fam_i5')}</li>${(state.fam||{}).role === 'adopt' ? `<li>${t('fam_iA')}</li>` : ''}</ul>
     <p class="note">${t('fam_disc')}</p>`;
 }
 
@@ -11657,13 +12255,15 @@ document.addEventListener('change', e => {
 document.addEventListener('click', e => {
   const id = e.target.id;
   if(id === 'chg-x'){ delete (state.changes||{})[e.target.dataset.k]; save(); renderChanges(null); return; }
+  const fr = e.target.closest('[data-famrole]'); if(fr){ const f = state.fam = state.fam || {}; famRead(f);
+    if($('fam-birth')) f.birth = $('fam-birth').value || f.birth || ''; f.role = fr.dataset.famrole; save(); renderFam(); return; }
   if(id === 'fam-add'){ const f = state.fam = state.fam || {}; famRead(f);
     const last = famLeaveDays(f), ls = [...last].sort().pop() || f.birth; const d = new Date(Date.parse(ls+'T12:00') + 864e5);
     (f.blocks = f.blocks || []).push({ s: d.toISOString().slice(0,10), w: 1 }); save(); renderFam(); return; }
   const fd = e.target.closest('[data-famdel]'); if(fd){ const f = state.fam; famRead(f); f.blocks.splice(+fd.dataset.famdel, 1); save(); renderFam(); return; }
   if(id === 'fam-save'){
     const f = state.fam = state.fam || {}; famRead(f);
-    f.birth = $('fam-birth').value || ''; f.weeks = +$('fam-weeks').value || 17;
+    f.birth = $('fam-birth').value || ''; if($('fam-child')) f.child = $('fam-child').value || ''; f.weeks = +$('fam-weeks').value || 17;
     const b = String($('fam-base').value).trim(); f.base = b ? (parseFloat(/,/.test(b) ? b.replace(/\./g,'').replace(',','.') : b) || null) : null;
     save(); renderFam(); return;
   }
@@ -12417,9 +13017,9 @@ function renderLicTable(){
   const L = licList().filter(x => !x.del && x.exp).sort((a,b) => a.exp.localeCompare(b.exp));
   const dl = iso => new Date(iso+'T12:00').toLocaleDateString(LOC, {day:'numeric', month:'short', year:'numeric'});
   el.innerHTML = `<div class="h2row"><h2 style="margin:0">${t('lic_tableT')}</h2><button class="btn ghost" type="button" data-tool="lic" style="font-size:13px">${t('lic_edit')}</button></div>
-    ${L.length ? `<div class="tablewrap"><table class="slip lictab"><tr class="sec"><td>${t('lic_colName')}</td><td>${t('lic_colExp')}</td></tr>
-    ${L.map(x => { const d = licDays(x.exp), cls = d < 0 || d <= 30 ? 'bad' : d <= 60 ? 'meh' : '';
-      return `<tr class="${cls}"><td>${esc(licName(x))}${x.rcode ? ` <span class="note mono">${esc(x.rcode)}</span>` : ''}</td><td style="white-space:nowrap">${dl(x.exp)}<div class="note" style="font-family:var(--f-body)">${d < 0 ? t('lic_expired') : d > 365 ? t('lic_years', {n: (d/365).toFixed(1).replace('.', LOC.startsWith('en') ? '.' : ',')}) : t('lic_inDays', {n: d})}</div></td></tr>`; }).join('')}</table></div>`
+    ${L.length ? `<div class="mg">${L.map(x => { const d = licDays(x.exp), tone = d <= 30 ? 'over' : d <= 60 ? 'warn' : 'ok';
+      const left = d < 0 ? t('lic_expired') : d > 365 ? t('lic_years', {n: (d/365).toFixed(1).replace('.', LOC.startsWith('en') ? '.' : ',')}) : t('lic_inDays', {n: d});
+      return meterRow({t: esc(licName(x)), v: left, p: Math.max(0, Math.min(100, d/365*100)), tone, s: dl(x.exp) + (x.rcode ? ` · <span class="mono">${esc(x.rcode)}</span>` : '')}); }).join('')}</div>`
     : `<p class="note">${t('lic_tableEmpty')}</p>`}`;
 }
 function renderLic(){
@@ -12928,13 +13528,19 @@ function ftlNow(){
     for(let i = 1; i <= 28; i++){ const e = add(today, i); if(!map[e]) break; const v = win(e, d.n, d.f); if(v > worst.sum) worst = { sum: v, end: e }; }
     return { ...d, now: win(today, d.n, d.f), worst }; });
 }
+// one meter tile row: title, value on the right, a bar, a plain line under it
+function meterRow(o){
+  const p = Math.max(0, Math.min(100, o.p||0));
+  return `<div class="mr ${o.tone||''}"><div class="mh"><span class="mt">${o.t}</span><span class="mv">${o.v}</span></div>
+    ${o.p != null ? `<div class="mbar"><i style="width:${Math.max(p, p ? 2 : 0)}%"></i></div>` : ''}${o.s ? `<div class="ms">${o.s}</div>` : ''}</div>`;
+}
+const meterTone = p => p >= 100 ? 'over' : p >= 90 ? 'warn' : '';
 function ftlNowHtml(){
   let L; try{ L = ftlNow(); }catch(e){ return ''; }
   const dd = iso => new Date(iso+'T12:00').toLocaleDateString(LOC, {day:'numeric', month:'short'});
-  return `<h3 class="wh">${t('ftl_nowT')}</h3><div class="ftl">${L.map(i => { const p = Math.min(100, i.now/i.lim*100), cls = p >= 100 ? 'over' : p >= 90 ? 'warn' : '';
-    return `<div class="fr"><div class="fl"><span>${t(i.k)}</span><span class="mono">${fmtH(i.now)} / ${i.lim} h</span></div>
-      <div class="gtrack"><div class="gseg" style="width:${p}%;background:${cls==='over'?'var(--warn)':cls==='warn'?'var(--k-train)':'var(--accent)'}"></div></div>
-      <div class="note">${t('ftl_left', {h: fmtH(Math.max(0, i.lim - i.now))})}${i.worst.end !== todayISO() && i.worst.sum > i.now ? ' · ' + t('ftl_peak', {h: fmtH(i.worst.sum), d: dd(i.worst.end)}) : ''}</div></div>`; }).join('')}</div>`;
+  return `<div class="mgT">${t('ftl_nowT')}</div><div class="mg">${L.map(i => { const p = i.now/i.lim*100;
+    return meterRow({t:t(i.k), v:t('mt_used', {p:Math.round(p)}), p, tone:meterTone(p),
+      s:`${fmtH(i.now)} / ${i.lim} h · ${t('ftl_left', {h: fmtH(Math.max(0, i.lim - i.now))})}${i.worst.end !== todayISO() && i.worst.sum > i.now ? ' · ' + t('ftl_peak', {h: fmtH(i.worst.sum), d: dd(i.worst.end)}) : ''}`}); }).join('')}</div>`;
 }
 function ftlAlertHtml(){
   let L; try{ L = ftlNow(); }catch(e){ return ''; }
@@ -13264,11 +13870,76 @@ document.addEventListener('click', e => {
   if(pk && !pk.hidden && !e.target.closest('#mPick') && !e.target.closest('#mLabel')) pk.hidden = true;
 });
 
+// ================= earn more: which duties pay best (own rosters, trainer pay left out) =================
+function earnData(year){
+  const cats = {}, months = [], days = [];
+  const add = (k, d, tot) => { const c = cats[k] = cats[k] || {k, n:0, tot:0, H:0}; c.n++; c.tot += tot; c.H += d.H||0; };
+  let earlyN = 0, earlySum = 0, buyN = 0, buySum = 0, rMin = Infinity, rMax = 0, nightD = 0, dayD = 0;
+  for(const key of Object.keys(state.months).sort()){
+    const ro = state.months[key]; if(ro.year !== year) continue;
+    const c = PR.compute(ro, state.settings, state.extras);
+    let duty = 0, sum = 0, nights = 0;
+    for(const d of c.days){
+      if(d.extraFix > 0){ buyN++; buySum += d.extraFix; }
+      if(d.kind === 'off' || d.kind === 'empty' || d.absence) continue;
+      const tot = (d.hourPay||0) + (d.dieta||0) + (d.early||0);   // no trainer pay, no bought day, no sales
+      duty++; sum += tot;
+      if(d.early > 0){ earlyN++; earlySum += d.early; }
+      if(d.hourRate > 0){ rMin = Math.min(rMin, d.hourRate); rMax = Math.max(rMax, d.hourRate); }
+      const night = /Night/.test(d.dietaType||''), away = !!d.dietaType;
+      if(night){ nights++; nightD = Math.max(nightD, d.dieta||0); } else if(away) dayD = Math.max(dayD, d.dieta||0);
+      let k;
+      if(d.kind === 'flight') k = night ? 'fn' : away ? 'fd' : 'f0';
+      else if(d.kind === 'deadhead') k = night ? 'dn' : 'dd';
+      else if(d.kind === 'standby' || d.kind === 'reserve') k = away ? 'on' : 'sb';
+      else k = night ? 'on' : away ? 'od' : 'gr';
+      add(k, d, tot);
+      if(d.kind === 'flight') days.push({date:d.date, route:d.route||d.label||'', tot, H:d.H||0});
+    }
+    if(duty) months.push({y:ro.year, m:ro.month, duty, sum, nights, T:c.T||0, per:sum/duty});
+  }
+  return {cats:Object.values(cats).map(c => ({...c, avg:c.tot/c.n, ph:c.H ? c.tot/c.H : 0})).sort((a,b) => b.avg-a.avg),
+    months, days:days.sort((a,b) => b.tot-a.tot), earlyN, earlySum, buyN, buySum, rMin:isFinite(rMin)?rMin:0, rMax, nightD, dayD};
+}
+function renderEarn(){
+  const years = [...new Set(Object.values(state.months).map(r => r.year))].sort();
+  const cur = state.months[state.current];
+  const el = document.getElementById('earn-y');
+  const year = +(el && el.value) || (cur ? cur.year : years[years.length-1]);
+  if(!year){ pnl(hdr('earn') + `<p class="msg">${t('startText')}</p>`); return; }
+  const D = earnData(year);
+  if(!D.cats.length){ pnl(hdr('earn') + `<p class="msg">${t('startText')}</p>`); return; }
+  const mx = Math.max(...D.cats.map(c => c.avg), 1);
+  const catRows = D.cats.map(c => meterRow({t:t('earn_c_'+c.k), v:eur.format(c.avg), p:c.avg/mx*100, tone:c.avg/mx > .75 ? 'ok' : '',
+    s:t('earn_perH', {v:eur.format(c.ph), h:fmtH(c.H/c.n)}) + ' · × ' + c.n})).join('');
+  const ms = D.months, best = ms.reduce((a,b) => b.sum > a.sum ? b : a), low = ms.reduce((a,b) => b.sum < a.sum ? b : a);
+  const mmx = best.sum || 1;
+  const mRows = ms.map(r => meterRow({t:nm(r.y, r.m, {month:'long'}) + (r === best ? ' ⭐' : ''), v:eur.format(r.sum), p:r.sum/mmx*100, tone:r === best ? 'ok' : '',
+    s:t('earn_mLine', {d:r.duty, n:r.nights, h:fmtH(r.T), p:eur.format(r.per)})})).join('');
+  const fn = D.cats.find(c => c.k === 'fn'), fd = D.cats.find(c => c.k === 'fd'), sb = D.cats.find(c => c.k === 'sb'), dn = D.cats.find(c => c.k === 'dn');
+  const tips = [];
+  if(D.nightD && D.dayD) tips.push(t('earn_t_night', {a:eur.format(D.nightD), b:eur.format(D.dayD), d:eur.format(D.nightD - D.dayD)}));
+  if(D.rMax > D.rMin * 1.2) tips.push(t('earn_t_tier', {a:eur.format(D.rMin), b:eur.format(D.rMax)}));
+  if(D.earlyN) tips.push(t('earn_t_early', {v:eur.format(+state.settings.earlyCheckin || 30), n:D.earlyN, s:eur.format(D.earlySum)}));
+  if(dn) tips.push(t('earn_t_dh', {v:eur.format(dn.avg), h:fmtH(dn.H/dn.n)}));
+  if(sb && (fd || fn)) tips.push(t('earn_t_sb', {a:eur.format(sb.avg), b:eur.format((fd || fn).avg)}));
+  tips.push(D.buyN ? t('earn_t_buyHad', {n:D.buyN, s:eur.format(D.buySum)}) : t('earn_t_buy'));
+  if(ms.length > 1 && best !== low) tips.push(t('earn_t_month', {a:nm(best.y, best.m, {month:'long'}), as:eur.format(best.sum), ad:best.duty, an:best.nights, b:nm(low.y, low.m, {month:'long'}), bs:eur.format(low.sum), bd:low.duty}));
+  const top = D.days.slice(0, 5).map(d => `<div class="mrow"><div class="mh"><span>${d.route} <span class="note">${new Date(d.date+'T12:00:00').toLocaleDateString(LOC, {day:'numeric', month:'short'})} · ${fmtH(d.H)}</span></span><b class="num">${eur.format(d.tot)}</b></div></div>`).join('');
+  pnl(hdr('earn', t('earn_intro')) + `<label class="note">${t('yr_year')} <select id="earn-y">${years.map(y => `<option${y === year ? ' selected' : ''}>${y}</option>`).join('')}</select></label>
+    <div class="mgT">${t('earn_h_types')}</div><div class="mg">${catRows}</div>
+    <h3 class="wh">${t('earn_h_tips')}</h3><ul class="etips">${tips.map(x => `<li>${x}</li>`).join('')}</ul>
+    <div class="mgT">${t('earn_h_months')}</div><div class="mg">${mRows}</div>
+    <h3 class="wh">${t('earn_h_top')}</h3><div class="mlist">${top}</div>
+    <p class="note">${t('earn_note')}</p>`);
+}
+document.addEventListener('change', e => { if(e.target && e.target.id === 'earn-y') renderEarn(); });
+
 </script>
 <script>
 const SEED = null;
 const SEED_SETTINGS = null;
-const APP_VERSION = '2026.11.12-1147';
+const APP_VERSION = '2026.11.12-2153';
 const IS_PWA_BUILD = true;
 const LS = 'payroster.v1';
 const KC = { sick:'--warn', flight:'--k-flight', deadhead:'--k-dh', training:'--k-train', standby:'--k-sby', reserve:'--k-sby', ground:'--k-ground', off:'--k-off', empty:'--k-off', other:'--k-ground' };
@@ -13524,7 +14195,7 @@ function render(){
 function renderHero(c, ro){
   const [L1,L2] = c.rates.limits;
   const max = Math.max(L2+20, Math.ceil((c.T+10)/10)*10);
-  const seg = (lo,hi,color) => { const w = Math.max(0, Math.min(c.T,hi)-lo)/max*100; return w>0?`<div class="gseg" style="width:${w}%;background:${color}"></div>`:''; };
+  const seg = (lo,hi,color) => { const w = Math.max(0, Math.min(c.T,hi)-lo)/max*100; return w>0?`<i style="width:${w}%;background:${color}"></i>`:''; };
   const tierNow = c.T>L2?3:c.T>L1?2:1;
   const nextMsg = tierNow===1 ? t('tier1Msg',{h:hhmm(L1-c.T)}) : tierNow===2 ? t('tier2Msg',{h:hhmm(L2-c.T)}) : t('tier3Msg');
   const dc = c.dietaCounts;
@@ -13562,11 +14233,13 @@ function renderHero(c, ro){
       ${c.sales?`<dt>${t('sales')} ${c.salesFromDays?'':t('estimated')}</dt><dd>${eur.format(c.sales)}</dd>`:''}
       ${c.topUp?`<dt>${t('minGuar')}</dt><dd>+${eur.format(c.topUp)}</dd>`:''}
     </dl>
-    <div class="gauge" aria-label="${t('gaugeAria')}">
-      <div class="gtrack">${seg(0,L1,'var(--accent)')}${seg(L1,L2,'var(--pay)')}${seg(L2,Infinity,'var(--warn)')}</div>
+    <div class="mg" style="margin-top:14px" aria-label="${t('gaugeAria')}"><div class="mr">
+      <div class="mh"><span class="mt">${t('mt_hours')}</span><span class="mv">${hhmm(c.T)} h</span></div>
+      <div class="mbar seg">${seg(0,L1,'var(--accent)')}${seg(L1,L2,'var(--pay)')}${seg(L2,Infinity,'var(--warn)')}</div>
       <div class="gscale"><span style="left:0;transform:none">0</span><span style="left:${L1/max*100}%">${L1} h</span><span style="left:${L2/max*100}%">${L2} h</span></div>
-      <div class="gnote">${nextMsg}</div>
-      <div class="gnote mono">FDP ${hhmm(c.TF)} · ${t('addDuty')} ${hhmm(c.TA)} · Block ${hhmm(c.blockHours)} · ${Math.round(c.r*100)} % FDP</div>
+      <div class="ms" style="margin-top:4px">${nextMsg}</div>
+      <div class="ms mono">FDP ${hhmm(c.TF)} · ${t('addDuty')} ${hhmm(c.TA)} · Block ${hhmm(c.blockHours)} · ${Math.round(c.r*100)} % FDP</div>
+    </div></div>
     </div>
   </div>
   <div class="panel">
