@@ -572,6 +572,11 @@ html.glass[data-theme="dark"] .tabbar .tb button{background:rgba(255,255,255,.08
 /* the bar sits low, like the system tab bar */
 .tabbar,html.glass .tabbar{bottom:calc(env(safe-area-inset-bottom, 0px) * .45 + 6px)}
 html.glass .wrap,.wrap{padding-bottom:calc(84px + env(safe-area-inset-bottom, 0px) * .5)}
+
+/* short pages (Tools) must still fill the whole screen, or iOS lifts the fixed bottom bar */
+html{min-height:100%}
+body{min-height:100vh;min-height:100lvh}
+html.glass::before{bottom:auto;height:100vh;height:100lvh}
 </style>
 
 </head>
@@ -12926,7 +12931,7 @@ document.addEventListener('change', e => { if(e.target.id === 'ui-nick'){ state.
 <script>
 const SEED = null;
 const SEED_SETTINGS = null;
-const APP_VERSION = '2026.11.12-0507';
+const APP_VERSION = '2026.11.12-0512';
 const IS_PWA_BUILD = true;
 const LS = 'payroster.v1';
 const KC = { sick:'--warn', flight:'--k-flight', deadhead:'--k-dh', training:'--k-train', standby:'--k-sby', reserve:'--k-sby', ground:'--k-ground', off:'--k-off', empty:'--k-off', other:'--k-ground' };
