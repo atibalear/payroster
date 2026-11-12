@@ -542,6 +542,25 @@ html.glass[data-theme="dark"]{--card2:rgba(255,255,255,.06);--card2-brd:rgba(255
 .dx .brk dd.t{color:var(--pay)}
 .dx .extras{padding:12px 14px}
 .dx .how{padding:0 4px}
+
+/* ===== bottom bar "F": month + three round buttons, all within thumb reach ===== */
+.tabbar,html.glass .tabbar{left:max(12px, env(safe-area-inset-left, 0px));right:max(12px, env(safe-area-inset-right, 0px));bottom:calc(8px + env(safe-area-inset-bottom, 0px));
+  max-width:560px;margin:0 auto;display:flex;justify-content:space-between;align-items:center;gap:8px;padding:6px 6px 6px 8px;border-radius:32px;border:1px solid var(--line);background:var(--surface);box-shadow:0 10px 30px rgba(20,30,80,.16)}
+html.glass .tabbar{border:1px solid var(--glass-brd);background:var(--glass);backdrop-filter:blur(26px) saturate(1.9);-webkit-backdrop-filter:blur(26px) saturate(1.9);box-shadow:inset 0 1px 0 var(--glass-hi),0 12px 34px rgba(20,30,80,.18)}
+.tabbar .monthnav{display:flex;align-items:center;gap:0;min-width:0}
+.tabbar .mlabel{font-weight:750;font-size:16px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;letter-spacing:-.01em;padding:0 2px}
+.tabbar .monthnav .iconbtn{width:32px;height:40px;min-width:0;border:0;background:none;box-shadow:none;font-size:20px;color:var(--accent);padding:0;backdrop-filter:none;-webkit-backdrop-filter:none}
+.tabbar .monthnav .iconbtn:disabled{opacity:.25}
+.tabbar .tb{display:flex;gap:6px;flex:none}
+.tabbar .tb button,html.glass .tabbar .tb button{flex:none;max-width:none;width:48px;height:48px;padding:0;border-radius:50%;display:grid;place-items:center;background:color-mix(in srgb,var(--muted) 12%,transparent);color:var(--muted);transition:background .2s,color .2s,transform .15s}
+html.glass .tabbar .tb button{background:rgba(255,255,255,.55)}
+@media (prefers-color-scheme: dark){ html.glass:not([data-theme="light"]) .tabbar .tb button{background:rgba(255,255,255,.08)} }
+html.glass[data-theme="dark"] .tabbar .tb button{background:rgba(255,255,255,.08)}
+.tabbar .tb button span{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
+.tabbar .tb button svg{width:23px;height:23px}
+.tabbar .tb button.on,html.glass .tabbar .tb button.on{background:var(--accent);color:#fff;box-shadow:0 6px 16px color-mix(in srgb,var(--accent) 40%,transparent)}
+.tabbar .tb button:active{transform:scale(.92)}
+.bar .brand{flex:1}
 </style>
 
 </head>
@@ -549,11 +568,6 @@ html.glass[data-theme="dark"]{--card2:rgba(255,255,255,.06);--card2-brd:rgba(255
 <div class="wrap">
   <header class="bar">
     <div class="brand">Pay<span>roster</span><sup class="plus">+</sup></div>
-    <div class="monthnav">
-      <button class="iconbtn" id="prevM" aria-label="" data-i18n-aria="prevMonth">‹</button>
-      <div class="mlabel" id="mLabel">—</div>
-      <button class="iconbtn" id="nextM" aria-label="" data-i18n-aria="nextMonth">›</button>
-    </div>
     <label class="iconbtn" for="pdfIn" title="" data-i18n-title="importTitle">＋ PDF</label>
     <input type="file" id="pdfIn" accept="application/pdf,.pdf,image/*,application/json,.json" class="sr" multiple>
   </header>
@@ -623,9 +637,16 @@ html.glass[data-theme="dark"]{--card2:rgba(255,255,255,.06);--card2-brd:rgba(255
 </div>
 
 <nav class="tabbar" id="tabbar">
-  <button type="button" data-tabgo="roster"><svg viewBox="0 0 24 24"><rect x="3.5" y="5" width="17" height="15" rx="2.5"/><path d="M3.5 10h17M8 3v4M16 3v4"/></svg><span data-i18n="tab_roster"></span></button>
-  <button type="button" data-tabgo="tools"><svg viewBox="0 0 24 24"><rect x="4" y="4" width="6.5" height="6.5" rx="1.6"/><rect x="13.5" y="4" width="6.5" height="6.5" rx="1.6"/><rect x="4" y="13.5" width="6.5" height="6.5" rx="1.6"/><rect x="13.5" y="13.5" width="6.5" height="6.5" rx="1.6"/></svg><span data-i18n="toolsT"></span></button>
-  <button type="button" data-tabgo="more"><svg viewBox="0 0 24 24"><path d="M4 7h10M18 7h2M4 17h2M10 17h10"/><circle cx="16" cy="7" r="2.2"/><circle cx="8" cy="17" r="2.2"/></svg><span data-i18n="tab_more"></span></button>
+  <div class="monthnav">
+    <button class="iconbtn" id="prevM" aria-label="" data-i18n-aria="prevMonth">‹</button>
+    <div class="mlabel" id="mLabel">—</div>
+    <button class="iconbtn" id="nextM" aria-label="" data-i18n-aria="nextMonth">›</button>
+  </div>
+  <div class="tb">
+  <button type="button" data-tabgo="roster" aria-label="" data-i18n-aria="tab_roster"><svg viewBox="0 0 24 24"><rect x="3.5" y="5" width="17" height="15" rx="2.5"/><path d="M3.5 10h17M8 3v4M16 3v4"/></svg><span data-i18n="tab_roster"></span></button>
+  <button type="button" data-tabgo="tools" aria-label="" data-i18n-aria="toolsT"><svg viewBox="0 0 24 24"><rect x="4" y="4" width="6.5" height="6.5" rx="1.6"/><rect x="13.5" y="4" width="6.5" height="6.5" rx="1.6"/><rect x="4" y="13.5" width="6.5" height="6.5" rx="1.6"/><rect x="13.5" y="13.5" width="6.5" height="6.5" rx="1.6"/></svg><span data-i18n="toolsT"></span></button>
+  <button type="button" data-tabgo="more" aria-label="" data-i18n-aria="tab_more"><svg viewBox="0 0 24 24"><path d="M4 7h10M18 7h2M4 17h2M10 17h10"/><circle cx="16" cy="7" r="2.2"/><circle cx="8" cy="17" r="2.2"/></svg><span data-i18n="tab_more"></span></button>
+  </div>
 </nav>
 
 <script>
@@ -12832,7 +12853,7 @@ document.addEventListener('click', e => {
 <script>
 const SEED = null;
 const SEED_SETTINGS = null;
-const APP_VERSION = '2026.11.11-1853';
+const APP_VERSION = '2026.11.12-0504';
 const IS_PWA_BUILD = true;
 const LS = 'payroster.v1';
 const KC = { sick:'--warn', flight:'--k-flight', deadhead:'--k-dh', training:'--k-train', standby:'--k-sby', reserve:'--k-sby', ground:'--k-ground', off:'--k-off', empty:'--k-off', other:'--k-ground' };
