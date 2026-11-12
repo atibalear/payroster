@@ -419,7 +419,7 @@ html.glass .today{border-left:1px solid var(--glass-brd);box-shadow:inset 0 1px 
 html.glass .licalert{border-left:1px solid var(--glass-brd);box-shadow:inset 0 1px 0 var(--glass-hi),inset 4px 0 0 var(--warn),var(--glass-shadow)}
 html.glass .bar{background:transparent;border-bottom:0;padding-block:12px 8px}
 html.glass .bar::before{content:"";position:absolute;inset:0 calc(-1 * max(16px, env(safe-area-inset-left, 0px)));z-index:-1;
-  background:color-mix(in srgb,var(--glass) 70%,transparent);backdrop-filter:blur(20px) saturate(1.8);-webkit-backdrop-filter:blur(20px) saturate(1.8);
+  background:color-mix(in srgb,var(--glass-solid,#eef1fb) 88%,transparent);backdrop-filter:blur(20px) saturate(1.8);-webkit-backdrop-filter:blur(20px) saturate(1.8);
   -webkit-mask:linear-gradient(#000 70%,transparent);mask:linear-gradient(#000 70%,transparent)}
 html.glass .iconbtn{white-space:nowrap;min-width:36px;background:var(--glass-in);border:1px solid var(--glass-brd);border-radius:999px;backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px)}
 html.glass .btn{border-radius:999px;padding:10px 18px;box-shadow:0 4px 14px color-mix(in srgb,var(--accent) 30%,transparent)}
@@ -590,6 +590,64 @@ html.glass .mpick{background:var(--glass);border-color:var(--glass-brd);backdrop
 .mp-m:disabled{opacity:.3;cursor:default;background:transparent}
 .mp-m.now{box-shadow:inset 0 0 0 2px var(--accent)}
 .mp-m.sel{background:var(--accent);color:#fff}
+
+/* ===== "clay" 3D surfaces ===== */
+:root{--clay:linear-gradient(180deg,#ffffff 0%,#f2f4fb 100%);
+  --clay-sh:inset 0 1px 0 #fff,inset 0 -3px 0 rgba(30,45,110,.07),0 12px 24px -10px rgba(30,45,110,.30),0 2px 5px rgba(30,45,110,.08);
+  --clay-sh-press:inset 0 1px 0 #fff,inset 0 -1px 0 rgba(30,45,110,.07),0 4px 10px -6px rgba(30,45,110,.30);--glass-solid:#eef1fb}
+@media (prefers-color-scheme: dark){ :root:not([data-theme="light"]){--clay:linear-gradient(180deg,#2c3456 0%,#1f2541 100%);
+  --clay-sh:inset 0 1px 0 rgba(255,255,255,.12),inset 0 -3px 0 rgba(0,0,0,.28),0 12px 24px -10px rgba(0,0,0,.7),0 2px 5px rgba(0,0,0,.3);
+  --clay-sh-press:inset 0 1px 0 rgba(255,255,255,.1),inset 0 -1px 0 rgba(0,0,0,.28),0 4px 10px -6px rgba(0,0,0,.6);--glass-solid:#12162a} }
+:root[data-theme="dark"]{--clay:linear-gradient(180deg,#2c3456 0%,#1f2541 100%);
+  --clay-sh:inset 0 1px 0 rgba(255,255,255,.12),inset 0 -3px 0 rgba(0,0,0,.28),0 12px 24px -10px rgba(0,0,0,.7),0 2px 5px rgba(0,0,0,.3);
+  --clay-sh-press:inset 0 1px 0 rgba(255,255,255,.1),inset 0 -1px 0 rgba(0,0,0,.28),0 4px 10px -6px rgba(0,0,0,.6);--glass-solid:#12162a}
+.dleg,.dtile,.dx .brk,.dx details.crewbox,.dx .extras,.td-st,.stub,.qa,.html-clay{background:var(--clay)!important;border:0!important;box-shadow:var(--clay-sh)!important}
+.dleg,.dtile,.td-st,.stub,.qa{transition:transform .12s,box-shadow .12s}
+.dleg:active,.stub:active,.qa:active{transform:translateY(1px) scale(.99);box-shadow:var(--clay-sh-press)!important}
+.td-st.next{background:linear-gradient(180deg,color-mix(in srgb,var(--accent) 88%,#fff) 0%,var(--accent) 100%)!important;box-shadow:inset 0 1px 0 rgba(255,255,255,.35),inset 0 -3px 0 rgba(0,0,0,.18),0 12px 22px -8px color-mix(in srgb,var(--accent) 70%,transparent)!important}
+.dleg{border-radius:22px}.dtile{border-radius:22px}
+.dleg .ap .wx{display:block;font-size:12px;color:var(--muted);margin-top:1px}
+/* earnings with icons */
+.dx .brk dt{display:flex;gap:8px;align-items:flex-start}
+.dx .brk .ei{font-style:normal;width:26px;height:26px;flex:none;border-radius:9px;display:grid;place-items:center;font-size:14px;background:color-mix(in srgb,var(--accent) 10%,transparent)}
+/* crew, organised */
+.dx .crew .leg{display:grid;gap:6px;margin-top:6px}
+.dx .crew .lh{display:flex;align-items:center;gap:8px;font-weight:700;font-size:13.5px}
+.dx .crew .lh .fno{font-family:var(--f-mono);font-size:11.5px;padding:3px 8px;border-radius:8px;background:color-mix(in srgb,var(--accent) 12%,transparent);color:var(--accent)}
+.dx .crew .mem{display:grid;grid-template-columns:1fr;gap:2px}
+.dx .crew .cm{display:flex;align-items:center;gap:10px;padding:6px 6px;border-radius:12px}
+.dx .crew .cm.me{background:color-mix(in srgb,var(--accent) 10%,transparent)}
+.dx .crew .rb{width:34px;height:34px;flex:none;border-radius:50%;display:grid;place-items:center;font:800 11px var(--f-body);color:#fff;letter-spacing:.02em;box-shadow:inset 0 1px 0 rgba(255,255,255,.3),0 3px 8px -3px rgba(0,0,0,.35)}
+.dx .crew .rb.ck{background:linear-gradient(180deg,#3b4468,#1f2540)}
+.dx .crew .rb.pu{background:linear-gradient(180deg,color-mix(in srgb,var(--accent) 80%,#fff),var(--accent))}
+.dx .crew .rb.st{background:linear-gradient(180deg,#2ec4a4,#16967c)}
+.dx .crew .cn{font-size:15px;font-weight:600;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.dx .crew .you{margin-left:auto;font-size:11px;font-weight:700;color:var(--accent);text-transform:uppercase;letter-spacing:.06em}
+.dx .crew .m{display:none}
+/* quick actions on the duty card */
+.qas{display:grid;grid-auto-flow:column;grid-auto-columns:minmax(0,1fr);gap:8px;margin-top:14px}
+.qa{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;padding:10px 4px 9px;border-radius:18px;font:600 12px var(--f-body);color:var(--ink);cursor:pointer;min-width:0}
+.qa .qi{font-size:20px;line-height:1}
+.qa span{max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.qa.on{color:var(--accent);box-shadow:var(--clay-sh-press),inset 0 0 0 2px var(--accent)!important}
+.qpanel{margin-top:10px}
+.qpanel[hidden]{display:none}
+.td-hint{margin-top:10px;text-align:center;font-size:11.5px;color:var(--muted)}
+.toast{position:fixed;left:50%;bottom:calc(96px + env(safe-area-inset-bottom,0px));transform:translate(-50%,20px);opacity:0;z-index:90;padding:10px 16px;border-radius:999px;background:var(--ink);color:var(--bg);font-weight:600;font-size:14px;transition:all .2s;pointer-events:none}
+.toast.on{opacity:1;transform:translate(-50%,0)}
+.dleg.live{box-shadow:var(--clay-sh),inset 0 0 0 2px #e8b41f!important}
+.dleg.past{opacity:.5}
+/* long-press sheet */
+.sheet-bg{position:fixed;inset:0;z-index:80;background:rgba(10,14,30,.35);backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px)}
+.sheet{position:fixed;left:max(10px, env(safe-area-inset-left, 0px));right:max(10px, env(safe-area-inset-right, 0px));bottom:calc(10px + env(safe-area-inset-bottom, 0px));z-index:81;max-width:520px;margin:0 auto;
+  padding:10px;border-radius:28px;background:var(--surface);box-shadow:0 20px 60px rgba(0,0,0,.35);animation:sheetUp .22s ease-out}
+html.glass .sheet{background:var(--glass);backdrop-filter:blur(30px) saturate(1.9);-webkit-backdrop-filter:blur(30px) saturate(1.9);border:1px solid var(--glass-brd)}
+.sheet .sh-t{padding:8px 12px 10px;font-weight:800;font-size:16px}.sheet .sh-t small{display:block;font-weight:500;font-size:12.5px;color:var(--muted)}
+.sheet button{display:flex;align-items:center;gap:12px;width:100%;padding:13px 14px;border:0;border-radius:16px;background:none;color:var(--ink);font:600 15.5px var(--f-body);text-align:left;cursor:pointer}
+.sheet button:active{background:color-mix(in srgb,var(--accent) 10%,transparent)}
+.sheet button i{font-style:normal;width:34px;height:34px;border-radius:11px;display:grid;place-items:center;background:var(--clay);box-shadow:var(--clay-sh);font-size:17px}
+.sheet .sh-x{justify-content:center;margin-top:4px;background:color-mix(in srgb,var(--muted) 12%,transparent)}
+@keyframes sheetUp{from{transform:translateY(30px);opacity:0}to{transform:none;opacity:1}}
 </style>
 
 </head>
@@ -608,7 +666,6 @@ html.glass .mpick{background:var(--glass);border-color:var(--glass-brd);backdrop
   <section class="panel" id="setup" hidden></section>
 
   <div class="panel licalert" id="licAlert" hidden data-tab="roster"></div>
-  <div class="weekstrip" id="weekStrip" hidden data-tab="roster"></div>
   <div class="panel licalert" id="baseWarn" hidden data-tab="roster"></div>
   <div class="panel licalert" id="yearWarn" hidden data-tab="roster"></div>
   <div class="panel licalert" id="bkRemind" hidden data-tab="roster"></div>
@@ -1473,6 +1530,19 @@ var I18N = {
   names: { es: 'Español', ca: 'Català', en: 'English', de: 'Deutsch', fr: 'Français', it: 'Italiano', pt: 'Português', ro: 'Română', hu: 'Magyar', sk: 'Slovenčina', cs: 'Čeština' },
   locales: { es: 'es-ES', ca: 'ca-ES', en: 'en-GB', de: 'de-DE', fr: 'fr-FR', it: 'it-IT', pt: 'pt-PT', ro: 'ro-RO', hu: 'hu-HU', sk: 'sk-SK', cs: 'cs-CZ' },
   es: {
+    qa_rest: 'Descanso',
+    close: 'Cerrar',
+    you: 'Tú',
+    qa_copied: 'Horario copiado',
+    qa_cal: 'Calendario',
+    qa_copy: 'Copiar horario',
+    qa_share: 'Compartir horario',
+    qa_lay: 'Escala y hotel',
+    qa_dayFull: 'Ver el día completo',
+    qa_hint: 'Mantén pulsada la tarjeta para más opciones',
+    qa_more: 'Más',
+    qa_day: 'Día',
+    qa_mm: 'Mapa',
     ui_nick: 'Tu nombre para el saludo',
     hi_e: 'Buenas noches',
     hi_a: 'Buenas tardes',
@@ -2062,6 +2132,19 @@ var I18N = {
     e_noPeriod: 'No encuentro el periodo del roster. ¿Es el «Individual duty plan» de IDP en PDF?'
   },
   ca: {
+    qa_rest: 'Descans',
+    close: 'Tancar',
+    you: 'Tu',
+    qa_copied: 'Horari copiat',
+    qa_cal: 'Calendari',
+    qa_copy: 'Copiar horari',
+    qa_share: 'Compartir horari',
+    qa_lay: 'Escala i hotel',
+    qa_dayFull: 'Veure el dia complet',
+    qa_hint: 'Mantén premuda la targeta per a més opcions',
+    qa_more: 'Més',
+    qa_day: 'Dia',
+    qa_mm: 'Mapa',
     ui_nick: 'El teu nom per a la salutació',
     hi_e: 'Bona nit',
     hi_a: 'Bona tarda',
@@ -2652,6 +2735,19 @@ var I18N = {
     e_noPeriod: 'No trobo el període del roster. És l’«Individual duty plan» d’IDP en PDF?'
   },
   en: {
+    qa_rest: 'Rest',
+    close: 'Close',
+    you: 'You',
+    qa_copied: 'Schedule copied',
+    qa_cal: 'Calendar',
+    qa_copy: 'Copy schedule',
+    qa_share: 'Share schedule',
+    qa_lay: 'Layover & hotel',
+    qa_dayFull: 'Open the full day',
+    qa_hint: 'Press and hold the card for more options',
+    qa_more: 'More',
+    qa_day: 'Day',
+    qa_mm: 'Map',
     ui_nick: 'Your name for the greeting',
     hi_e: 'Good evening',
     hi_a: 'Good afternoon',
@@ -3242,6 +3338,19 @@ var I18N = {
     e_noPeriod: 'I can’t find the roster period. Is this the IDP “Individual duty plan” PDF?'
   },
   de: {
+    qa_rest: 'Ruhe',
+    close: 'Schließen',
+    you: 'Du',
+    qa_copied: 'Kopiert',
+    qa_cal: 'Kalender',
+    qa_copy: 'Dienstplan kopieren',
+    qa_share: 'Dienstplan teilen',
+    qa_lay: 'Layover & Hotel',
+    qa_dayFull: 'Ganzen Tag öffnen',
+    qa_hint: 'Karte gedrückt halten für mehr Optionen',
+    qa_more: 'Mehr',
+    qa_day: 'Tag',
+    qa_mm: 'Karte',
     ui_nick: 'Dein Name für die Begrüßung',
     hi_e: 'Guten Abend',
     hi_a: 'Guten Tag',
@@ -3832,6 +3941,19 @@ var I18N = {
     e_noPeriod: 'Ich finde den Zeitraum des Dienstplans nicht. Ist das der „Individual duty plan“ aus IDP als PDF?'
   },
   fr: {
+    qa_rest: 'Repos',
+    close: 'Fermer',
+    you: 'Toi',
+    qa_copied: 'Horaire copié',
+    qa_cal: 'Calendrier',
+    qa_copy: 'Copier l’horaire',
+    qa_share: 'Partager l’horaire',
+    qa_lay: 'Escale et hôtel',
+    qa_dayFull: 'Voir la journée',
+    qa_hint: 'Appui long sur la carte pour plus d’options',
+    qa_more: 'Plus',
+    qa_day: 'Jour',
+    qa_mm: 'Carte',
     ui_nick: 'Ton prénom pour le salut',
     hi_e: 'Bonsoir',
     hi_a: 'Bon après-midi',
@@ -4422,6 +4544,19 @@ var I18N = {
     e_noPeriod: 'Je ne trouve pas la période du planning. Est-ce bien l’« Individual duty plan » d’IDP en PDF ?'
   },
   hu: {
+    qa_rest: 'Pihenő',
+    close: 'Bezárás',
+    you: 'Te',
+    qa_copied: 'Másolva',
+    qa_cal: 'Naptár',
+    qa_copy: 'Beosztás másolása',
+    qa_share: 'Beosztás megosztása',
+    qa_lay: 'Kint alvás és hotel',
+    qa_dayFull: 'Teljes nap megnyitása',
+    qa_hint: 'Tartsd lenyomva a kártyát további lehetőségekért',
+    qa_more: 'Több',
+    qa_day: 'Nap',
+    qa_mm: 'Térkép',
     ui_nick: 'A neved a köszöntéshez',
     hi_e: 'Jó estét',
     hi_a: 'Jó napot',
@@ -5012,6 +5147,19 @@ var I18N = {
     e_noPeriod: 'Nem találom a beosztás időszakát. Ez az IDP „Individual duty plan” PDF-je?'
   },
   sk: {
+    qa_rest: 'Odpočinok',
+    close: 'Zavrieť',
+    you: 'Ty',
+    qa_copied: 'Skopírované',
+    qa_cal: 'Kalendár',
+    qa_copy: 'Kopírovať rozpis',
+    qa_share: 'Zdieľať rozpis',
+    qa_lay: 'Layover a hotel',
+    qa_dayFull: 'Otvoriť celý deň',
+    qa_hint: 'Podrž kartu pre ďalšie možnosti',
+    qa_more: 'Viac',
+    qa_day: 'Deň',
+    qa_mm: 'Mapa',
     ui_nick: 'Tvoje meno pre pozdrav',
     hi_e: 'Dobrý večer',
     hi_a: 'Dobrý deň',
@@ -5602,6 +5750,19 @@ var I18N = {
     e_noPeriod: 'Nenachádzam obdobie rozpisu. Je to „Individual duty plan“ z IDP v PDF?'
   },
   cs: {
+    qa_rest: 'Odpočinek',
+    close: 'Zavřít',
+    you: 'Ty',
+    qa_copied: 'Zkopírováno',
+    qa_cal: 'Kalendář',
+    qa_copy: 'Kopírovat rozpis',
+    qa_share: 'Sdílet rozpis',
+    qa_lay: 'Layover a hotel',
+    qa_dayFull: 'Otevřít celý den',
+    qa_hint: 'Podrž kartu pro další možnosti',
+    qa_more: 'Více',
+    qa_day: 'Den',
+    qa_mm: 'Mapa',
     ui_nick: 'Tvoje jméno pro pozdrav',
     hi_e: 'Dobrý večer',
     hi_a: 'Dobrý den',
@@ -6192,6 +6353,19 @@ var I18N = {
     e_noPeriod: 'Nenacházím období rozpisu. Je to „Individual duty plan“ z IDP v PDF?'
   },
   it: {
+    "qa_rest": "Riposo",
+    "close": "Chiudi",
+    "you": "Tu",
+    "qa_copied": "Orario copiato",
+    "qa_cal": "Calendario",
+    "qa_copy": "Copia orario",
+    "qa_share": "Condividi orario",
+    "qa_lay": "Scalo e hotel",
+    "qa_dayFull": "Apri il giorno intero",
+    "qa_hint": "Tieni premuta la scheda per altre opzioni",
+    "qa_more": "Altro",
+    "qa_day": "Giorno",
+    "qa_mm": "Mappa",
     "ui_nick": "Il tuo nome per il saluto",
     "hi_e": "Buonasera",
     "hi_a": "Buon pomeriggio",
@@ -6887,6 +7061,19 @@ var I18N = {
     "e_noPeriod": "Non trovo il periodo del turno. È l’«Individual duty plan» di IDP in PDF?"
   },
   pt: {
+    "qa_rest": "Descanso",
+    "close": "Fechar",
+    "you": "Tu",
+    "qa_copied": "Horário copiado",
+    "qa_cal": "Calendário",
+    "qa_copy": "Copiar horário",
+    "qa_share": "Partilhar horário",
+    "qa_lay": "Escala e hotel",
+    "qa_dayFull": "Ver o dia completo",
+    "qa_hint": "Mantém premido o cartão para mais opções",
+    "qa_more": "Mais",
+    "qa_day": "Dia",
+    "qa_mm": "Mapa",
     "ui_nick": "O teu nome para a saudação",
     "hi_e": "Boa noite",
     "hi_a": "Boa tarde",
@@ -7582,6 +7769,19 @@ var I18N = {
     "e_noPeriod": "Não encontro o período da escala. É o «Individual duty plan» do IDP em PDF?"
   },
   ro: {
+    "qa_rest": "Odihnă",
+    "close": "Închide",
+    "you": "Tu",
+    "qa_copied": "Program copiat",
+    "qa_cal": "Calendar",
+    "qa_copy": "Copiază programul",
+    "qa_share": "Distribuie programul",
+    "qa_lay": "Escală și hotel",
+    "qa_dayFull": "Vezi ziua completă",
+    "qa_hint": "Ține apăsat pe card pentru mai multe opțiuni",
+    "qa_more": "Mai mult",
+    "qa_day": "Zi",
+    "qa_mm": "Hartă",
     "ui_nick": "Numele tău pentru salut",
     "hi_e": "Bună seara",
     "hi_a": "Bună ziua",
@@ -11153,32 +11353,41 @@ function renderToday(){
       <div class="lb">${s.ic} ${s.lb}</div><div class="tm">${localHM(s.ms, s.st || st)}</div>
       ${s.ms > now ? `<div class="in" data-at="${s.ms}">${durTxt(s.ms - now)}</div>` : '<div class="in">&nbsp;</div>'}</div>`).join('')}</div>`;
 
-  // flights, one per row, with the weather on arrival (filled in by loadWx)
-  const fl = legs.length ? `<div class="td-fl">${legs.map(l => { const t1 = utcAt(x.date, l.t1), t2 = legEnd(x.date, l), done = cur && t2 <= now;
-      return `<div class="td-leg${done ? ' past' : ''}"><span class="fn">${l.type==='dh' ? 'DH ' : ''}${esc(l.flight)}</span>
-        <span class="rt"><b>${l.dep}</b> → <b>${l.arr}</b><small>${localHM(t1, l.dep)} – ${localHM(t2, l.arr)}</small></span>
-        <span class="wx" data-wx="${l.arr}|${t2}"></span></div>`; }).join('')}</div>` : '';
+  // flights as 3D cards, weather on arrival filled in by loadWx
+  const fl = legs.length ? `<div class="dlegs" style="margin-top:14px">${legs.map(l => { const t1 = utcAt(x.date, l.t1), t2 = legEnd(x.date, l), done = cur && t2 <= now, live = cur && t1 <= now && t2 > now;
+      return `<div class="dleg${l.type==='dh'?' dh':''}${done ? ' past' : ''}${live ? ' live' : ''}"><span class="ap"><b>${l.dep}</b><small>${localHM(t1, l.dep)}</small></span>
+        <span class="mid"><span class="fn">${l.type==='dh'?'DH ':''}${esc(l.flight)}</span><span class="ln"></span><span>${hhmm((t2-t1)/36e5)} h</span></span>
+        <span class="ap r"><b>${l.arr}</b><small>${localHM(t2, l.arr)}</small><span class="wx" data-wx="${l.arr}|${t2}"></span></span></div>`; }).join('')}</div>` : '';
 
-  // compact rest line; the full EASA explanation opens on tap
-  let rest = '';
+  // rest: summary + EASA detail, shown from a quick action
+  let restPanel = '', restLbl = t('qa_rest');
   const rd = cur ? null : prev && now - prev.end < 36*36e5 ? prev : null;
   if(rd){
     const home = (rd.endSt || base) === base && !rd.hotel, need = Math.max(rd.end - rd.start, (home ? 12 : 10) * 36e5), got = x.start - rd.end;
-    rest = `<details class="td-rest"><summary><span>🛏 ${got >= 36*36e5 ? t('td_restLong', {g: durTxt(got).replace(/ 0 min$/, '')}) : t('td_rest', {g: hhmm(got/36e5), n: hhmm(need/36e5)})}</span><span class="${got >= need ? 'ok' : 'bad'}">${got >= need ? '✓' : '⚠'}</span></summary>${restHtml(rd.d)}</details>`;
-  } else if(cur) rest = `<details class="td-rest"><summary><span>🛏 ${t('td_restAfter')}</span></summary>${restHtml(cur.d)}</details>`;
-
+    restLbl = got >= 36*36e5 ? durTxt(got).replace(/ 0 min$/, '') : hhmm(got/36e5) + ' h' + (got >= need ? ' ✓' : ' ⚠');
+    restPanel = `<div class="fdpl"><div><b>${got >= 36*36e5 ? t('td_restLong', {g: durTxt(got).replace(/ 0 min$/, '')}) : t('td_rest', {g: hhmm(got/36e5), n: hhmm(need/36e5)})}</b></div></div>${restHtml(rd.d)}`;
+  } else restPanel = restHtml(x.d);
+  const ls = x.hotel && x.hotel !== base ? x.hotel : (x.st && x.st !== base ? x.st : null);
+  const hasMm = legs.some(l => l.type==='flt');
+  const qa = [
+    hasMm ? `<button type="button" class="qa" id="td-mm"><span class="qi">🛰</span><span>${t('qa_mm')}</span></button>` : '',
+    `<button type="button" class="qa" data-wk="${x.date}"><span class="qi">📋</span><span>${t('qa_day')}</span></button>`,
+    ls || x.hotel ? `<button type="button" class="qa" data-qp="lay"><span class="qi">🏨</span><span>${esc(x.hotel || ls)}</span></button>` : '',
+    restPanel ? `<button type="button" class="qa" data-qp="rest"><span class="qi">🛏</span><span>${esc(restLbl)}</span></button>` : '',
+    `<button type="button" class="qa" data-qsheet="1"><span class="qi">⋯</span><span>${t('qa_more')}</span></button>`].join('');
   const endTxt = x.end ? localHM(x.end, x.endSt || st) : '';
   const sub = [localDay(x.start, st), nFlt ? t('td_sectors', {n: nFlt}) : '', endTxt ? t('td_until', {h: endTxt}) : ''].filter(Boolean).join(' · ');
   el.hidden = false;
+  el.dataset.date = x.date;
   el.innerHTML = skyHtml(x, cur, pk, now, legs, st) + `<div class="td-route">${esc(x.route || kind(x.kind).n)}</div>
     <div class="note">${sub}</div>
     ${tl}${fl}
-    ${upcomingHtml(x, duties)}
-    ${x.hotel ? `<div class="td-hotel" id="tdHotel">🏨 ${t('nightIn',{st:x.hotel})}</div>` : ''}
-    ${(() => { const ls = x.hotel && x.hotel !== base ? x.hotel : (x.st && x.st !== base ? x.st : null); return ls ? layHtml(ls) : ''; })()}
+    <div class="qas">${qa}</div>
+    <div class="qpanel" data-qpanel="lay" hidden>${x.hotel ? `<div class="td-hotel" id="tdHotel">🏨 ${t('nightIn',{st:x.hotel})}</div>` : ''}${ls ? layHtml(ls) : ''}</div>
+    <div class="qpanel" data-qpanel="rest" hidden>${restPanel}</div>
     ${ftlA ? `<div class="chips" style="margin-top:10px">${ftlA}</div>` : ''}
-    ${rest}
-    ${legs.some(l => l.type==='flt') && (cur || x.start - now < 18*36e5) ? `<button class="btn td-mmb" type="button" id="td-mm">✈ ${t('mm_start')}</button>` : ''}`;
+    ${upcomingHtml(x, duties)}
+    <div class="td-hint">${t('qa_hint')}</div>`;
   loadWx(x).catch(() => {});
   clearInterval(todayTimer);
   todayTimer = setInterval(() => { const c = $('today'); if(!c || c.hidden){ clearInterval(todayTimer); return; }
@@ -11495,6 +11704,75 @@ document.addEventListener('click', e => {
   if(v > 0) x.delay = v; else delete x.delay;
   save(); render();
 });
+
+// ---------- duty card: quick-action panels + long-press menu ----------
+document.addEventListener('click', e => {
+  const q = e.target.closest('[data-qp]');
+  if(q){ const card = q.closest('.today') || document, k = q.dataset.qp, p = card.querySelector(`[data-qpanel="${k}"]`); if(!p) return;
+    const open = p.hidden; card.querySelectorAll('[data-qpanel]').forEach(x => x.hidden = true); card.querySelectorAll('[data-qp]').forEach(x => x.classList.remove('on'));
+    if(open){ p.hidden = false; q.classList.add('on'); if(k === 'lay'){ const dd = p.querySelector('details.td-lay'); if(dd) dd.open = true; } }
+    return; }
+  if(e.target.closest('[data-qsheet]')){ dutySheet(); return; }
+  const sa = e.target.closest('[data-sa]');
+  if(sa){ const k = sa.dataset.sa; closeSheet();
+    const card = $('today'), date = card && card.dataset.date;
+    if(k === 'mm'){ const b = $('td-mm'); if(b) b.click(); }
+    else if(k === 'day' && date){ const w = document.createElement('span'); w.dataset.wk = date; document.body.appendChild(w); w.click(); w.remove(); }
+    else if(k === 'cal'){ toolOpen = null; openTool('cal'); }
+    else if(k === 'lay' || k === 'rest'){ const b = card && card.querySelector(`[data-qp="${k}"]`); if(b){ b.click(); b.scrollIntoView({behavior:'smooth', block:'center'}); } }
+    else if(k === 'share' || k === 'copy') shareDuty(k);
+    return; }
+  if(e.target.closest('.sheet-bg') || e.target.closest('.sh-x')) closeSheet();
+});
+function closeSheet(){ document.querySelectorAll('.sheet,.sheet-bg').forEach(x => x.remove()); }
+function dutyText(){
+  const duties = allDuties(), now = Date.now(), x = duties.find(d => d.end && d.end > now); if(!x) return '';
+  const st = x.st || state.settings.base;
+  const lines = [`${localDay(x.start, st)} · ${x.route || kind(x.kind).n}`];
+  const pk = pickupMs(x.date, x.d.events, x.start); if(pk) lines.push(`🚐 ${localHM(pk, st)}`);
+  lines.push(`✓ ${t('td_ci')} ${localHM(x.start, st)} (${st})`);
+  (x.d.legs||[]).filter(l => l.t1 && l.t2).forEach(l => { const a = utcAt(x.date, l.t1), b = legEnd(x.date, l); lines.push(`✈ ${l.flight} ${l.dep} ${localHM(a, l.dep)} → ${l.arr} ${localHM(b, l.arr)}`); });
+  if(x.end) lines.push(`🏁 ${t('td_co')} ${localHM(x.end, x.endSt || st)}`);
+  if(x.hotel) lines.push('🏨 ' + t('nightIn', {st: x.hotel}));
+  return lines.join('\n');
+}
+async function shareDuty(k){
+  const txt = dutyText(); if(!txt) return;
+  try{ if(k === 'share' && navigator.share){ await navigator.share({ text: txt }); return; } }catch(e){ if(e && e.name === 'AbortError') return; }
+  try{ await navigator.clipboard.writeText(txt); toastMsg(t('qa_copied')); }catch(e){}
+}
+function toastMsg(m){ let el = $('toast'); if(!el){ el = document.createElement('div'); el.id = 'toast'; el.className = 'toast'; document.body.appendChild(el); } el.textContent = m; el.classList.add('on'); clearTimeout(el._t); el._t = setTimeout(() => el.classList.remove('on'), 1800); }
+function dutySheet(){
+  closeSheet();
+  const card = $('today'); if(!card || card.hidden) return;
+  const has = k => !!card.querySelector(k);
+  const items = [
+    has('#td-mm') ? ['mm','🛰', t('qa_mm')] : null,
+    ['day','📋', t('qa_dayFull')],
+    has('[data-qp="lay"]') ? ['lay','🏨', t('qa_lay')] : null,
+    has('[data-qp="rest"]') ? ['rest','🛏', t('dx_rest')] : null,
+    ['share','📤', t('qa_share')], ['copy','📄', t('qa_copy')], ['cal','📅', t('qa_cal')] ].filter(Boolean);
+  const route = (card.querySelector('.td-route') || {}).textContent || '';
+  const bg = document.createElement('div'); bg.className = 'sheet-bg';
+  const sh = document.createElement('div'); sh.className = 'sheet'; sh.setAttribute('role', 'menu');
+  sh.innerHTML = `<div class="sh-t">${esc(route)}<small>${esc((card.querySelector('.td-route + .note') || {}).textContent || '')}</small></div>` +
+    items.map(([k, ic, lb]) => `<button type="button" data-sa="${k}" role="menuitem"><i>${ic}</i>${lb}</button>`).join('') +
+    `<button type="button" class="sh-x">${t('close')}</button>`;
+  document.body.append(bg, sh);
+  try{ navigator.vibrate && navigator.vibrate(10); }catch(e){}
+}
+// long press anywhere on the duty card (not on a button) opens the menu
+(function(){
+  let tm = null, sx = 0, sy = 0;
+  document.addEventListener('touchstart', e => {
+    const c = e.target.closest('#today'); if(!c || e.target.closest('button,a,input,select,textarea,summary,.stubs,svg.sky-arc')) return;
+    sx = e.touches[0].clientX; sy = e.touches[0].clientY;
+    tm = setTimeout(() => { tm = null; dutySheet(); }, 520);
+  }, {passive: true});
+  document.addEventListener('touchmove', e => { if(tm && (Math.abs(e.touches[0].clientX - sx) > 8 || Math.abs(e.touches[0].clientY - sy) > 8)){ clearTimeout(tm); tm = null; } }, {passive: true});
+  ['touchend','touchcancel'].forEach(ev => document.addEventListener(ev, () => { if(tm){ clearTimeout(tm); tm = null; } }, {passive: true}));
+  document.addEventListener('contextmenu', e => { if(e.target.closest('#today')){ e.preventDefault(); dutySheet(); } });
+})();
 
 // ---- Route map and in-flight moving map (offline: country outlines + airports are inside the app) ----
 
@@ -11822,7 +12100,7 @@ document.addEventListener('change', e => { if(e.target.id === 'map-d'){ mapDay =
 document.addEventListener('click', e => {
   const id = e.target.id;
   if(id === 'mm-go'){ startMoving(); return; }
-  if(id === 'td-mm'){ toolOpen = null; openTool('map'); if(!mm) startMoving(); $('toolPanel').scrollIntoView({block:'start'}); return; }
+  if(id === 'td-mm' || e.target.closest && e.target.closest('#td-mm')){ toolOpen = null; openTool('map'); if(!mm) startMoving(); $('toolPanel').scrollIntoView({block:'start'}); return; }
   if(id === 'mm-stop'){ clearInterval(mmTimer); stopMoving(); return; }
   if(id === 'mm-sim' && mm){ mm.sim = mm.sim ? 0 : Date.now(); renderMoving(); return; }
   if(id === 'mm-follow' && mm){ mm.follow = !mm.follow; renderMoving(); return; }
@@ -12973,7 +13251,7 @@ document.addEventListener('click', e => {
 <script>
 const SEED = null;
 const SEED_SETTINGS = null;
-const APP_VERSION = '2026.11.12-0526';
+const APP_VERSION = '2026.11.12-1049';
 const IS_PWA_BUILD = true;
 const LS = 'payroster.v1';
 const KC = { sick:'--warn', flight:'--k-flight', deadhead:'--k-dh', training:'--k-train', standby:'--k-sby', reserve:'--k-sby', ground:'--k-ground', off:'--k-off', empty:'--k-off', other:'--k-ground' };
@@ -13341,20 +13619,19 @@ function renderDays(c, ro){
         ${crewHtml(d, state.months[state.current] && state.months[state.current].crew)}
         <div class="dsec"><div class="dh">${t('dx_pay')}</div>
         <dl class="brk">
-          ${d.H?`<dt>${t('payHours',{f:hhmm(d.F),a:hhmm(d.A)})}${d.absence?t('absenceCredit'):''} · ${tier} · ${n2.format(d.hourRate)} €/h</dt><dd>${eur.format(d.hourPay)}</dd>`:''}
-          ${d.dieta?`<dt>${t('d_'+d.dietaType)}</dt><dd>${eur.format(d.dieta)}</dd>`:''}
-          ${d.early?`<dt>${t('earlyAt',{t:t4(d.ci)})}</dt><dd>${eur.format(d.early)}</dd>`:''}
-          ${d.isTrain?`<dt>${t('trainDay',{n:d.trainNo})}${d.trainNo===1?t('inPlus'):''}</dt><dd>${eur.format(d.trainPay)}</dd>`:''}
+          ${d.H?`<dt><i class="ei">⏱</i>${t('payHours',{f:hhmm(d.F),a:hhmm(d.A)})}${d.absence?t('absenceCredit'):''} · ${tier} · ${n2.format(d.hourRate)} €/h</dt><dd>${eur.format(d.hourPay)}</dd>`:''}
+          ${d.dieta?`<dt><i class="ei">🍽</i>${t('d_'+d.dietaType)}</dt><dd>${eur.format(d.dieta)}</dd>`:''}
+          ${d.early?`<dt><i class="ei">🌅</i>${t('earlyAt',{t:t4(d.ci)})}</dt><dd>${eur.format(d.early)}</dd>`:''}
+          ${d.isTrain?`<dt><i class="ei">🎓</i>${t('trainDay',{n:d.trainNo})}${d.trainNo===1?t('inPlus'):''}</dt><dd>${eur.format(d.trainPay)}</dd>`:''}
           ${d.isCTday?`<dt>${t('ctDay',{n:d.ctNo})}${d.ctNo===1?t('inPlus'):''}</dt><dd>${eur.format(d.trainPay)}</dd>`:''}
           ${d.extraFix?`<dt>${t('buyDefer')}${d.autoBuy && !d.buyManual && d.buyWhy ? ' · '+buyWhyText(d) : ''}</dt><dd>${eur.format(d.extraFix)}</dd>`:''}
-          ${d.sales?`<dt>${t('sales')}</dt><dd>${eur.format(d.sales)}</dd>`:''}
+          ${d.sales?`<dt><i class="ei">🛍</i>${t('sales')}</dt><dd>${eur.format(d.sales)}</dd>`:''}
           <dt class="t">${t('dayTotal')}</dt><dd class="t">${eur.format(d.total)}</dd>
         </dl></div>
         <div class="extras" data-date="${d.date}">
           ${d.kind==='flight'?`<label>${t('salesEur')} <input type="number" step="0.01" min="0" id="s-${d.date}" data-f="sales" value="${ex.sales||''}" placeholder="0,00"></label>`:''}
           ${offish?`<label>${t('dayBought')} <select id="b-${d.date}" data-f="buy"><option value="">${t('buyAuto',{v: d.autoBuy==='full'?t('full'):d.autoBuy==='half'?t('half'):t('no')})}${d.buyWhy?' · '+buyWhyText(d):''}</option><option value="none"${ex.buy==='none'?' selected':''}>${t('no')}</option><option value="full"${ex.buy==='full'?' selected':''}>${t('full')}</option><option value="half"${ex.buy==='half'?' selected':''}>${t('half')}</option></select></label>`:''}
           ${d.codes.includes('O_M')?`<label><input type="checkbox" id="o-${d.date}" data-f="omDefer"${ex.omDefer?' checked':''}> ${t('omDeferred')}</label>`:''}
-          ${(!offish && d.kind!=='flight')?`<span class="note">${t('noExtras')}</span>`:''}
           <button class="btn ghost" type="button" data-sim="${d.date}" style="margin-left:auto">${t('sim_btn')}</button>
         </div>
       </div>
@@ -13727,8 +14004,9 @@ function crewHtml(d, me){
   const meKey = (me||'').trim().toLowerCase();
   const nPeople = new Set(legs.flatMap(l => l.members.map(m => m.name))).size + ev.reduce((a, e) => a + e.names.length, 0);
   return `<details class="crewbox dsec"><summary><div class="dh"><span>${t('crewT')} · ${nPeople}${d.crewInherited?` <span style="text-transform:none;letter-spacing:0">${t('crewInh')}</span>`:''}</span></div></summary><div class="crew">
-    ${legs.map(l=>`<div class="leg"><span class="lh">${esc(l.flight)} ${esc(l.dep)}–${esc(l.arr)}</span><div class="mem">${l.members.map(m=>`<span class="m${m.name.trim().toLowerCase()===meKey?' me':''}"><b>${esc(m.role)}</b>${esc(m.name)}</span>`).join('')}</div></div>`).join('')}
-    ${ev.map(e=>`<details><summary>${esc(e.code)}${e.st?' · '+esc(e.st):''} · ${t('eventPeople',{n:e.names.length})}</summary><div class="names">${e.names.map(n=>`<div>${esc(n)}</div>`).join('')}</div></details>`).join('')}
+    ${legs.map(l=>`<div class="leg"><div class="lh"><span class="fno">${esc(l.flight)}</span>${esc(l.dep)} → ${esc(l.arr)}</div><div class="mem">${l.members.map(m=>{ const nm = m.name.split(',').map(x=>x.trim()); const full = nm[1] ? nm[1] + ' ' + nm[0] : nm[0]; const rc = /^(CP|FO|SO|CM)/.test(m.role) ? 'ck' : /^(PU|SP|SC)/.test(m.role) ? 'pu' : 'st';
+      return `<div class="cm${m.name.trim().toLowerCase()===meKey?' me':''}"><span class="rb ${rc}">${esc(m.role)}</span><span class="cn">${esc(full)}</span>${m.name.trim().toLowerCase()===meKey?`<span class="you">${t('you')}</span>`:''}</div>`; }).join('')}</div></div>`).join('')}
+    ${ev.map(e=>`<div class="leg"><div class="lh"><span class="fno">${esc(e.code)}</span>${e.st?esc(e.st)+' · ':''}${t('eventPeople',{n:e.names.length})}</div><div class="mem">${e.names.map(n=>{ const nm = n.split(',').map(x=>x.trim()); const full = nm[1] ? nm[1] + ' ' + nm[0] : nm[0]; return `<div class="cm${n.trim().toLowerCase()===meKey?' me':''}"><span class="rb st">${esc((full.match(/\b\p{L}/gu)||[]).slice(0,2).join(''))}</span><span class="cn">${esc(full)}</span></div>`; }).join('')}</div></div>`).join('')}
   </div></details>`;
 }
 
