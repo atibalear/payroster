@@ -1,26 +1,26 @@
 {
-  "name": "Payroster+",
-  "short_name": "Payroster+",
+  "name": "Payroster",
+  "short_name": "Payroster",
   "description": "Tu roster de Eurowings con lo que generas cada día según el convenio.",
   "lang": "es",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",
-  "background_color": "#0f1220",
-  "theme_color": "#161a2c",
+  "background_color": "#111111",
+  "theme_color": "#111111",
   "icons": [
     {
-      "src": "icons/icon4-192.png",
+      "src": "icons/icon5-192.png",
       "sizes": "192x192",
       "type": "image/png"
     },
     {
-      "src": "icons/icon4-512.png",
+      "src": "icons/icon5-512.png",
       "sizes": "512x512",
       "type": "image/png"
     },
     {
-      "src": "icons/icon4-512.png",
+      "src": "icons/icon5-mask-512.png",
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "maskable"
@@ -33,7 +33,7 @@
       "url": "./?go=next",
       "icons": [
         {
-          "src": "icons/icon4-192.png",
+          "src": "icons/icon5-192.png",
           "sizes": "192x192"
         }
       ]
@@ -44,7 +44,7 @@
       "url": "./?go=pdf",
       "icons": [
         {
-          "src": "icons/icon4-192.png",
+          "src": "icons/icon5-192.png",
           "sizes": "192x192"
         }
       ]
@@ -55,7 +55,7 @@
       "url": "./?go=mm",
       "icons": [
         {
-          "src": "icons/icon4-192.png",
+          "src": "icons/icon5-192.png",
           "sizes": "192x192"
         }
       ]

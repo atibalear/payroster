@@ -7,12 +7,12 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="apple-mobile-web-app-title" content="Payroster+">
+<meta name="apple-mobile-web-app-title" content="Payroster">
 <link rel="manifest" href="manifest.webmanifest">
-<link rel="apple-touch-icon" href="icons/apple-touch-icon4.png">
-<link rel="icon" href="icons/icon4-192.png">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon5.png">
+<link rel="icon" href="icons/icon5-192.png">
 <style>:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0}img{max-width:100%}[hidden]{display:none!important}</style>
-<title>Payroster+</title>
+<title>Payroster</title>
 <script>try{if(localStorage.getItem('pr.lock'))document.documentElement.classList.add('locked');var u=JSON.parse(localStorage.getItem('pr.ui')||'{}');if(u.style!=='classic')document.documentElement.classList.add('glass');if(u.theme==='light'||u.theme==='dark')document.documentElement.dataset.theme=u.theme;if(u.zoom&&u.zoom!==100)document.documentElement.style.setProperty('--uiz',u.zoom/100)}catch(e){}</script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -674,13 +674,14 @@ html.glass .mg{background:var(--clay,var(--card2));box-shadow:var(--clay-sh,none
 .seg{display:flex;gap:4px;padding:4px;border-radius:16px;background:var(--sunk);flex-wrap:wrap}
 .seg button{flex:1 1 0;min-width:0;border:0;background:transparent;color:var(--muted);font:600 13.5px/1.2 var(--f-body);padding:9px 6px;border-radius:12px;cursor:pointer}
 .seg button.on{background:var(--surface);color:var(--ink);box-shadow:0 1px 4px rgba(0,0,0,.14)}
+.brand .bmark{width:1.35em;height:1.35em;vertical-align:-.32em;margin-right:6px;border-radius:.3em}
 </style>
 
 </head>
 <body>
 <div class="wrap">
   <header class="bar">
-    <div class="hello"><div class="hl1"><span class="brand">Pay<span>roster</span><sup class="plus">+</sup></span><span id="hDate"></span></div><div class="hl2" id="hGreet"></div></div>
+    <div class="hello"><div class="hl1"><span class="brand"><svg class="bmark" viewBox="0 0 120 120" aria-hidden="true"><rect width="120" height="120" rx="27" fill="#111"/><circle cx="62" cy="54" r="16" fill="none" stroke="#00e5a0" stroke-width="10"/><path d="M46 52v40q0 10 -10 10" stroke="#00e5a0" stroke-width="10" stroke-linecap="round" fill="none"/><path d="M84 30l10-5-3 11z" fill="#fff"/></svg>Payroster</span><span id="hDate"></span></div><div class="hl2" id="hGreet"></div></div>
     <label class="iconbtn" for="pdfIn" title="" data-i18n-title="importTitle">＋ PDF</label>
     <input type="file" id="pdfIn" accept="application/pdf,.pdf,image/*,application/json,.json" class="sr" multiple>
   </header>
@@ -1877,7 +1878,7 @@ var I18N = {
     "swp_days": "Días cambiados: {d}",
     "swp_note": "El roster compartido no trae el FDP: las horas salen de su check-in, su último aterrizaje y su check-out. La nómina real puede ser distinta.",
     "swp_estT": "Es una estimación",
-    "inst_t": "Instala Payroster+ en el móvil",
+    "inst_t": "Instala Payroster en el móvil",
     "inst_why": "Se abre a pantalla completa desde el inicio y funciona sin conexión, también en vuelo.",
     "inst_btn": "Instalar",
     "inst_ios": "En Safari: pulsa Compartir ⬆︎ y luego «Añadir a pantalla de inicio».",
@@ -2534,7 +2535,7 @@ var I18N = {
     "swp_days": "Dies canviats: {d}",
     "swp_note": "El roster compartit no porta el FDP: les hores surten del seu check-in, últim aterratge i check-out. La nòmina real pot ser diferent.",
     "swp_estT": "És una estimació",
-    "inst_t": "Instal·la Payroster+ al mòbil",
+    "inst_t": "Instal·la Payroster al mòbil",
     "inst_why": "S’obre a pantalla completa des de l’inici i funciona sense connexió, també en vol.",
     "inst_btn": "Instal·lar",
     "inst_ios": "A Safari: prem Compartir ⬆︎ i després «Afegir a la pantalla d’inici».",
@@ -3191,7 +3192,7 @@ var I18N = {
     "swp_days": "Days swapped: {d}",
     "swp_note": "The shared roster has no FDP: the hours come from their check-in, last landing and check-out. Your real pay may differ.",
     "swp_estT": "This is an estimate",
-    "inst_t": "Install Payroster+ on your phone",
+    "inst_t": "Install Payroster on your phone",
     "inst_why": "It opens full screen from your home screen and works offline, in flight too.",
     "inst_btn": "Install",
     "inst_ios": "In Safari: tap Share ⬆︎, then “Add to Home Screen”.",
@@ -3848,7 +3849,7 @@ var I18N = {
     "swp_days": "Getauschte Tage: {d}",
     "swp_note": "Der geteilte Dienstplan enthält keine FDP: Die Stunden kommen aus Check-in, letzter Landung und Check-out. Die echte Abrechnung kann abweichen.",
     "swp_estT": "Das ist eine Schätzung",
-    "inst_t": "Payroster+ aufs Handy installieren",
+    "inst_t": "Payroster aufs Handy installieren",
     "inst_why": "Sie öffnet sich im Vollbild vom Startbildschirm und funktioniert offline, auch im Flug.",
     "inst_btn": "Installieren",
     "inst_ios": "In Safari: Teilen ⬆︎ antippen, dann „Zum Home-Bildschirm“.",
@@ -4505,7 +4506,7 @@ var I18N = {
     "swp_days": "Jours échangés : {d}",
     "swp_note": "Le planning partagé n’a pas la FDP : les heures viennent du check-in, du dernier atterrissage et du check-out. La vraie paie peut être différente.",
     "swp_estT": "C’est une estimation",
-    "inst_t": "Installe Payroster+ sur ton téléphone",
+    "inst_t": "Installe Payroster sur ton téléphone",
     "inst_why": "Elle s’ouvre en plein écran depuis l’accueil et marche hors ligne, en vol aussi.",
     "inst_btn": "Installer",
     "inst_ios": "Dans Safari : touche Partager ⬆︎ puis « Sur l’écran d’accueil ».",
@@ -5162,7 +5163,7 @@ var I18N = {
     "swp_days": "Cserélt napok: {d}",
     "swp_note": "A megosztott beosztásban nincs FDP: az órák a check-inből, az utolsó leszállásból és a check-outból jönnek. A valódi bér eltérhet.",
     "swp_estT": "Ez csak becslés",
-    "inst_t": "Telepítsd a Payroster+-t a telefonra",
+    "inst_t": "Telepítsd a Payroster-t a telefonra",
     "inst_why": "Teljes képernyőn nyílik a kezdőképernyőről, és internet nélkül is működik, repülés közben is.",
     "inst_btn": "Telepítés",
     "inst_ios": "Safariban: Megosztás ⬆︎, majd „Főképernyőhöz adás”.",
@@ -5819,7 +5820,7 @@ var I18N = {
     "swp_days": "Vymenené dni: {d}",
     "swp_note": "Zdieľaný rozpis nemá FDP: hodiny sú z check-inu, posledného pristátia a check-outu. Skutočná mzda sa môže líšiť.",
     "swp_estT": "Je to len odhad",
-    "inst_t": "Nainštaluj Payroster+ do telefónu",
+    "inst_t": "Nainštaluj Payroster do telefónu",
     "inst_why": "Otvára sa na celú obrazovku z plochy a funguje offline, aj počas letu.",
     "inst_btn": "Inštalovať",
     "inst_ios": "V Safari: ťukni na Zdieľať ⬆︎ a potom „Pridať na plochu“.",
@@ -6476,7 +6477,7 @@ var I18N = {
     "swp_days": "Vyměněné dny: {d}",
     "swp_note": "Sdílený rozpis nemá FDP: hodiny jsou z check-inu, posledního přistání a check-outu. Skutečná mzda se může lišit.",
     "swp_estT": "Je to jen odhad",
-    "inst_t": "Nainstaluj Payroster+ do telefonu",
+    "inst_t": "Nainstaluj Payroster do telefonu",
     "inst_why": "Otevírá se na celou obrazovku z plochy a funguje offline, i za letu.",
     "inst_btn": "Instalovat",
     "inst_ios": "V Safari: klepni na Sdílet ⬆︎ a pak „Přidat na plochu“.",
@@ -7132,7 +7133,7 @@ var I18N = {
     "swp_days": "Giorni scambiati: {d}",
     "swp_note": "Il roster condiviso non ha l’FDP: le ore vengono dal check-in, dall’ultimo atterraggio e dal check-out. Lo stipendio reale può essere diverso.",
     "swp_estT": "È una stima",
-    "inst_t": "Installa Payroster+ sul telefono",
+    "inst_t": "Installa Payroster sul telefono",
     "inst_why": "Si apre a schermo intero dalla schermata home e funziona offline, anche in volo.",
     "inst_btn": "Installa",
     "inst_ios": "In Safari: tocca Condividi ⬆︎ e poi «Aggiungi alla schermata Home».",
@@ -7894,7 +7895,7 @@ var I18N = {
     "swp_days": "Dias trocados: {d}",
     "swp_note": "A escala partilhada não traz o FDP: as horas saem do check-in, última aterragem e check-out. O recibo real pode ser diferente.",
     "swp_estT": "É uma estimativa",
-    "inst_t": "Instala o Payroster+ no telemóvel",
+    "inst_t": "Instala o Payroster no telemóvel",
     "inst_why": "Abre em ecrã inteiro a partir do ecrã inicial e funciona sem ligação, também em voo.",
     "inst_btn": "Instalar",
     "inst_ios": "No Safari: toca em Partilhar ⬆︎ e depois «Adicionar ao ecrã principal».",
@@ -8656,7 +8657,7 @@ var I18N = {
     "swp_days": "Zile schimbate: {d}",
     "swp_note": "Planul partajat nu are FDP: orele vin din check-in, ultima aterizare și check-out. Salariul real poate fi diferit.",
     "swp_estT": "Este o estimare",
-    "inst_t": "Instalează Payroster+ pe telefon",
+    "inst_t": "Instalează Payroster pe telefon",
     "inst_why": "Se deschide pe tot ecranul din ecranul principal și merge offline, și în zbor.",
     "inst_btn": "Instalează",
     "inst_ios": "În Safari: apasă Partajare ⬆︎, apoi „Adaugă pe ecranul principal”.",
@@ -13005,7 +13006,7 @@ document.addEventListener('click', async e => {
   if(td){ delete (state.tracks || {})[td.dataset.trkdel]; save(); if(toolOpen === 'map' && !mm) renderMap(); return; }
 });
 
-// ---- Payroster+: licences & expiry dates, delays (actual FDP), fatigue, on-board sales log ----
+// ---- Payroster: licences & expiry dates, delays (actual FDP), fatigue, on-board sales log ----
 
 // ---------- 1. licences and expiry dates ----------
 const LIC_PRESETS = ['lic_sep','lic_crm','lic_dg','lic_sec','lic_fa','lic_med','lic_cca','lic_tri','lic_pass','lic_id'];
@@ -13413,7 +13414,7 @@ function Globe3D(box){
   };
 }
 
-// ---- Payroster+ extras: pick-up, sleep time, weather, Face ID lock, FTL "from today", backup reminder ----
+// ---- Payroster extras: pick-up, sleep time, weather, Face ID lock, FTL "from today", backup reminder ----
 
 // transport before a duty («Pick Up» line, or TAXI/TAXI_LAT before a ground duty), in ms (UTC)
 function pickupMs(date, events, startMs){
@@ -13496,8 +13497,8 @@ async function lockAvailable(){
 }
 async function lockEnable(){
   const cred = await navigator.credentials.create({ publicKey: {
-    challenge: lkRnd(32), rp: { name: 'Payroster+' },
-    user: { id: lkRnd(16), name: 'payroster', displayName: 'Payroster+' },
+    challenge: lkRnd(32), rp: { name: 'Payroster' },
+    user: { id: lkRnd(16), name: 'payroster', displayName: 'Payroster' },
     pubKeyCredParams: [{ type:'public-key', alg:-7 }, { type:'public-key', alg:-257 }],
     authenticatorSelection: { authenticatorAttachment:'platform', userVerification:'required', residentKey:'discouraged' }, timeout: 60000 } });
   localStorage.setItem(LOCK_KEY, lkB64(cred.rawId));
@@ -13721,7 +13722,7 @@ function renderYearWarn(){
 function reportText(){
   const s = state.settings, ms = Object.keys(state.months).sort();
   const lines = [
-    'Payroster+ ' + (typeof APP_VERSION !== 'undefined' ? APP_VERSION : ''), 'Parser v' + PR.PARSER_V,
+    'Payroster ' + (typeof APP_VERSION !== 'undefined' ? APP_VERSION : ''), 'Parser v' + PR.PARSER_V,
     'Lang: ' + lang + ' · ' + navigator.userAgent.replace(/\(([^)]*)\)/, m => m.length > 60 ? m.slice(0, 60) + '…)' : m),
     'Rank: ' + s.rank + ' · contract ' + s.contract + ' % · base ' + s.base + ' · trainer ' + (s.isTrainer ? 'y' : 'n') + ' · CT ' + (s.isCT ? 'y' : 'n'),
     'Months: ' + ms.length + ' (' + (ms[0] || '-') + ' … ' + (ms[ms.length-1] || '-') + ') · payslips ' + Object.keys(state.slips||{}).length,
@@ -13749,7 +13750,7 @@ document.addEventListener('click', async e => {
   if(e.target.id === 'ywOk'){ state.yearAck = +e.target.dataset.y; save(); renderYearWarn(); return; }
   if(e.target.id === 'rp-go'){
     const txt = ($('rp-what').value.trim() ? t('rp_what') + ': ' + $('rp-what').value.trim() + '\n\n' : '') + reportText(), out = $('rp-out');
-    try{ if(navigator.share){ await navigator.share({ title: 'Payroster+ – ' + t('rp_T'), text: txt }); out.textContent = ''; return; } }catch(err){ if(err && err.name === 'AbortError') return; }
+    try{ if(navigator.share){ await navigator.share({ title: 'Payroster – ' + t('rp_T'), text: txt }); out.textContent = ''; return; } }catch(err){ if(err && err.name === 'AbortError') return; }
     try{ await navigator.clipboard.writeText(txt); out.textContent = t('rp_copied'); }
     catch(err){ out.innerHTML = `<textarea readonly rows="8" style="width:100%;font:12px var(--f-mono)">${esc(txt)}</textarea>`; }
     return;
@@ -13961,7 +13962,7 @@ document.addEventListener('change', e => { if(e.target && e.target.id === 'earn-
 <script>
 const SEED = null;
 const SEED_SETTINGS = null;
-const APP_VERSION = '2026.11.12-2202';
+const APP_VERSION = '2026.11.12-2217';
 const IS_PWA_BUILD = true;
 const LS = 'payroster.v1';
 const KC = { sick:'--warn', flight:'--k-flight', deadhead:'--k-dh', training:'--k-train', standby:'--k-sby', reserve:'--k-sby', ground:'--k-ground', off:'--k-off', empty:'--k-off', other:'--k-ground' };
