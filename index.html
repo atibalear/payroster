@@ -561,13 +561,24 @@ html.glass[data-theme="dark"] .tabbar .tb button{background:rgba(255,255,255,.08
 .tabbar .tb button.on,html.glass .tabbar .tb button.on{background:var(--accent);color:#fff;box-shadow:0 6px 16px color-mix(in srgb,var(--accent) 40%,transparent)}
 .tabbar .tb button:active{transform:scale(.92)}
 .bar .brand{flex:1}
+
+/* greeting header */
+.hello{flex:1;min-width:0;display:flex;flex-direction:column;gap:1px}
+.hello .hl1{display:flex;align-items:baseline;gap:8px;font-size:12.5px;font-weight:600;color:var(--muted);white-space:nowrap;overflow:hidden}
+.hello .hl1 .brand{font-size:15px;margin:0;flex:none}
+.hello .hl1 #hDate{text-transform:capitalize;overflow:hidden;text-overflow:ellipsis}
+.hello .hl2{font:800 24px/1.15 -apple-system,"SF Pro Display",var(--f-display),system-ui,sans-serif;letter-spacing:-.02em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.hello .hl2:empty{display:none}
+/* the bar sits low, like the system tab bar */
+.tabbar,html.glass .tabbar{bottom:calc(env(safe-area-inset-bottom, 0px) * .45 + 6px)}
+html.glass .wrap,.wrap{padding-bottom:calc(84px + env(safe-area-inset-bottom, 0px) * .5)}
 </style>
 
 </head>
 <body>
 <div class="wrap">
   <header class="bar">
-    <div class="brand">Pay<span>roster</span><sup class="plus">+</sup></div>
+    <div class="hello"><div class="hl1"><span class="brand">Pay<span>roster</span><sup class="plus">+</sup></span><span id="hDate"></span></div><div class="hl2" id="hGreet"></div></div>
     <label class="iconbtn" for="pdfIn" title="" data-i18n-title="importTitle">＋ PDF</label>
     <input type="file" id="pdfIn" accept="application/pdf,.pdf,image/*,application/json,.json" class="sr" multiple>
   </header>
@@ -1444,6 +1455,10 @@ var I18N = {
   names: { es: 'Español', ca: 'Català', en: 'English', de: 'Deutsch', fr: 'Français', it: 'Italiano', pt: 'Português', ro: 'Română', hu: 'Magyar', sk: 'Slovenčina', cs: 'Čeština' },
   locales: { es: 'es-ES', ca: 'ca-ES', en: 'en-GB', de: 'de-DE', fr: 'fr-FR', it: 'it-IT', pt: 'pt-PT', ro: 'ro-RO', hu: 'hu-HU', sk: 'sk-SK', cs: 'cs-CZ' },
   es: {
+    ui_nick: 'Tu nombre para el saludo',
+    hi_e: 'Buenas noches',
+    hi_a: 'Buenas tardes',
+    hi_m: 'Buenos días',
     dx_easa: 'Detalles EASA (FTL)',
     dx_delayS: 'más de 30 min cuenta para el FDP pagado',
     dx_delay: 'Retraso a la llegada',
@@ -2029,6 +2044,10 @@ var I18N = {
     e_noPeriod: 'No encuentro el periodo del roster. ¿Es el «Individual duty plan» de IDP en PDF?'
   },
   ca: {
+    ui_nick: 'El teu nom per a la salutació',
+    hi_e: 'Bona nit',
+    hi_a: 'Bona tarda',
+    hi_m: 'Bon dia',
     dx_easa: 'Detalls EASA (FTL)',
     dx_delayS: 'més de 30 min compta per al FDP pagat',
     dx_delay: 'Retard a l’arribada',
@@ -2615,6 +2634,10 @@ var I18N = {
     e_noPeriod: 'No trobo el període del roster. És l’«Individual duty plan» d’IDP en PDF?'
   },
   en: {
+    ui_nick: 'Your name for the greeting',
+    hi_e: 'Good evening',
+    hi_a: 'Good afternoon',
+    hi_m: 'Good morning',
     dx_easa: 'EASA details (FTL)',
     dx_delayS: 'over 30 min counts for paid FDP',
     dx_delay: 'Arrival delay',
@@ -3201,6 +3224,10 @@ var I18N = {
     e_noPeriod: 'I can’t find the roster period. Is this the IDP “Individual duty plan” PDF?'
   },
   de: {
+    ui_nick: 'Dein Name für die Begrüßung',
+    hi_e: 'Guten Abend',
+    hi_a: 'Guten Tag',
+    hi_m: 'Guten Morgen',
     dx_easa: 'EASA-Details (FTL)',
     dx_delayS: 'über 30 min zählt für bezahlte FDP',
     dx_delay: 'Verspätung bei Ankunft',
@@ -3787,6 +3814,10 @@ var I18N = {
     e_noPeriod: 'Ich finde den Zeitraum des Dienstplans nicht. Ist das der „Individual duty plan“ aus IDP als PDF?'
   },
   fr: {
+    ui_nick: 'Ton prénom pour le salut',
+    hi_e: 'Bonsoir',
+    hi_a: 'Bon après-midi',
+    hi_m: 'Bonjour',
     dx_easa: 'Détails EASA (FTL)',
     dx_delayS: 'plus de 30 min compte pour le FDP payé',
     dx_delay: 'Retard à l’arrivée',
@@ -4373,6 +4404,10 @@ var I18N = {
     e_noPeriod: 'Je ne trouve pas la période du planning. Est-ce bien l’« Individual duty plan » d’IDP en PDF ?'
   },
   hu: {
+    ui_nick: 'A neved a köszöntéshez',
+    hi_e: 'Jó estét',
+    hi_a: 'Jó napot',
+    hi_m: 'Jó reggelt',
     dx_easa: 'EASA részletek (FTL)',
     dx_delayS: '30 perc felett számít a fizetett FDP-be',
     dx_delay: 'Késés érkezéskor',
@@ -4959,6 +4994,10 @@ var I18N = {
     e_noPeriod: 'Nem találom a beosztás időszakát. Ez az IDP „Individual duty plan” PDF-je?'
   },
   sk: {
+    ui_nick: 'Tvoje meno pre pozdrav',
+    hi_e: 'Dobrý večer',
+    hi_a: 'Dobrý deň',
+    hi_m: 'Dobré ráno',
     dx_easa: 'Podrobnosti EASA (FTL)',
     dx_delayS: 'nad 30 min sa počíta do plateného FDP',
     dx_delay: 'Meškanie pri prílete',
@@ -5545,6 +5584,10 @@ var I18N = {
     e_noPeriod: 'Nenachádzam obdobie rozpisu. Je to „Individual duty plan“ z IDP v PDF?'
   },
   cs: {
+    ui_nick: 'Tvoje jméno pro pozdrav',
+    hi_e: 'Dobrý večer',
+    hi_a: 'Dobrý den',
+    hi_m: 'Dobré ráno',
     dx_easa: 'Podrobnosti EASA (FTL)',
     dx_delayS: 'nad 30 min se počítá do placeného FDP',
     dx_delay: 'Zpoždění při příletu',
@@ -6131,6 +6174,10 @@ var I18N = {
     e_noPeriod: 'Nenacházím období rozpisu. Je to „Individual duty plan“ z IDP v PDF?'
   },
   it: {
+    "ui_nick": "Il tuo nome per il saluto",
+    "hi_e": "Buonasera",
+    "hi_a": "Buon pomeriggio",
+    "hi_m": "Buongiorno",
     "dx_easa": "Dettagli EASA (FTL)",
     "dx_delayS": "oltre 30 min conta per l’FDP pagato",
     "dx_delay": "Ritardo all’arrivo",
@@ -6822,6 +6869,10 @@ var I18N = {
     "e_noPeriod": "Non trovo il periodo del turno. È l’«Individual duty plan» di IDP in PDF?"
   },
   pt: {
+    "ui_nick": "O teu nome para a saudação",
+    "hi_e": "Boa noite",
+    "hi_a": "Boa tarde",
+    "hi_m": "Bom dia",
     "dx_easa": "Detalhes EASA (FTL)",
     "dx_delayS": "mais de 30 min conta para o FDP pago",
     "dx_delay": "Atraso na chegada",
@@ -7513,6 +7564,10 @@ var I18N = {
     "e_noPeriod": "Não encontro o período da escala. É o «Individual duty plan» do IDP em PDF?"
   },
   ro: {
+    "ui_nick": "Numele tău pentru salut",
+    "hi_e": "Bună seara",
+    "hi_a": "Bună ziua",
+    "hi_m": "Bună dimineața",
     "dx_easa": "Detalii EASA (FTL)",
     "dx_delayS": "peste 30 min contează pentru FDP plătit",
     "dx_delay": "Întârziere la sosire",
@@ -12694,6 +12749,7 @@ function renderUiBox(){
   const el = $('uiBox'); if(!el) return;
   const u = uiPrefs(), th = u.theme || 'auto', z = u.zoom || 100;
   el.innerHTML = `<h2 style="margin:0 0 6px">${t('ui_T')}</h2><div class="form" style="margin-top:4px">
+    <label>${t('ui_nick')}<input type="text" id="ui-nick" value="${esc(state.settings.nick || '')}" placeholder="${esc(myFirstName() || '')}" autocomplete="given-name"></label>
     <label>${t('ui_style')}<select id="ui-style">${[['glass','ui_st_glass'],['classic','ui_st_classic']].map(([v,k]) => `<option value="${v}"${v===(u.style||'glass')?' selected':''}>${t(k)}</option>`).join('')}</select></label>
     <label>${t('ui_theme')}<select id="ui-theme">${['auto','light','dark'].map(v => `<option value="${v}"${v===th?' selected':''}>${t('ui_th_'+v)}</option>`).join('')}</select></label>
     <label>${t('ui_zoom')}<select id="ui-zoom">${[[90,'ui_z_s'],[100,'ui_z_n'],[115,'ui_z_l'],[130,'ui_z_xl']].map(([v,k]) => `<option value="${v}"${v===z?' selected':''}>${t(k)}</option>`).join('')}</select></label></div>`;
@@ -12849,11 +12905,28 @@ document.addEventListener('click', e => {
   setTimeout(() => { const r = $('d-' + d); if(r){ r.open = true; r.scrollIntoView({behavior:'smooth', block:'center'}); } }, 60);
 });
 
+// ---------- greeting in the header: good morning / afternoon / evening + your first name ----------
+function myFirstName(){
+  if(state.settings.nick) return state.settings.nick;
+  const ks = Object.keys(state.months).sort().reverse();
+  for(const k of ks){ const n = state.months[k] && state.months[k].crew; if(n){ const f = (n.split(',')[1] || n).trim().split(/\s+/)[0]; if(f) return f.charAt(0).toUpperCase() + f.slice(1).toLowerCase(); } }
+  return '';
+}
+function renderGreeting(){
+  const g = $('hGreet'), d = $('hDate'); if(!g) return;
+  const h = new Date().getHours(), key = h >= 5 && h < 12 ? 'hi_m' : h >= 12 && h < 20 ? 'hi_a' : 'hi_e', n = myFirstName();
+  g.textContent = n ? t(key) + ', ' + n : t(key);
+  if(d) d.textContent = '· ' + new Date().toLocaleDateString(LOC, {weekday:'long', day:'numeric', month:'short'});
+}
+document.addEventListener('visibilitychange', () => { if(document.visibilityState === 'visible') try{ renderGreeting(); }catch(e){} });
+
+document.addEventListener('change', e => { if(e.target.id === 'ui-nick'){ state.settings.nick = e.target.value.trim(); save(); renderGreeting(); } });
+
 </script>
 <script>
 const SEED = null;
 const SEED_SETTINGS = null;
-const APP_VERSION = '2026.11.12-0504';
+const APP_VERSION = '2026.11.12-0507';
 const IS_PWA_BUILD = true;
 const LS = 'payroster.v1';
 const KC = { sick:'--warn', flight:'--k-flight', deadhead:'--k-dh', training:'--k-train', standby:'--k-sby', reserve:'--k-sby', ground:'--k-ground', off:'--k-off', empty:'--k-off', other:'--k-ground' };
@@ -13085,7 +13158,7 @@ function render(){
   { const b = $('privBtn'); if(b && !b.innerHTML){ b.innerHTML = privIcon(); b.title = t(PRIV ? 'priv_show' : 'priv_hide'); b.setAttribute('aria-pressed', PRIV ? 'true' : 'false'); } }
   renderSetup();
   try{ renderInstall(); }catch(e){}
-  try{ renderToday(); renderChanges(ro); renderLicAlert(); renderLicTable(); renderBkRemind(); renderLockBox(); renderBaseWarn(ro); renderUiBox(); renderYearWarn(); renderReportBox(); renderWeek(); }catch(e){ console.warn(e); }
+  try{ renderToday(); renderChanges(ro); renderLicAlert(); renderLicTable(); renderBkRemind(); renderLockBox(); renderBaseWarn(ro); renderUiBox(); renderYearWarn(); renderReportBox(); renderWeek(); renderGreeting(); }catch(e){ console.warn(e); }
   if(ro.base && !s.baseSetByUser) s.base = ro.base;
   const w = $('rankWarn');
   if(s.configured && ro.rankNorm && ro.rankNorm!==s.rank){
