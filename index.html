@@ -1042,6 +1042,7 @@ var PR = (function () {
         out.push(x);
       }
       res.push({ parser: PARSER_V, year: yy, month: mm, crew: nameM ? nameM[1] : '', crewId: nameM ? nameM[2] : '', contract, rank, rankNorm: normRank(rank), base, days: out, from: o === 0 ? startDay : 1,
+        to: last < new Date(Date.UTC(yy, mm, 0)).getUTCDate() ? last : undefined,
         summary: nMonths === 1 ? summary : { flightTime: null, fdp: null }, multi: nMonths > 1 ? nMonths : undefined, checks });
     }
     return res;
@@ -1557,6 +1558,8 @@ var I18N = {
   names: { es: 'Español', ca: 'Català', en: 'English', de: 'Deutsch', fr: 'Français', it: 'Italiano', pt: 'Português', ro: 'Română', hu: 'Magyar', sk: 'Slovenčina', cs: 'Čeština' },
   locales: { es: 'es-ES', ca: 'ca-ES', en: 'en-GB', de: 'de-DE', fr: 'fr-FR', it: 'it-IT', pt: 'pt-PT', ro: 'ro-RO', hu: 'hu-HU', sk: 'sk-SK', cs: 'cs-CZ' },
   es: {
+    pt_text: 'Solo tienes este mes hasta el {d}, del roster del mes anterior. Cuando salga el roster de {m}, súbelo y se completará; mientras tanto la nómina de este mes no es fiable.',
+    pt_title: 'Roster incompleto',
     sales_override: 'Este importe del mes sustituye a lo apuntado por días ({v}); no se suman. Bórralo para usar la suma de los días.',
     src_days: 'suma de los días: {v}',
     fam_iA: 'Adopción: 6 semanas seguidas desde la resolución y el resto por semanas en los 12 meses siguientes. Si adoptas al hijo de tu cónyuge, el Tribunal Supremo reconoce tu prestación aunque el otro progenitor ya cobrara la suya y vivierais juntos desde el nacimiento (STS 997/2022).',
@@ -2213,6 +2216,8 @@ var I18N = {
     e_noPeriod: 'No encuentro el periodo del roster. ¿Es el «Individual duty plan» de IDP en PDF?'
   },
   ca: {
+    pt_text: 'Només tens aquest mes fins al {d}, del roster del mes anterior. Quan surti el roster de {m}, puja’l i es completarà; mentrestant la nòmina d’aquest mes no és fiable.',
+    pt_title: 'Roster incomplet',
     sales_override: 'Aquest import del mes substitueix el que has apuntat per dies ({v}); no se sumen. Esborra’l per fer servir la suma dels dies.',
     src_days: 'suma dels dies: {v}',
     fam_iA: 'Adopció: 6 setmanes seguides des de la resolució i la resta per setmanes en els 12 mesos següents. Si adoptes el fill del teu cònjuge, el Tribunal Suprem reconeix la teva prestació encara que l’altre progenitor ja cobrés la seva i hi visquéssiu des del naixement (STS 997/2022).',
@@ -2870,6 +2875,8 @@ var I18N = {
     e_noPeriod: 'No trobo el període del roster. És l’«Individual duty plan» d’IDP en PDF?'
   },
   en: {
+    pt_text: 'You only have this month up to {d}, from last month’s roster. When the {m} roster is out, upload it and the month fills in; until then this month’s pay is not reliable.',
+    pt_title: 'Roster incomplete',
     sales_override: 'This monthly amount replaces what you entered per day ({v}); they are not added. Clear it to use the sum of the days.',
     src_days: 'sum of the days: {v}',
     fam_iA: 'Adoption: 6 weeks in one go from the decision, the rest week by week over the next 12 months. If you adopt your spouse’s child, the Spanish Supreme Court grants your benefit even if the other parent already received theirs and you have lived together since the birth (STS 997/2022).',
@@ -3527,6 +3534,8 @@ var I18N = {
     e_noPeriod: 'I can’t find the roster period. Is this the IDP “Individual duty plan” PDF?'
   },
   de: {
+    pt_text: 'Diesen Monat hast du nur bis {d}, aus dem Roster des Vormonats. Lade den Roster für {m} hoch, sobald er da ist; bis dahin ist die Abrechnung dieses Monats nicht verlässlich.',
+    pt_title: 'Roster unvollständig',
     sales_override: 'Dieser Monatsbetrag ersetzt die Tageseinträge ({v}); sie werden nicht addiert. Lösch ihn, um die Summe der Tage zu nutzen.',
     src_days: 'Summe der Tage: {v}',
     fam_iA: 'Adoption: 6 Wochen am Stück ab dem Beschluss, der Rest wochenweise in den 12 Monaten danach. Adoptierst du das Kind deines Ehepartners, gewährt der spanische Oberste Gerichtshof deine Leistung, auch wenn der andere Elternteil seine schon bekam und ihr seit der Geburt zusammenlebt (STS 997/2022).',
@@ -4184,6 +4193,8 @@ var I18N = {
     e_noPeriod: 'Ich finde den Zeitraum des Dienstplans nicht. Ist das der „Individual duty plan“ aus IDP als PDF?'
   },
   fr: {
+    pt_text: 'Tu n’as ce mois que jusqu’au {d}, grâce au planning du mois précédent. Quand le planning de {m} sort, importe-le ; d’ici là la paie de ce mois n’est pas fiable.',
+    pt_title: 'Planning incomplet',
     sales_override: 'Ce montant du mois remplace ce que tu as saisi par jour ({v}) ; ils ne s’additionnent pas. Efface-le pour utiliser la somme des jours.',
     src_days: 'somme des jours : {v}',
     fam_iA: 'Adoption : 6 semaines d’un bloc dès la décision, le reste par semaine dans les 12 mois suivants. Si tu adoptes l’enfant de ton conjoint, la Cour suprême espagnole reconnaît ta prestation même si l’autre parent a déjà touché la sienne et que vous viviez ensemble depuis la naissance (STS 997/2022).',
@@ -4841,6 +4852,8 @@ var I18N = {
     e_noPeriod: 'Je ne trouve pas la période du planning. Est-ce bien l’« Individual duty plan » d’IDP en PDF ?'
   },
   hu: {
+    pt_text: 'Ebből a hónapból csak {d}-ig van adatod, az előző havi beosztásból. Ha kijön a(z) {m} beosztás, töltsd fel; addig e havi bér nem megbízható.',
+    pt_title: 'Hiányos beosztás',
     sales_override: 'Ez a havi összeg felülírja a napokra beírtakat ({v}); nem adódnak össze. Töröld, hogy a napok összegét használja.',
     src_days: 'a napok összege: {v}',
     fam_iA: 'Örökbefogadás: 6 hét egyben a határozattól, a többi hetenként a következő 12 hónapban. Ha a házastársad gyermekét fogadod örökbe, a spanyol Legfelsőbb Bíróság elismeri az ellátásodat akkor is, ha a másik szülő már megkapta a sajátját, és a születés óta együtt éltek (STS 997/2022).',
@@ -5498,6 +5511,8 @@ var I18N = {
     e_noPeriod: 'Nem találom a beosztás időszakát. Ez az IDP „Individual duty plan” PDF-je?'
   },
   sk: {
+    pt_text: 'Tento mesiac máš len do {d}, z rozpisu predošlého mesiaca. Keď vyjde rozpis na {m}, nahraj ho; dovtedy výplata za tento mesiac nie je spoľahlivá.',
+    pt_title: 'Neúplný rozpis',
     sales_override: 'Táto mesačná suma nahrádza zadané po dňoch ({v}); nesčítavajú sa. Vymaž ju, aby sa použil súčet dní.',
     src_days: 'súčet dní: {v}',
     fam_iA: 'Adopcia: 6 týždňov naraz od rozhodnutia, zvyšok po týždňoch v nasledujúcich 12 mesiacoch. Ak adoptuješ dieťa manžela, španielsky Najvyšší súd uznáva tvoju dávku, aj keď druhý rodič už svoju dostal a žijete spolu od narodenia (STS 997/2022).',
@@ -6155,6 +6170,8 @@ var I18N = {
     e_noPeriod: 'Nenachádzam obdobie rozpisu. Je to „Individual duty plan“ z IDP v PDF?'
   },
   cs: {
+    pt_text: 'Tento měsíc máš jen do {d}, z rozpisu předchozího měsíce. Až vyjde rozpis na {m}, nahraj ho; do té doby výplata za tento měsíc není spolehlivá.',
+    pt_title: 'Neúplný rozpis',
     sales_override: 'Tato měsíční částka nahrazuje zadané po dnech ({v}); nesčítají se. Smaž ji, aby se použil součet dní.',
     src_days: 'součet dní: {v}',
     fam_iA: 'Adopce: 6 týdnů vcelku od rozhodnutí, zbytek po týdnech v následujících 12 měsících. Pokud adoptuješ dítě manžela, španělský Nejvyšší soud uznává tvou dávku, i když druhý rodič už svou dostal a žijete spolu od narození (STS 997/2022).',
@@ -6812,6 +6829,8 @@ var I18N = {
     e_noPeriod: 'Nenacházím období rozpisu. Je to „Individual duty plan“ z IDP v PDF?'
   },
   it: {
+    "pt_text": "Hai questo mese solo fino al {d}, dal roster del mese prima. Quando esce il roster di {m}, caricalo e si completa; fino ad allora la paga di questo mese non è affidabile.",
+    "pt_title": "Roster incompleto",
     "sales_override": "Questo importo del mese sostituisce quanto inserito per giorno ({v}); non si sommano. Cancellalo per usare la somma dei giorni.",
     "src_days": "somma dei giorni: {v}",
     "fam_iA": "Adozione: 6 settimane di fila dalla decisione, il resto a settimane nei 12 mesi successivi. Se adotti il figlio del tuo coniuge, la Corte suprema spagnola riconosce la tua prestazione anche se l’altro genitore ha già ricevuto la sua e vivete insieme dalla nascita (STS 997/2022).",
@@ -7574,6 +7593,8 @@ var I18N = {
     "e_noPeriod": "Non trovo il periodo del turno. È l’«Individual duty plan» di IDP in PDF?"
   },
   pt: {
+    "pt_text": "Só tens este mês até {d}, da escala do mês anterior. Quando sair a escala de {m}, carrega-a e fica completo; até lá o salário deste mês não é fiável.",
+    "pt_title": "Escala incompleta",
     "sales_override": "Este valor do mês substitui o que puseste por dia ({v}); não se somam. Apaga-o para usar a soma dos dias.",
     "src_days": "soma dos dias: {v}",
     "fam_iA": "Adoção: 6 semanas seguidas desde a decisão e o resto por semanas nos 12 meses seguintes. Se adotares o filho do teu cônjuge, o Supremo espanhol reconhece a tua prestação mesmo que o outro progenitor já tenha recebido a sua e vivam juntos desde o nascimento (STS 997/2022).",
@@ -8336,6 +8357,8 @@ var I18N = {
     "e_noPeriod": "Não encontro o período da escala. É o «Individual duty plan» do IDP em PDF?"
   },
   ro: {
+    "pt_text": "Ai luna aceasta doar până pe {d}, din rosterul lunii trecute. Când apare rosterul pentru {m}, încarcă-l și se completează; până atunci plata acestei luni nu e sigură.",
+    "pt_title": "Roster incomplet",
     "sales_override": "Suma lunii înlocuiește ce ai trecut pe zile ({v}); nu se adună. Șterge-o ca să folosești suma zilelor.",
     "src_days": "suma zilelor: {v}",
     "fam_iA": "Adopție: 6 săptămâni continuu de la hotărâre, restul pe săptămâni în următoarele 12 luni. Dacă adopți copilul soțului, Curtea Supremă spaniolă îți recunoaște prestația chiar dacă celălalt părinte a primit-o deja și locuiți împreună de la naștere (STS 997/2022).",
@@ -13614,12 +13637,19 @@ function rosterBase(ro){
 function renderBaseWarn(ro){
   const el = $('baseWarn'); if(!el) return;
   const rb = rosterBase(ro), b = state.settings.base || 'PMI';
+  if(ro && ro.to){
+    const dl = new Date(Date.UTC(ro.year, ro.month-1, ro.to)).toLocaleDateString(LOC, {day:'numeric', month:'long', timeZone:'UTC'});
+    el.hidden = false;
+    el.innerHTML = `<div class="eyebrow">${t('pt_title')}</div><p style="margin:6px 0 10px">${t('pt_text', {d: dl, m: monthName(ro.year, ro.month, {month:'long'})})}</p>
+      <button class="btn" type="button" data-pdf-pick="1">＋ PDF</button>`;
+    return;
+  }
   if(!rb || rb === b){ el.hidden = true; el.innerHTML = ''; return; }
   el.hidden = false;
   el.innerHTML = `<div class="eyebrow">⚠ ${t('bw_title')}</div><p style="margin:6px 0 10px">${t('bw_text', {r: rb, b})}</p>
     <button class="btn" type="button" id="bwFix" data-b="${rb}">${t('bw_fix', {r: rb})}</button>`;
 }
-document.addEventListener('click', e => { if(e.target.id === 'bwFix'){ state.settings.base = e.target.dataset.b; save(); render(); } });
+document.addEventListener('click', e => { if(e.target.dataset && e.target.dataset.pdfPick){ const i = document.getElementById('pdfIn'); if(i) i.click(); return; } if(e.target.id === 'bwFix'){ state.settings.base = e.target.dataset.b; save(); render(); } });
 
 // ---------- IRPF: will this year's withholding be enough? (Illes Balears scale) ----------
 const IRPF_STATE = [[12450,9.5],[20200,12],[35200,15],[60000,18.5],[300000,22.5],[Infinity,24.5]];
@@ -13962,7 +13992,7 @@ document.addEventListener('change', e => { if(e.target && e.target.id === 'earn-
 <script>
 const SEED = null;
 const SEED_SETTINGS = null;
-const APP_VERSION = '2026.11.12-2217';
+const APP_VERSION = '2026.11.12-2304';
 const IS_PWA_BUILD = true;
 const LS = 'payroster.v1';
 const KC = { sick:'--warn', flight:'--k-flight', deadhead:'--k-dh', training:'--k-train', standby:'--k-sby', reserve:'--k-sby', ground:'--k-ground', off:'--k-off', empty:'--k-off', other:'--k-ground' };
@@ -14013,6 +14043,10 @@ function load(from){
   if(s.settings.ctCodes==='DT_CT, DT_COMP, CT') s.settings.ctCodes='COMP';
   if(s.settings.trainingCodes==='DT_TRNG') s.settings.trainingCodes='DT_TRNG, CATR, CAB_K';
   if(s.settings.absenceCodes && !/\bSU\b/.test(s.settings.absenceCodes)) s.settings.absenceCodes = s.settings.absenceCodes.replace(/^U,/, 'U, SU,');
+  // months saved before rosters knew their last day: a month whose days stop early is a partial tail
+  for(const m of Object.values(s.months||{})){ if(!m || !m.days || !m.days.length || m.to || m.keptBefore) continue;
+    const dim = new Date(Date.UTC(m.year, m.month, 0)).getUTCDate(), mx = Math.max(...m.days.map(d => d.day));
+    if(mx < dim && m.days.length === mx - (m.from||1) + 1) m.to = mx; }
   if(!s.settings.v2slip){ s.settings.salesEstimate = 0; s.settings.v2slip = true; }
   s.slips = s.slips || {};
   if(!Object.keys(s.months).length && SEED){ s.months[key(SEED)] = SEED; s.current = key(SEED); }
@@ -14064,6 +14098,15 @@ function mergeEarlier(ro, old){
   ro.summary = { flightTime: null, fdp: null };
   return true;
 }
+function mergeLater(ro, old){
+  if(!old || !old.days) return false;
+  const later = old.days.filter(d => d.day > ro.to);
+  if(!later.some(d => (d.events||[]).length || d.dt || d.hotel)) return false;
+  ro.days = ro.days.filter(d => d.day <= ro.to).concat(later).sort((a, b) => a.day - b.day);
+  delete ro.to; if(old.from > 1 && ro.from <= 1) ro.from = 1;
+  ro.summary = { flightTime: null, fdp: null };
+  return true;
+}
 // Months that only start mid-month and lost their first days: look for them in the other roster PDFs
 // still saved on this device (e.g. a multi-month plan) and bring them back.
 function fillFromRaws(s){
@@ -14086,6 +14129,9 @@ function storeRosters(s, list, raw, only){
       if(k !== only && s.months[k]) continue;
     }
     if(id) ro.rawId = id; else ro.raw = raw;
+    // a roster that only reaches the first day(s) of a month (December plan ending 1 Jan) must not
+    // wipe a full month already saved: keep the saved days after its last day
+    if(ro.to && s.months[k] && mergeLater(ro, s.months[k])){ s.months[k] = ro; continue; }
     mergeEarlier(ro, s.months[k]);
     s.months[k] = ro;
     if(s.stale) s.stale = s.stale.filter(x=>x!==k);
@@ -14650,7 +14696,9 @@ async function importPdf(f){
       let d = null; try{ d = rosterDiff(before[k], state.months[k]); }catch(e){ console.warn(e); }
       if(d){ state.changes[k] = d; chg.push(t('chg_import',{m:monthName(r.year,r.month,{month:'long',year:'numeric'}), n:d.items.length, v:(d.dNet>0?'+':'')+eur.format(d.dNet)})); } else delete state.changes[k]; }
     pruneRaws(state);
-    state.current = keys[keys.length-1]; save(); render();
+    // open the last month that the PDF really covers, not a month it only touches with a day or two
+    const full = keys.filter(k => !(state.months[k] && state.months[k].to));
+    state.current = (full.length ? full : keys)[(full.length ? full : keys).length-1]; save(); render();
     const ro = list[list.length-1];
     if(list.length > 1){
       const flights = list.reduce((a,r)=>a+r.days.filter(d=>d.events.some(x=>x.type==='flt')).length, 0);
