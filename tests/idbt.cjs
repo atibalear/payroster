@@ -1,0 +1,21 @@
+const {chromium,devices}=require('playwright');const http=require('http'),fs=require('fs'),path=require('path');
+const srv=http.createServer((q,r)=>{let f=path.join(__dirname,'pwa',decodeURIComponent(q.url.split('?')[0]));if(f.endsWith('/'))f+='index.html';fs.readFile(f,(e,d)=>{if(e){r.writeHead(404);r.end();return;}r.writeHead(200,{'content-type':f.endsWith('.js')?'text/javascript':f.endsWith('.html')?'text/html':'application/octet-stream'});r.end(d);});}).listen(8773);
+(async()=>{const b=await chromium.launch();const c=await b.newContext({...devices['iPhone 13']});const p=await c.newPage();
+const errs=[];
+await p.goto('file://'+__dirname+'/payroster.html');await p.waitForTimeout(500);
+const st=await p.evaluate(()=>{const {stale,...k}=state;return JSON.stringify(k)});
+const p2=await c.newPage();p2.on('pageerror',e=>errs.push(e.message));
+await p2.goto('http://localhost:8773/index.html');await p2.evaluate(s=>localStorage.setItem('payroster.v1',s),st);
+await p2.reload();await p2.waitForTimeout(1500);
+const before=await p2.evaluate(()=>Object.keys(state.months).join(',')+' slips'+Object.keys(state.slips).length);
+console.log('1 loaded from LS:',before, JSON.stringify(errs));
+console.log('1 idb copy:',await p2.evaluate(()=>idbGet('state').then(t=>t?Object.keys(JSON.parse(t).months).join(','):'none')));
+console.log('sw:',await p2.evaluate(()=>navigator.serviceWorker.getRegistration().then(r=>!!r)));
+// quota failure
+await p2.evaluate(()=>{const o=Storage.prototype.setItem;Storage.prototype.setItem=function(k,v){if(k==='payroster.v1')throw new DOMException('full','QuotaExceededError');return o.call(this,k,v)}; state.extras['TEST']={marker:42}; save();});
+await p2.waitForTimeout(500);
+console.log('2 warn visible:',await p2.evaluate(()=>!!document.getElementById('saveWarn')&&!document.getElementById('saveWarn').hidden));
+await p2.reload();await p2.waitForTimeout(1500);
+console.log('3 after reload marker:',await p2.evaluate(()=>JSON.stringify(state.extras['TEST'])), 'months', await p2.evaluate(()=>Object.keys(state.months).join(',')));
+console.log('LS still has old (no marker):',await p2.evaluate(()=>!JSON.parse(localStorage.getItem('payroster.v1')).extras.TEST));
+console.log(errs);await b.close();srv.close();})();
