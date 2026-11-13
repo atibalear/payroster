@@ -727,6 +727,12 @@ body.scrolled .topbar{opacity:1;transform:none;pointer-events:auto}
 /* tool tiles: same widget style */
 .tile svg{box-sizing:content-box;padding:9px;border-radius:13px;background:color-mix(in srgb,var(--ink) 8%,transparent);stroke:var(--ink);stroke-width:1.9;width:22px;height:22px}
 @media (min-width:700px){ .tile svg{width:24px;height:24px;padding:11px;border-radius:15px} }
+/* compact sky header: countdown on the left, route arc on the right (about half the old height) */
+.td-sky{min-height:0;padding:14px 16px 12px}
+.td-sky .sky-lbl{margin-top:6px;font-size:11.5px}
+.td-sky .sky-big{font-size:clamp(32px,9.5vw,44px);max-width:58%;white-space:nowrap}
+.td-sky .sky-arc{position:absolute;right:6px;bottom:4px;width:42%;max-width:220px;margin:0;overflow:visible}
+@media (min-width:700px){ .td-sky .sky-arc{width:40%} }
 </style>
 
 </head>
@@ -14080,7 +14086,7 @@ function skyHtml(x, cur, pk, now, legs, st){
       <path d="M40 112 Q180 -6 320 112" stroke="rgba(255,255,255,.45)" stroke-width="2" stroke-dasharray="5 7" fill="none"/>
       ${frac > 0 ? `<path d="M40 112 Q180 -6 320 112" stroke="#ffd23f" stroke-width="3.5" fill="none" stroke-linecap="round" pathLength="100" stroke-dasharray="${(frac*100).toFixed(1)} 100"/>` : ''}
       <circle cx="40" cy="112" r="5" fill="#fff"/><circle cx="320" cy="112" r="5" fill="#fff"/>
-      <text x="40" y="129" text-anchor="middle" fill="#fff" font-size="12" font-weight="700">${from}</text><text x="320" y="129" text-anchor="middle" fill="#fff" font-size="12" font-weight="700">${to}</text>
+      <text x="40" y="134" text-anchor="middle" fill="#fff" font-size="22" font-weight="700">${from}</text><text x="320" y="134" text-anchor="middle" fill="#fff" font-size="22" font-weight="700">${to}</text>
       ${flying || frac > 0 && frac < 1 ? `<text x="${px.toFixed(0)}" y="${(py+8).toFixed(0)}" text-anchor="middle" font-size="22" fill="#fff">✈︎</text>` : ''}</svg>` : `<svg class="sky-arc" viewBox="0 0 360 60" aria-hidden="true">${sun}</svg>`;
   const eb = (cur ? t('td_curT') : t('td_nextT')) + ' · ' + localDay(x.start, st);
   return `<div class="td-sky sky-${ph}">${ph === 'night' ? '<div class="stars"></div>' : ''}
@@ -14245,7 +14251,7 @@ document.addEventListener('change', e => { if(e.target && e.target.id === 'earn-
 <script>
 const SEED = null;
 const SEED_SETTINGS = null;
-const APP_VERSION = '2026.11.13-1550';
+const APP_VERSION = '2026.11.13-1557';
 const IS_PWA_BUILD = true;
 const LS = 'payroster.v1';
 const KC = { sick:'--warn', flight:'--k-flight', deadhead:'--k-dh', training:'--k-train', standby:'--k-sby', reserve:'--k-sby', ground:'--k-ground', off:'--k-off', empty:'--k-off', other:'--k-ground' };
