@@ -1,5 +1,5 @@
 // Payroster service worker: keeps the app usable offline and lets new versions in.
-const CACHE = 'payroster-2026.11.13-1140';
+const CACHE = 'payroster-2026.11.13-1148';
 const SHELL = ['./', './index.html', './manifest.webmanifest', './lib/pdf.min.js', './lib/pdf.worker.min.js',
   './icons/icon5-192.png', './icons/icon5-512.png', './icons/icon5-mask-512.png', './icons/apple-touch-icon5.png'];
 // big files of the 3D moving map: kept in their own cache across versions so they work in flight
