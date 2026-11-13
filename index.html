@@ -719,6 +719,10 @@ body.scrolled .topbar{opacity:1;transform:none;pointer-events:auto}
 .sheet button .qi3{width:32px;height:32px}.sheet button .qi3 svg{width:19px;height:19px}
 .td-dly{gap:6px}.td-dly .note{flex-basis:100%}.td-dly .chip{padding:5px 12px}
 .topbar #tbGreet{color:var(--ink);font-weight:700}
+.slippanel{position:relative}
+.slippanel #slipH,.hero .panel>.eyebrow{padding-right:52px}
+.hero>.panel{position:relative}
+.hero>.panel.hnow{order:-1}
 </style>
 
 </head>
@@ -744,8 +748,8 @@ body.scrolled .topbar{opacity:1;transform:none;pointer-events:auto}
   <div class="rgrid" data-tab="roster"><div class="rcolA">
   <section class="panel today" id="today" hidden data-tab="roster"></section>
   <div class="panel chg" id="chgCard" hidden data-tab="roster"></div>
-  <div class="herowrap" data-tab="roster"><button class="privbtn" id="privBtn" type="button" aria-pressed="false"></button><section class="hero" id="hero"></section></div>
-  <section class="panel slippanel" data-tab="roster">
+  <div class="herowrap" data-tab="roster"><section class="hero" id="hero"></section></div>
+  <section class="panel slippanel" data-tab="roster"><button class="privbtn" type="button" data-priv="1" aria-pressed="false"></button>
     <h2 style="margin-top:0" id="slipH"></h2>
     <p class="note" id="slipNote"></p>
     <div class="tablewrap"><table class="slip" id="slip"></table></div>
@@ -14237,7 +14241,7 @@ document.addEventListener('change', e => { if(e.target && e.target.id === 'earn-
 <script>
 const SEED = null;
 const SEED_SETTINGS = null;
-const APP_VERSION = '2026.11.13-1403';
+const APP_VERSION = '2026.11.13-1549';
 const IS_PWA_BUILD = true;
 const LS = 'payroster.v1';
 const KC = { sick:'--warn', flight:'--k-flight', deadhead:'--k-dh', training:'--k-train', standby:'--k-sby', reserve:'--k-sby', ground:'--k-ground', off:'--k-off', empty:'--k-off', other:'--k-ground' };
@@ -14325,7 +14329,7 @@ function privMask(f){
 function setPriv(on){
   PRIV = on; try{ localStorage.setItem('pr.priv', on ? '1' : '0'); }catch(e){}
   document.body.classList.toggle('priv', on);
-  const b = $('privBtn'); if(b){ b.innerHTML = privIcon(); b.setAttribute('aria-pressed', on ? 'true' : 'false'); b.title = t(on ? 'priv_show' : 'priv_hide'); }
+  document.querySelectorAll('.privbtn').forEach(b => { b.innerHTML = privIcon(); b.setAttribute('aria-pressed', on ? 'true' : 'false'); b.title = t(on ? 'priv_show' : 'priv_hide'); });
   render(); if(typeof refreshTool === 'function') refreshTool();
 }
 const privIcon = () => PRIV
@@ -14491,7 +14495,7 @@ function render(){
   const ro = state.months[state.current];
   if(!ro){ renderSetup(); $('mLabel').textContent=t('noData'); $('hero').innerHTML=`<div class="panel"><div class="eyebrow">${t('startHere')}</div><p style="margin:8px 0 0">${t('startText')}</p></div>`; ['strip','legend','days','slip'].forEach(i=>$(i).innerHTML=''); renderForm(); renderStored(); return; }
   const s = state.settings;
-  { const b = $('privBtn'); if(b && !b.innerHTML){ b.innerHTML = privIcon(); b.title = t(PRIV ? 'priv_show' : 'priv_hide'); b.setAttribute('aria-pressed', PRIV ? 'true' : 'false'); } }
+  document.querySelectorAll('.privbtn').forEach(b => { if(!b.innerHTML){ b.innerHTML = privIcon(); b.title = t(PRIV ? 'priv_show' : 'priv_hide'); b.setAttribute('aria-pressed', PRIV ? 'true' : 'false'); } });
   renderSetup();
   try{ renderInstall(); }catch(e){}
   try{ renderToday(); renderChanges(ro); renderLicAlert(); renderLicTable(); renderBkRemind(); renderLockBox(); renderBaseWarn(ro); renderUiBox(); renderYearWarn(); renderReportBox(); renderWeek(); renderGreeting(); }catch(e){ console.warn(e); }
@@ -14536,7 +14540,7 @@ function renderHero(c, ro){
     const SN = slipFor(cN, state.settings, y2, m2);
     ahead = `<button type="button" class="ahead" data-gom="${c._nextKey}"><span>${t('aheadT',{m:monthName(y2,m2,{month:'long'}),r:monthName(roN.year,roN.month,{month:'long'})})}</span><b class="num">${eur.format(SN.net)} ›</b></button>`; }catch(e){} }
   $('hero').innerHTML = `
-  <div class="panel">
+  <div class="panel"><button class="privbtn" type="button" aria-pressed="${PRIV}" title="${t(PRIV?'priv_show':'priv_hide')}">${privIcon()}</button>
     <div class="eyebrow">${t('nextPayHead',{m:mNext})}</div>
     <div class="big num" style="color:var(--pay)">${eur.format(N.net)}</div>
     <div class="sub">${t('nextPaySub',{m:mNext,p:mNow})}</div>
@@ -14572,7 +14576,7 @@ function renderHero(c, ro){
     </div></div>
     </div>
   </div>
-  <div class="panel">
+  <div class="panel hnow"><button class="privbtn" type="button" aria-pressed="${PRIV}" title="${t(PRIV?'priv_show':'priv_hide')}">${privIcon()}</button>
     <div class="eyebrow">${t('slipOf',{m:mNow})}</div>
     ${ok ? `
       <div class="netfig num">${eur.format(P.net)}</div>
@@ -14834,7 +14838,7 @@ function renderStored(){
 
 // ---- events ----
 document.addEventListener('click', e=>{
-  if(e.target.closest && e.target.closest('#privBtn')){ setPriv(!PRIV); return; }
+  if(e.target.closest && e.target.closest('.privbtn')){ setPriv(!PRIV); return; }
   const go = e.target.closest('[data-go]');
   if(go){ const el = $('d-'+go.dataset.go) || $('v-'+go.dataset.go); if(el){ el.open = true; el.scrollIntoView({behavior: matchMedia('(prefers-reduced-motion: reduce)').matches?'auto':'smooth', block:'center'}); } return; }
   const del = e.target.closest('[data-del]');
@@ -14856,7 +14860,7 @@ $('prevM').onclick = ()=>{ const k=Object.keys(state.months).sort(); const i=k.i
 $('nextM').onclick = ()=>{ const k=Object.keys(state.months).sort(); const i=k.indexOf(state.current); if(i<k.length-1){state.current=k[i+1]; save(); render();} };
 
 document.addEventListener('change', e=>{
-  if(e.target.id==='f-lang' || e.target.id==='p-lang'){ state.lang = e.target.value; setLang(state.lang); if(IS_PWA_BUILD) $('verTxt').textContent = t('version',{v:APP_VERSION}); save(); $('form').dataset.ready=''; $('setup').innerHTML=''; $('setup').hidden=true; render(); if(typeof refreshTool==='function') refreshTool(); const pb=$('privBtn'); if(pb) pb.title=t(PRIV?'priv_show':'priv_hide'); return; }
+  if(e.target.id==='f-lang' || e.target.id==='p-lang'){ state.lang = e.target.value; setLang(state.lang); if(IS_PWA_BUILD) $('verTxt').textContent = t('version',{v:APP_VERSION}); save(); $('form').dataset.ready=''; $('setup').innerHTML=''; $('setup').hidden=true; render(); if(typeof refreshTool==='function') refreshTool(); document.querySelectorAll('.privbtn').forEach(pb => pb.title=t(PRIV?'priv_show':'priv_hide')); return; }
   const el = e.target;
   if(el.id==='q-joined') return;   // iOS fires change on every wheel move: wait for the Save button
   if(el.dataset.moneoff){ const k = el.dataset.moneoff; const v = String(el.value).trim();
