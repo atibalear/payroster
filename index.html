@@ -712,17 +712,21 @@ body.scrolled .topbar{opacity:1;transform:none;pointer-events:auto}
 .topbar .iconbtn{flex:none}
 
 /* Apple-style symbols: tinted glyph on a soft tinted circle, no gloss */
-.qi3{display:grid;place-items:center;width:36px;height:36px;flex:none;border-radius:50%;color:var(--qc);background:color-mix(in srgb,var(--qc) 15%,transparent)}
+/* widget style: monochrome glyph on a soft squircle */
+.qi3{display:grid;place-items:center;width:40px;height:40px;flex:none;border-radius:13px;color:var(--ink);background:color-mix(in srgb,var(--ink) 8%,transparent)}
 .qi3 svg{width:21px;height:21px}
 .qa{gap:6px;padding:11px 4px 9px}
 .qa:active .qi3{transform:scale(.94)}
-.sheet button .qi3{width:32px;height:32px}.sheet button .qi3 svg{width:19px;height:19px}
+.sheet button .qi3{width:32px;height:32px;border-radius:10px}.sheet button .qi3 svg{width:19px;height:19px}
 .td-dly{gap:6px}.td-dly .note{flex-basis:100%}.td-dly .chip{padding:5px 12px}
 .topbar #tbGreet{color:var(--ink);font-weight:700}
 .slippanel{position:relative}
 .slippanel #slipH,.hero .panel>.eyebrow{padding-right:52px}
 .hero>.panel{position:relative}
 .hero>.panel.hnow{order:-1}
+/* tool tiles: same widget style */
+.tile svg{box-sizing:content-box;padding:9px;border-radius:13px;background:color-mix(in srgb,var(--ink) 8%,transparent);stroke:var(--ink);stroke-width:1.9;width:22px;height:22px}
+@media (min-width:700px){ .tile svg{width:24px;height:24px;padding:11px;border-radius:15px} }
 </style>
 
 </head>
@@ -14241,7 +14245,7 @@ document.addEventListener('change', e => { if(e.target && e.target.id === 'earn-
 <script>
 const SEED = null;
 const SEED_SETTINGS = null;
-const APP_VERSION = '2026.11.13-1549';
+const APP_VERSION = '2026.11.13-1550';
 const IS_PWA_BUILD = true;
 const LS = 'payroster.v1';
 const KC = { sick:'--warn', flight:'--k-flight', deadhead:'--k-dh', training:'--k-train', standby:'--k-sby', reserve:'--k-sby', ground:'--k-ground', off:'--k-off', empty:'--k-off', other:'--k-ground' };
