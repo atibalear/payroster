@@ -20,8 +20,8 @@
 <style>
 /* Layout: duty-plan ledger — month figure + tier gauge on top, a NetLine-style day strip, then one row per day that opens into its pay breakdown. */
 :root{
-  --bg:#f3f4f7; --surface:#ffffff; --sunk:#e9ebf1; --ink:#161a2c; --muted:#5d6379; --line:#d8dbe5;
-  --accent:#2c4fd6; --accent-soft:#e3e8fb; --pay:#0b7650; --pay-soft:#dcf1e7; --warn:#a85a00; --warn-soft:#fbecd6;
+  --bg:#f3f4f7; --surface:#ffffff; --sunk:#e9ebf1; --ink:#0f1222; --muted:#62677a; --line:#d8dbe5;
+  --accent:#2856f0; --accent-soft:#e6ecfe; --pay:#0b7650; --pay-soft:#dcf1e7; --warn:#a85a00; --warn-soft:#fbecd6;
   --k-flight:#2c4fd6; --k-dh:#7d8bd6; --k-train:#c48a00; --k-sby:#8e4fb8; --k-off:#c9ccd7; --k-ground:#3a8a9a;
   --map-sea:#cfdff0; --map-sea2:#e4eefa; --map-sky:#a9cbf0; --ac-hi:#b9f2d8; --ac-edge:#0d4a36; --map-land:#f8f6f0; --map-border:#aeb6c6;
   --f-display:"Archivo", "Arial Narrow", system-ui, sans-serif;
@@ -396,9 +396,9 @@ input[type=date]::-webkit-date-and-time-value{text-align:left}
 
 /* ===== Liquid Glass (default look; "Classic" in My details → Display turns it off) ===== */
 html.glass{
-  --glass:rgba(255,255,255,.56); --glass-hi:rgba(255,255,255,.85); --glass-brd:rgba(255,255,255,.75); --glass-in:rgba(255,255,255,.5);
-  --glass-shadow:0 10px 30px rgba(40,60,140,.10); --sunk:rgba(255,255,255,.55);
-  --mesh:radial-gradient(110% 60% at 0% 0%,rgba(122,168,255,.55),transparent 60%),radial-gradient(80% 55% at 100% 25%,rgba(178,139,255,.45),transparent 60%),radial-gradient(90% 60% at 20% 100%,rgba(95,224,192,.40),transparent 60%),radial-gradient(70% 50% at 100% 100%,rgba(255,190,140,.30),transparent 60%),#e8edfb;
+  --glass:rgba(255,255,255,.86); --glass-hi:rgba(255,255,255,1); --glass-brd:rgba(17,24,39,.06); --glass-in:rgba(17,24,39,.04);
+  --glass-shadow:0 1px 2px rgba(17,24,39,.04),0 10px 30px -8px rgba(17,24,39,.10); --sunk:rgba(17,24,39,.06);
+  --mesh:radial-gradient(90% 45% at 15% 0%,rgba(96,140,255,.22),transparent 65%),radial-gradient(70% 40% at 100% 10%,rgba(160,120,255,.14),transparent 65%),linear-gradient(180deg,#eef2fb 0%,#f5f6fa 55%,#f2f3f7 100%);
 }
 @media (prefers-color-scheme: dark){ html.glass:not([data-theme="light"]){
   --glass:rgba(30,35,58,.55); --glass-hi:rgba(255,255,255,.14); --glass-brd:rgba(255,255,255,.10); --glass-in:rgba(255,255,255,.06);
@@ -590,9 +590,9 @@ html.glass .mpick{background:var(--glass);border-color:var(--glass-brd);backdrop
 .mp-m.sel{background:var(--accent);color:#fff}
 
 /* ===== "clay" 3D surfaces ===== */
-:root{--clay:linear-gradient(180deg,#ffffff 0%,#f2f4fb 100%);
-  --clay-sh:inset 0 1px 0 #fff,inset 0 -3px 0 rgba(30,45,110,.07),0 12px 24px -10px rgba(30,45,110,.30),0 2px 5px rgba(30,45,110,.08);
-  --clay-sh-press:inset 0 1px 0 #fff,inset 0 -1px 0 rgba(30,45,110,.07),0 4px 10px -6px rgba(30,45,110,.30);--glass-solid:#eef1fb}
+:root{--clay:#f3f5fa;
+  --clay-sh:inset 0 0 0 1px rgba(17,24,39,.05);
+  --clay-sh-press:inset 0 0 0 1px rgba(17,24,39,.08);--glass-solid:#f3f5fa}
 @media (prefers-color-scheme: dark){ :root:not([data-theme="light"]){--clay:linear-gradient(180deg,#2c3456 0%,#1f2541 100%);
   --clay-sh:inset 0 1px 0 rgba(255,255,255,.12),inset 0 -3px 0 rgba(0,0,0,.28),0 12px 24px -10px rgba(0,0,0,.7),0 2px 5px rgba(0,0,0,.3);
   --clay-sh-press:inset 0 1px 0 rgba(255,255,255,.1),inset 0 -1px 0 rgba(0,0,0,.28),0 4px 10px -6px rgba(0,0,0,.6);--glass-solid:#12162a} }
@@ -718,6 +718,7 @@ body.scrolled .topbar{opacity:1;transform:none;pointer-events:auto}
 .qa:active .qi3{transform:scale(.94)}
 .sheet button .qi3{width:32px;height:32px}.sheet button .qi3 svg{width:19px;height:19px}
 .td-dly{gap:6px}.td-dly .note{flex-basis:100%}.td-dly .chip{padding:5px 12px}
+.topbar #tbGreet{color:var(--ink);font-weight:700}
 </style>
 
 </head>
@@ -14236,7 +14237,7 @@ document.addEventListener('change', e => { if(e.target && e.target.id === 'earn-
 <script>
 const SEED = null;
 const SEED_SETTINGS = null;
-const APP_VERSION = '2026.11.13-1207';
+const APP_VERSION = '2026.11.13-1403';
 const IS_PWA_BUILD = true;
 const LS = 'payroster.v1';
 const KC = { sick:'--warn', flight:'--k-flight', deadhead:'--k-dh', training:'--k-train', standby:'--k-sby', reserve:'--k-sby', ground:'--k-ground', off:'--k-off', empty:'--k-off', other:'--k-ground' };
