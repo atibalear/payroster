@@ -417,7 +417,7 @@ html.glass .panel,html.glass .tile{background:var(--glass);border:1px solid var(
 html.glass .tile{border-radius:22px}
 html.glass .today{border-left:1px solid var(--glass-brd);box-shadow:inset 0 1px 0 var(--glass-hi),inset 4px 0 0 var(--accent),var(--glass-shadow)}
 html.glass .licalert{border-left:1px solid var(--glass-brd);box-shadow:inset 0 1px 0 var(--glass-hi),inset 4px 0 0 var(--warn),var(--glass-shadow)}
-html.glass .bar{background:transparent;border-bottom:0;padding-block:12px 8px}
+html.glass .bar{background:color-mix(in srgb,var(--bg) 72%,transparent);-webkit-backdrop-filter:blur(18px) saturate(1.6);backdrop-filter:blur(18px) saturate(1.6);border-bottom:0;padding-block:12px 8px}
 html.glass .bar::before{content:"";position:absolute;inset:0 calc(-1 * max(16px, env(safe-area-inset-left, 0px)));z-index:-1;
   background:color-mix(in srgb,var(--glass-solid,#eef1fb) 88%,transparent);backdrop-filter:blur(20px) saturate(1.8);-webkit-backdrop-filter:blur(20px) saturate(1.8);
   -webkit-mask:linear-gradient(#000 70%,transparent);mask:linear-gradient(#000 70%,transparent)}
@@ -699,6 +699,7 @@ html.glass .mg{background:var(--clay,var(--card2));box-shadow:var(--clay-sh,none
 .cell .rq{position:absolute;top:5px;right:5px;font-size:11px;line-height:1;color:#e0a030}
 .rqL{color:#e0a030;margin-right:4px}
 .tag.rqtag{color:#a86a00;background:color-mix(in srgb,#e0a030 18%,transparent)}
+.mm-dly{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin:8px 0}.mm-dly .chip{cursor:pointer;border:0}
 </style>
 
 </head>
@@ -1603,6 +1604,9 @@ var I18N = {
   names: { es: 'Español', ca: 'Català', en: 'English', de: 'Deutsch', fr: 'Français', it: 'Italiano', pt: 'Português', ro: 'Română', hu: 'Magyar', sk: 'Slovenčina', cs: 'Čeština' },
   locales: { es: 'es-ES', ca: 'ca-ES', en: 'en-GB', de: 'de-DE', fr: 'fr-FR', it: 'it-IT', pt: 'pt-PT', ro: 'ro-RO', hu: 'hu-HU', sk: 'sk-SK', cs: 'cs-CZ' },
   es: {
+    mm_dlyOn: 'Retraso de {m} min aplicado. ¿Más?',
+    mm_dlyQ: '¿Retraso? Añádelo y el avión no se moverá hasta la nueva hora:',
+    mm_ground: 'En tierra en {a}: el mapa empieza a moverse cuando despeguéis.',
     req_t: 'Pedido',
     aheadT: 'Nómina de {m} (con tu roster de {r})',
     src_cla: 'nuevo convenio: pago único 2026',
@@ -2269,6 +2273,9 @@ var I18N = {
     e_noPeriod: 'No encuentro el periodo del roster. ¿Es el «Individual duty plan» de IDP en PDF?'
   },
   ca: {
+    mm_dlyOn: 'Retard de {m} min aplicat. Més?',
+    mm_dlyQ: 'Retard? Afegeix-lo i l’avió no es mourà fins a la nova hora:',
+    mm_ground: 'A terra a {a}: el mapa es mou quan enlaireu.',
     req_t: 'Demanat',
     aheadT: 'Nòmina de {m} (amb el roster de {r})',
     src_cla: 'nou conveni: pagament únic 2026',
@@ -2936,6 +2943,9 @@ var I18N = {
     e_noPeriod: 'No trobo el període del roster. És l’«Individual duty plan» d’IDP en PDF?'
   },
   en: {
+    mm_dlyOn: '{m} min delay applied. More?',
+    mm_dlyQ: 'Delayed? Add it and the plane won’t move until the new time:',
+    mm_ground: 'On the ground at {a}: the map starts moving once you take off.',
     req_t: 'Requested',
     aheadT: '{m} payslip (from your {r} roster)',
     src_cla: 'new CLA: 2026 one-off',
@@ -3603,6 +3613,9 @@ var I18N = {
     e_noPeriod: 'I can’t find the roster period. Is this the IDP “Individual duty plan” PDF?'
   },
   de: {
+    mm_dlyOn: '{m} min Verspätung eingetragen. Mehr?',
+    mm_dlyQ: 'Verspätung? Trag sie ein, dann bewegt sich das Flugzeug erst zur neuen Zeit:',
+    mm_ground: 'Am Boden in {a}: die Karte bewegt sich erst nach dem Start.',
     req_t: 'Wunsch',
     aheadT: 'Abrechnung {m} (aus dem {r}-Roster)',
     src_cla: 'neuer TV: Einmalzahlung 2026',
@@ -4270,6 +4283,9 @@ var I18N = {
     e_noPeriod: 'Ich finde den Zeitraum des Dienstplans nicht. Ist das der „Individual duty plan“ aus IDP als PDF?'
   },
   fr: {
+    mm_dlyOn: 'Retard de {m} min appliqué. Plus ?',
+    mm_dlyQ: 'Retard ? Ajoute-le et l’avion ne bougera qu’à la nouvelle heure :',
+    mm_ground: 'Au sol à {a} : la carte bouge dès le décollage.',
     req_t: 'Demandé',
     aheadT: 'Paie de {m} (planning de {r})',
     src_cla: 'nouvelle convention : paiement unique 2026',
@@ -4937,6 +4953,9 @@ var I18N = {
     e_noPeriod: 'Je ne trouve pas la période du planning. Est-ce bien l’« Individual duty plan » d’IDP en PDF ?'
   },
   hu: {
+    mm_dlyOn: '{m} perc késés beállítva. Több?',
+    mm_dlyQ: 'Késés? Add meg, és a gép csak az új időpontban indul:',
+    mm_ground: 'A földön, {a}: a térkép felszálláskor indul.',
     req_t: 'Kért',
     aheadT: '{m} bérjegyzék ({r} beosztás alapján)',
     src_cla: 'új KSZ: 2026-os egyszeri kifizetés',
@@ -5604,6 +5623,9 @@ var I18N = {
     e_noPeriod: 'Nem találom a beosztás időszakát. Ez az IDP „Individual duty plan” PDF-je?'
   },
   sk: {
+    mm_dlyOn: 'Meškanie {m} min použité. Viac?',
+    mm_dlyQ: 'Meškanie? Pridaj ho a lietadlo sa pohne až v novom čase:',
+    mm_ground: 'Na zemi v {a}: mapa sa pohne po vzlete.',
     req_t: 'Požadované',
     aheadT: 'Výplata za {m} (z rozpisu na {r})',
     src_cla: 'nová KZ: jednorazová platba 2026',
@@ -6271,6 +6293,9 @@ var I18N = {
     e_noPeriod: 'Nenachádzam obdobie rozpisu. Je to „Individual duty plan“ z IDP v PDF?'
   },
   cs: {
+    mm_dlyOn: 'Zpoždění {m} min použito. Víc?',
+    mm_dlyQ: 'Zpoždění? Přidej ho a letadlo se pohne až v novém čase:',
+    mm_ground: 'Na zemi v {a}: mapa se pohne po vzletu.',
     req_t: 'Požadované',
     aheadT: 'Výplata za {m} (z rozpisu na {r})',
     src_cla: 'nová KS: jednorázová platba 2026',
@@ -6938,6 +6963,9 @@ var I18N = {
     e_noPeriod: 'Nenacházím období rozpisu. Je to „Individual duty plan“ z IDP v PDF?'
   },
   it: {
+    "mm_dlyOn": "Ritardo di {m} min applicato. Di più?",
+    "mm_dlyQ": "Ritardo? Aggiungilo e l’aereo non si muove fino al nuovo orario:",
+    "mm_ground": "A terra a {a}: la mappa parte al decollo.",
     "req_t": "Richiesto",
     "aheadT": "Busta paga di {m} (dal roster di {r})",
     "src_cla": "nuovo contratto: pagamento unico 2026",
@@ -7710,6 +7738,9 @@ var I18N = {
     "e_noPeriod": "Non trovo il periodo del turno. È l’«Individual duty plan» di IDP in PDF?"
   },
   pt: {
+    "mm_dlyOn": "Atraso de {m} min aplicado. Mais?",
+    "mm_dlyQ": "Atraso? Junta-o e o avião só se mexe à nova hora:",
+    "mm_ground": "Em terra em {a}: o mapa começa a mexer quando descolarem.",
     "req_t": "Pedido",
     "aheadT": "Recibo de {m} (escala de {r})",
     "src_cla": "novo acordo: pagamento único 2026",
@@ -8482,6 +8513,9 @@ var I18N = {
     "e_noPeriod": "Não encontro o período da escala. É o «Individual duty plan» do IDP em PDF?"
   },
   ro: {
+    "mm_dlyOn": "Întârziere de {m} min aplicată. Mai mult?",
+    "mm_dlyQ": "Întârziere? Adaug-o și avionul nu se mișcă până la noua oră:",
+    "mm_ground": "La sol în {a}: harta pornește după decolare.",
     "req_t": "Cerut",
     "aheadT": "Fluturașul din {m} (din rosterul {r})",
     "src_cla": "contract nou: plată unică 2026",
@@ -12157,7 +12191,7 @@ function renderToday(){
   let crewP = typeof crewHtml === 'function' ? crewHtml(x.d, meName) : '';
   if(crewP) crewP = crewP.replace('<details class="crewbox dsec">', '<details class="crewbox dsec" open>');
   const crewN = crewP ? (crewP.match(/class="cm/g) || []).length : 0;
-  const hasMm = legs.some(l => l.type==='flt');
+  const hasMm = legs.some(l => l.type==='flt' || l.type==='dh');
   const qa = [
     hasMm ? `<button type="button" class="qa" id="td-mm"><span class="qi">🛰</span><span>${t('qa_mm')}</span></button>` : '',
     crewP ? `<button type="button" class="qa" data-qp="crew"><span class="qi">👥</span><span>${t('qa_crew')}${crewN ? ' · ' + crewN : ''}</span></button>` : `<button type="button" class="qa" data-wk="${x.date}"><span class="qi">📋</span><span>${t('qa_day')}</span></button>`,
@@ -12751,10 +12785,12 @@ function allLegs(){
   for(const k of Object.keys(state.months).sort()){
     const c = PR.compute(state.months[k], state.settings, state.extras);
     for(const d of c.days) for(const l of d.legs){ if(!l.t1 || !l.t2) continue;
-      const a = utcAt(d.date, l.t1); let b = utcAt(d.date, l.t2); if(b < a) b += 864e5;
-      all.push({ ...l, date: d.date, start: a, end: b }); }
+      // a delay entered for the day moves the legs: the plane must not "take off" while we are still on the ground
+      const dly = Math.max(0, +((state.extras[d.date]||{}).delay) || 0) * 60e3;
+      const a = utcAt(d.date, l.t1) + dly; let b = utcAt(d.date, l.t2) + dly; if(b < a) b += 864e5;
+      all.push({ ...l, date: d.date, start: a, end: b, dly: dly / 60e3 }); }
   }
-  return all.filter(l => l.type === 'flt');
+  return all.filter(l => l.type === 'flt' || l.type === 'dh');   // deadheads too: we fly them as well
 }
 function startMoving(){
   mapDispose();
@@ -12821,6 +12857,14 @@ async function start3d(L, plane, done, now){
     const ld = $('g3-load'); if(ld) ld.remove();
   }catch(e){ console.warn('3d', e); if(mm){ mm.no3d = true; mm._key = null; renderMoving(); } }
 }
+document.addEventListener('click', e => {
+  const b = e.target.closest && e.target.closest('[data-mmdly]'); if(!b || !mm) return;
+  const v = +b.dataset.mmdly, ex = state.extras[mm.leg.date] = state.extras[mm.leg.date] || {};
+  ex.delay = v ? (+ex.delay || 0) + v : 0; save();
+  const st = mm.leg.start - (mm.leg.dly||0)*60e3;
+  mm.dayLegs = allLegs().filter(l => l.date === mm.leg.date);
+  mm.leg = mm.dayLegs.find(l => l.flight === mm.leg.flight && l.dep === mm.leg.dep) || mm.leg; mm._key = null; renderMoving();
+});
 function renderMoving(){
   let now = Date.now();
   // when a leg is over (and there is no live GPS), go on to the next leg of the day by itself
@@ -12835,7 +12879,8 @@ function renderMoving(){
     const p = ((now - mm.sim) / 45000) % 1.08;
     f = flightProfile(L, p / 1.0); src = 'sim';
     eta = now + (1 - Math.min(1, p)) * 45000;
-  } else if(mm.fix && now - mm.fix.at < 120000){ f = mm.fix; src = 'gps'; }
+  } else if(mm.fix && now - mm.fix.at < 120000){ f = mm.fix; src = 'gps';
+    mm.ground = (f.spd == null || f.spd < 40) && (f.alt == null || f.alt < 400); }
   else { f = flightProfile(L, schedProgress(L, now)); src = 'est'; eta = L.end; }
   const left = kmLL(f.lat, f.lon, B.lat, B.lon), done = Math.max(0, Math.min(100, 100 * (1 - left / total)));
   const kts = f.spd != null ? f.spd * 1.94384 : null, kmh = f.spd != null ? f.spd * 3.6 : null;
@@ -12847,6 +12892,8 @@ function renderMoving(){
   const badge = src === 'gps' ? `<span class="chip c-vac">📡 ${t('mm_srcGps')}</span>` : src === 'sim' ? `<span class="chip c-bez">▶ ${t('mm_srcSim')}</span>` : `<span class="chip">🕒 ${t('mm_srcEst')}</span>`;
   let why = src === 'est' ? `<p class="note">${mm.err === 'denied' ? t('mm_denied') : t('mm_estWhy')}</p>` : '';
   if(src !== 'sim' && now < L.start) why = `<p class="msg">${t('mm_before', {h: localHM(L.start, L.dep), m: durTxt(L.start - now)})}</p>` + why;
+  else if(src === 'gps' && mm.ground && done < 50) why = `<p class="msg">${t('mm_ground', {a: L.dep})}</p>` + why;
+  if(src !== 'sim' && now < L.end) why += `<div class="mm-dly"><span class="note">${L.dly ? t('mm_dlyOn', {m: L.dly}) : t('mm_dlyQ')}</span>${[15,30,60].map(v => `<button type="button" class="chip" data-mmdly="${v}">+${v}′</button>`).join('')}${L.dly ? `<button type="button" class="chip" data-mmdly="0">✕</button>` : ''}</div>`;
   else if(src === 'est' && now > L.end) why = `<p class="msg">${t('mm_after', {a: L.arr})}</p>` + why;
   const legs = mm.dayLegs || [];
   const legSel = legs.length > 1 ? `<select id="mm-leg">${legs.map((l, i) => `<option value="${i}"${l.flight===L.flight && l.dep===L.dep ? ' selected' : ''}>${esc(l.flight)} ${l.dep}–${l.arr} ${t4(l.t1)}Z</option>`).join('')}</select>` : '';
@@ -12871,7 +12918,8 @@ function renderMoving(){
     // only move the plane and refresh the numbers: the map itself stays
     if(use3d){ if(mm.g3) mm.g3.update(plane, done / 100, now); }
     else MAP.place(el, one, mopt);
-    $('mm-badge').innerHTML = badge; $('mm-why').innerHTML = why; $('mm-stats').innerHTML = stats; $('mm-fix').textContent = fix;
+    const put = (id, h) => { const x = $(id); if(x && x._h !== h){ x._h = h; x.innerHTML = h; } };
+    put('mm-badge', badge); put('mm-why', why); put('mm-stats', stats); $('mm-fix').textContent = fix;
   } else {
     mm._key = key;
     pnl(hdr('map') + `<div class="mm-head"><b>${esc(L.flight)}</b> ${L.dep} → ${L.arr} · ${t4(L.t1)}–${t4(L.t2)} UTC · ${Math.round(total)} km</div>
@@ -14126,7 +14174,7 @@ document.addEventListener('change', e => { if(e.target && e.target.id === 'earn-
 <script>
 const SEED = null;
 const SEED_SETTINGS = null;
-const APP_VERSION = '2026.11.13-1136';
+const APP_VERSION = '2026.11.13-1140';
 const IS_PWA_BUILD = true;
 const LS = 'payroster.v1';
 const KC = { sick:'--warn', flight:'--k-flight', deadhead:'--k-dh', training:'--k-train', standby:'--k-sby', reserve:'--k-sby', ground:'--k-ground', off:'--k-off', empty:'--k-off', other:'--k-ground' };
