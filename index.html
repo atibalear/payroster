@@ -479,17 +479,14 @@ html.glass .wr .wn.off{background:transparent}
 .wr.now .wn{box-shadow:0 0 0 3px var(--surface),0 0 0 5px var(--accent)}
 html.glass .wr.now .wn{box-shadow:0 0 0 3px rgba(255,255,255,.6),0 0 0 5px var(--accent)}
 /* boarding-pass stubs */
-.stubs{display:flex;gap:10px;overflow-x:auto;scroll-snap-type:x mandatory;padding:6px 2px 4px;margin:0 -2px;scrollbar-width:none}
+.stubs{display:flex;gap:12px;overflow-x:auto;scroll-snap-type:x mandatory;padding:6px 8px 16px;margin:0 -8px -10px;scrollbar-width:none;scroll-padding-left:8px;-webkit-mask-image:linear-gradient(90deg,#000 88%,transparent);mask-image:linear-gradient(90deg,#000 88%,transparent)}
 .stubs::-webkit-scrollbar{display:none}
 .stub{flex:0 0 212px;width:212px;scroll-snap-align:start;display:flex;align-items:stretch;border:0;padding:0;border-radius:16px;background:var(--sunk);color:var(--ink);font:inherit;cursor:pointer;text-align:left;position:relative;overflow:hidden;max-width:230px}
 html.glass .stub{background:var(--glass-in);box-shadow:inset 0 0 0 1px var(--glass-brd)}
-.stub .sbd{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:8px 12px;background:var(--k);color:#fff;min-width:54px}
+.stub .sbd{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:8px 10px;margin:6px;border-radius:12px;background:var(--k);color:#fff;min-width:52px}
 .stub .sbd b{font-size:20px;line-height:1}.stub .sbd small{font-size:10.5px;font-weight:700;text-transform:uppercase;opacity:.9;margin-top:2px}
-.stub .sbr{flex:1;display:flex;flex-direction:column;justify-content:center;padding:8px 14px 8px 12px;border-left:2px dashed color-mix(in srgb,var(--ink) 18%,transparent);min-width:0}
+.stub .sbr{flex:1;display:flex;flex-direction:column;justify-content:center;padding:8px 14px 8px 6px;min-width:0}
 .stub .sbr b{font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.stub .sbr small{font-size:12px;color:var(--muted)}
-.stub::before,.stub::after{content:"";position:absolute;left:52px;width:10px;height:10px;border-radius:50%;background:var(--surface)}
-.stub::before{top:-5px}.stub::after{bottom:-5px}
-html.glass .stub::before,html.glass .stub::after{background:rgba(255,255,255,.7)}
 
 /* ===== day detail (modern) ===== */
 :root{--card2:color-mix(in srgb,var(--accent) 5%,var(--surface));--card2-brd:color-mix(in srgb,var(--accent) 12%,transparent)}
@@ -14214,7 +14211,7 @@ document.addEventListener('change', e => { if(e.target && e.target.id === 'earn-
 <script>
 const SEED = null;
 const SEED_SETTINGS = null;
-const APP_VERSION = '2026.11.13-1154';
+const APP_VERSION = '2026.11.13-1158';
 const IS_PWA_BUILD = true;
 const LS = 'payroster.v1';
 const KC = { sick:'--warn', flight:'--k-flight', deadhead:'--k-dh', training:'--k-train', standby:'--k-sby', reserve:'--k-sby', ground:'--k-ground', off:'--k-off', empty:'--k-off', other:'--k-ground' };
