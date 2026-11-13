@@ -711,15 +711,12 @@ body.scrolled .topbar{opacity:1;transform:none;pointer-events:auto}
 .topbar .brand{font-size:16px;display:flex;align-items:center;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin:0}
 .topbar .iconbtn{flex:none}
 
-/* glossy 3D icon tiles */
-.qi3{position:relative;display:grid;place-items:center;width:38px;height:38px;flex:none;border-radius:12px;
-  background:linear-gradient(160deg,var(--q1),var(--q2));
-  box-shadow:inset 0 1.5px 0 rgba(255,255,255,.55),inset 0 -3px 6px rgba(0,0,0,.22),0 6px 12px -4px var(--q2),0 2px 3px rgba(0,0,0,.18)}
-.qi3::after{content:"";position:absolute;inset:2px 3px 52% 3px;border-radius:10px 10px 14px 14px;background:linear-gradient(180deg,rgba(255,255,255,.45),rgba(255,255,255,0));pointer-events:none}
-.qi3 svg{width:22px;height:22px;fill:none;stroke:#fff;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round;filter:drop-shadow(0 1px 1px rgba(0,0,0,.25));position:relative;z-index:1}
+/* Apple-style symbols: tinted glyph on a soft tinted circle, no gloss */
+.qi3{display:grid;place-items:center;width:36px;height:36px;flex:none;border-radius:50%;color:var(--qc);background:color-mix(in srgb,var(--qc) 15%,transparent)}
+.qi3 svg{width:21px;height:21px}
 .qa{gap:6px;padding:11px 4px 9px}
 .qa:active .qi3{transform:scale(.94)}
-.sheet button .qi3{width:32px;height:32px;border-radius:10px}.sheet button .qi3 svg{width:19px;height:19px}
+.sheet button .qi3{width:32px;height:32px}.sheet button .qi3 svg{width:19px;height:19px}
 .td-dly{gap:6px}.td-dly .note{flex-basis:100%}.td-dly .chip{padding:5px 12px}
 </style>
 
@@ -12176,19 +12173,19 @@ function monthDuties(ro){
 
 
 // ---------- glossy 3D icons (own design, no emoji) ----------
-const QI = {
-  mm:   ['#38bdf8','#2563eb','<circle cx="12" cy="12" r="8.2"/><path d="M3.8 12h16.4M12 3.8c2.4 2.3 3.6 5 3.6 8.2s-1.2 5.9-3.6 8.2c-2.4-2.3-3.6-5-3.6-8.2s1.2-5.9 3.6-8.2z"/>'],
-  day:  ['#a78bfa','#6d28d9','<rect x="5" y="4.5" width="14" height="16" rx="2.6"/><path d="M9 3v3M15 3v3M8.5 11h7M8.5 15h4.5"/>'],
-  crew: ['#34d399','#059669','<circle cx="9" cy="9" r="3.1"/><path d="M3.6 19c.7-3 2.8-4.6 5.4-4.6s4.7 1.6 5.4 4.6"/><circle cx="16.6" cy="9.6" r="2.5"/><path d="M15.6 14.6c2.3-.2 4.2 1.2 4.8 4"/>'],
-  lay:  ['#fbbf24','#ea580c','<path d="M4 20V7.5L12 4l8 3.5V20"/><path d="M9.5 20v-4.5h5V20M8 9.5h1.5M14.5 9.5H16M8 13h1.5M14.5 13H16"/>'],
-  rest: ['#818cf8','#3730a3','<path d="M18.5 14.6A7.2 7.2 0 0 1 9.4 5.5a7.2 7.2 0 1 0 9.1 9.1z"/><path d="M16 4.5h3l-3 3.5h3"/>'],
-  more: ['#94a3b8','#475569','<circle cx="6.5" cy="12" r="1.3" fill="#fff"/><circle cx="12" cy="12" r="1.3" fill="#fff"/><circle cx="17.5" cy="12" r="1.3" fill="#fff"/>'],
-  share:['#38bdf8','#0284c7','<path d="M12 15V4M8 7.5 12 4l4 3.5"/><path d="M7 11H5.8A1.8 1.8 0 0 0 4 12.8v5.4A1.8 1.8 0 0 0 5.8 20h12.4a1.8 1.8 0 0 0 1.8-1.8v-5.4A1.8 1.8 0 0 0 18.2 11H17"/>'],
-  copy: ['#94a3b8','#475569','<rect x="8" y="8" width="11.5" height="12" rx="2.4"/><path d="M15.5 8V6.4A2.4 2.4 0 0 0 13.1 4H6.9A2.4 2.4 0 0 0 4.5 6.4v8.2A2.4 2.4 0 0 0 6.9 17H8"/>'],
-  cal:  ['#f87171','#dc2626','<rect x="4" y="5.5" width="16" height="14.5" rx="3"/><path d="M4 10h16M8.5 3.5v4M15.5 3.5v4"/>']
+const QI = {   // SF Symbols-like glyphs: filled shapes, one tint each
+  mm:   ['#0a84ff','<path fill="currentColor" d="M9 4.2 3.9 6.1a1 1 0 0 0-.6.9v12.1a.7.7 0 0 0 .95.66L9 18V4.2zm1.6-.1V17.9l4.8 2V6.1l-4.8-2zM17 6.1v13.8l3.1-1.2a1 1 0 0 0 .6-.9V5.6a.7.7 0 0 0-.95-.66L17 6.1z"/>'],
+  day:  ['#bf5af2','<path fill="currentColor" d="M7.5 3a1 1 0 0 1 1 1v1h7V4a1 1 0 1 1 2 0v1h.7A2.8 2.8 0 0 1 21 7.8v10.4a2.8 2.8 0 0 1-2.8 2.8H5.8A2.8 2.8 0 0 1 3 18.2V7.8A2.8 2.8 0 0 1 5.8 5h.7V4a1 1 0 0 1 1-1zM5 10v8.2c0 .44.36.8.8.8h12.4c.44 0 .8-.36.8-.8V10H5zm2.5 2h4v3h-4v-3z"/>'],
+  crew: ['#30d158','<circle fill="currentColor" cx="9" cy="8.2" r="3.4"/><path fill="currentColor" d="M2.8 18.4c.5-3.3 3-5.2 6.2-5.2s5.7 1.9 6.2 5.2a.9.9 0 0 1-.9 1H3.7a.9.9 0 0 1-.9-1z"/><circle fill="currentColor" cx="16.8" cy="9" r="2.7"/><path fill="currentColor" d="M16.3 13.3c2.9-.3 4.7 1.3 5.1 4.2a.8.8 0 0 1-.8.9h-3.4a6.6 6.6 0 0 0-.9-5.1z"/>'],
+  lay:  ['#ff9f0a','<path fill="currentColor" d="M3 6.5a1 1 0 0 1 2 0V13h6.5V9.8A1.8 1.8 0 0 1 13.3 8h4.4A3.3 3.3 0 0 1 21 11.3V18a1 1 0 1 1-2 0v-2H5v2a1 1 0 1 1-2 0V6.5z"/><circle fill="currentColor" cx="8" cy="10.2" r="2.1"/>'],
+  rest: ['#5e5ce6','<path fill="currentColor" d="M10.2 3.3a.8.8 0 0 1 .9 1A7.3 7.3 0 0 0 19.7 13a.8.8 0 0 1 1 .9A9 9 0 1 1 10.2 3.3z"/><path fill="currentColor" d="M15 3.5h4.2a.75.75 0 0 1 .58 1.22L17 8h2.3a.75.75 0 0 1 0 1.5h-4a.75.75 0 0 1-.58-1.22L17.5 5H15a.75.75 0 0 1 0-1.5z"/>'],
+  more: ['#8e8e93','<circle fill="currentColor" cx="5.5" cy="12" r="1.9"/><circle fill="currentColor" cx="12" cy="12" r="1.9"/><circle fill="currentColor" cx="18.5" cy="12" r="1.9"/>'],
+  share:['#0a84ff','<path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="M12 14.5V3.5M8.2 7 12 3.3 15.8 7M8 10.5H6.6A1.6 1.6 0 0 0 5 12.1v6.3A1.6 1.6 0 0 0 6.6 20h10.8a1.6 1.6 0 0 0 1.6-1.6v-6.3a1.6 1.6 0 0 0-1.6-1.6H16"/>'],
+  copy: ['#8e8e93','<rect fill="currentColor" x="8.5" y="8.5" width="12" height="12.5" rx="2.6"/><path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" d="M15.5 6.2V5.6A2.6 2.6 0 0 0 12.9 3H6.1A2.6 2.6 0 0 0 3.5 5.6v6.8A2.6 2.6 0 0 0 6.1 15h.4"/>'],
+  cal:  ['#ff453a','<path fill="currentColor" d="M7.5 3a1 1 0 0 1 1 1v1h7V4a1 1 0 1 1 2 0v1h.7A2.8 2.8 0 0 1 21 7.8v10.4a2.8 2.8 0 0 1-2.8 2.8H5.8A2.8 2.8 0 0 1 3 18.2V7.8A2.8 2.8 0 0 1 5.8 5h.7V4a1 1 0 0 1 1-1zM5 10v8.2c0 .44.36.8.8.8h12.4c.44 0 .8-.36.8-.8V10H5z"/>']
 };
 function qIcon(k){ const q = QI[k] || QI.more;
-  return `<span class="qi3" style="--q1:${q[0]};--q2:${q[1]}"><svg viewBox="0 0 24 24" aria-hidden="true">${q[2]}</svg></span>`; }
+  return `<span class="qi3" style="--qc:${q[0]}"><svg viewBox="0 0 24 24" aria-hidden="true">${q[1]}</svg></span>`; }
 
 // ---------- 4. today / next duty ----------
 let todayTimer = null;
@@ -14239,7 +14236,7 @@ document.addEventListener('change', e => { if(e.target && e.target.id === 'earn-
 <script>
 const SEED = null;
 const SEED_SETTINGS = null;
-const APP_VERSION = '2026.11.13-1202';
+const APP_VERSION = '2026.11.13-1207';
 const IS_PWA_BUILD = true;
 const LS = 'payroster.v1';
 const KC = { sick:'--warn', flight:'--k-flight', deadhead:'--k-dh', training:'--k-train', standby:'--k-sby', reserve:'--k-sby', ground:'--k-ground', off:'--k-off', empty:'--k-off', other:'--k-ground' };
