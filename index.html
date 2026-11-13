@@ -677,6 +677,25 @@ html.glass .mg{background:var(--clay,var(--card2));box-shadow:var(--clay-sh,none
 .brand .bmark{width:1.35em;height:1.35em;vertical-align:-.32em;margin-right:6px;border-radius:.3em}
 .ahead{display:flex;justify-content:space-between;align-items:center;gap:10px;width:100%;margin:0 0 14px;padding:11px 14px;border-radius:16px;border:1px solid var(--card2-brd);background:var(--pay-soft);color:var(--ink);font:600 14px/1.3 var(--f-body);text-align:left;cursor:pointer}
 .ahead b{color:var(--pay);white-space:nowrap}
+
+/* ---- iPad and wider screens ---- */
+.rgrid,.rcolA,.rcolB{display:contents}
+@media (min-width:700px){
+  .wrap{max-width:min(1200px, calc(100vw - 48px))}
+  .toolgrid{grid-template-columns:repeat(auto-fill,minmax(112px,1fr));gap:14px}
+  .tile{min-height:112px;font-size:14px;gap:10px}
+  .tile svg{width:30px;height:30px}
+  .tcat h3{font-size:19px}.tcat p{font-size:14px}
+  body[data-tab="more"] .wrap,body[data-tab="tools"] .wrap{max-width:min(980px, calc(100vw - 48px))}
+}
+@media (min-width:1000px){
+  .rgrid{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.15fr);gap:20px;align-items:start}
+  .rcolA,.rcolB{display:flex;flex-direction:column;gap:18px;min-width:0}
+  .rcolA>*,.rcolB>*{flex-shrink:0}
+  .rcolA .hero{grid-template-columns:1fr}
+  .toolcats{grid-template-columns:repeat(3,minmax(0,1fr));gap:22px;align-items:start}
+  .toolcats .toolgrid{grid-template-columns:repeat(2,minmax(0,1fr))}
+}
 </style>
 
 </head>
@@ -698,9 +717,16 @@ html.glass .mg{background:var(--clay,var(--card2));box-shadow:var(--clay-sh,none
   <div class="panel licalert" id="baseWarn" hidden data-tab="roster"></div>
   <div class="panel licalert" id="yearWarn" hidden data-tab="roster"></div>
   <div class="panel licalert" id="bkRemind" hidden data-tab="roster"></div>
+  <div class="rgrid" data-tab="roster"><div class="rcolA">
   <section class="panel today" id="today" hidden data-tab="roster"></section>
   <div class="panel chg" id="chgCard" hidden data-tab="roster"></div>
   <div class="herowrap" data-tab="roster"><button class="privbtn" id="privBtn" type="button" aria-pressed="false"></button><section class="hero" id="hero"></section></div>
+  <section class="panel slippanel" data-tab="roster">
+    <h2 style="margin-top:0" id="slipH"></h2>
+    <p class="note" id="slipNote"></p>
+    <div class="tablewrap"><table class="slip" id="slip"></table></div>
+  </section>
+  </div><div class="rcolB">
 
   <section data-tab="roster">
     <div class="strip" id="strip"></div>
@@ -714,6 +740,7 @@ html.glass .mg{background:var(--clay,var(--card2));box-shadow:var(--clay-sh,none
     <details class="how"><summary data-i18n="howCalc"></summary><p class="note" data-i18n="rateNote"></p><p class="note" data-i18n="fdpNote"></p></details>
     <div class="days" id="days"></div>
   </section>
+  </div></div>
 
   <section data-tab="tools">
     <h2 data-i18n="toolsT" class="tools-h"></h2>
@@ -722,11 +749,6 @@ html.glass .mg{background:var(--clay,var(--card2));box-shadow:var(--clay-sh,none
     <div class="panel" id="toolPanel" hidden style="margin-top:10px"></div>
   </section>
 
-  <section class="panel" data-tab="roster">
-    <h2 style="margin-top:0" id="slipH"></h2>
-    <p class="note" id="slipNote"></p>
-    <div class="tablewrap"><table class="slip" id="slip"></table></div>
-  </section>
 
   <h2 data-tab="more" data-i18n="tab_more"></h2>
   <section class="panel" id="instRow" data-tab="more" hidden></section>
@@ -14089,7 +14111,7 @@ document.addEventListener('change', e => { if(e.target && e.target.id === 'earn-
 <script>
 const SEED = null;
 const SEED_SETTINGS = null;
-const APP_VERSION = '2026.11.12-2330';
+const APP_VERSION = '2026.11.13-1036';
 const IS_PWA_BUILD = true;
 const LS = 'payroster.v1';
 const KC = { sick:'--warn', flight:'--k-flight', deadhead:'--k-dh', training:'--k-train', standby:'--k-sby', reserve:'--k-sby', ground:'--k-ground', off:'--k-off', empty:'--k-off', other:'--k-ground' };
