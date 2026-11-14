@@ -14251,7 +14251,7 @@ document.addEventListener('change', e => { if(e.target && e.target.id === 'earn-
 <script>
 const SEED = null;
 const SEED_SETTINGS = null;
-const APP_VERSION = '2026.11.13-1557';
+const APP_VERSION = '2026.11.14-1940';
 const IS_PWA_BUILD = true;
 const LS = 'payroster.v1';
 const KC = { sick:'--warn', flight:'--k-flight', deadhead:'--k-dh', training:'--k-train', standby:'--k-sby', reserve:'--k-sby', ground:'--k-ground', off:'--k-off', empty:'--k-off', other:'--k-ground' };
@@ -15090,8 +15090,8 @@ function parseShare2(txt){
   let loc = base;
   const fl = x => /^\d/.test(x) ? 'EW '+x : x;
   let last = [];
-  p.days = rows.map(r => {
-    const f = r.split('~'), idx = rows.indexOf(r);
+  p.days = rows.map((r, idx) => {   // idx from map: identical days (two O_S in a row) must keep their own date
+    const f = r.split('~');
     const [day, k, label, ci, co, hotel, startLoc, legs, crew] = compact ? [d0+idx, f[0], f[1], f[2], f[3], f[4], loc, f[5], f[6]] : f;
     const lg = legs ? legs.split(',').map(s => { const dh = s[0]==='*'; const b = dh?s.slice(1):s;
       if(compact){ const m = /^(.*?)([A-Z]{3})(\d{4})(\d{4})([A-Z]{3})$/.exec(b) || []; return {type:dh?'dh':'flt', flight:fl(m[1]||''), dep:m[2], t1:m[3], t2:m[4], arr:m[5]}; }
