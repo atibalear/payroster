@@ -733,6 +733,18 @@ body.scrolled .topbar{opacity:1;transform:none;pointer-events:auto}
 .td-sky .sky-big{font-size:clamp(32px,9.5vw,44px);max-width:58%;white-space:nowrap}
 .td-sky .sky-arc{position:absolute;right:6px;bottom:4px;width:42%;max-width:220px;margin:0;overflow:visible}
 @media (min-width:700px){ .td-sky .sky-arc{width:40%} }
+/* compact duty card (a little smaller overall) */
+.today .td-route{font-size:19px}
+.today .td-st{padding:7px 11px 6px;border-radius:14px}
+.today .td-st .tm{font-size:17px;margin-top:1px}
+.today .td-st .lb,.today .td-st .in{font-size:10.5px}
+.today .dleg{padding:8px 14px;border-radius:18px}
+.today .dleg .ap b{font-size:18px}.today .dleg .ap small{font-size:12px}
+.today .dleg .mid{min-width:76px;font-size:11px}
+.today .qas{gap:6px;margin-top:10px}
+.today .qa{padding:7px 2px 6px;gap:3px;border-radius:15px;font-size:11px}
+.today .qa .qi3{width:32px;height:32px;border-radius:11px}.today .qa .qi3 svg{width:18px;height:18px}
+.today .stub .sbd{padding:5px 9px;min-width:46px}
 </style>
 
 </head>
@@ -14251,7 +14263,7 @@ document.addEventListener('change', e => { if(e.target && e.target.id === 'earn-
 <script>
 const SEED = null;
 const SEED_SETTINGS = null;
-const APP_VERSION = '2026.11.14-1940';
+const APP_VERSION = '2026.11.14-1941';
 const IS_PWA_BUILD = true;
 const LS = 'payroster.v1';
 const KC = { sick:'--warn', flight:'--k-flight', deadhead:'--k-dh', training:'--k-train', standby:'--k-sby', reserve:'--k-sby', ground:'--k-ground', off:'--k-off', empty:'--k-off', other:'--k-ground' };
