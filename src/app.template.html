@@ -1039,9 +1039,10 @@ function oneOffOf(y,m){
   const sl = (state.slips||{})[k];
   const v = sl && sl.lines ? sl.lines.filter(l=>isOneOff(l) && !l.retro).reduce((a,l)=>a+(+l.dev||0),0) : 0;
   if(v > 0) return {v: PR.r2(v), fromSlip: true};
+  if(sl && sl.lines) return {v: 0};   // a real payslip is there and has no one-off: it wins over any estimate
   // new CLA: one-off payment for 2026 (PU 1.750 €, CA 1.500 € gross, prorated by contract) on the payslip the user expects it
   const s = state.settings;
-  if(s.cla27 !== false && s.claOneOff === k) return {v: PR.r2((s.rank === 'PU' ? 1750 : 1500) * s.contract / 100), cla: true};
+  if(s.cla27 !== false && s.claOneOff === k && k >= '2026-11') return {v: PR.r2((s.rank === 'PU' ? 1750 : 1500) * s.contract / 100), cla: true};
   return {v: 0};
 }
 // Sales commission read from an uploaded payslip (5128 «Comisión de Ventas»): it is paid with the
