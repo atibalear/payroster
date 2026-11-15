@@ -18,7 +18,7 @@ function sleepHtml(x, pk, now){
   const p = sleepPlan(x.start, pk);
   if(now > p.wake || p.bed - now > 20*36e5) return '';
   const st = x.st || state.settings.base || 'PMI', late = now > p.bed;
-  return `<div class="note td-sleep${late ? ' late' : ''}">😴 ${t(late ? 'sl_late' : 'sl_line', {h: p.h, b: localHM(p.bed, st), w: localHM(p.wake, st), n: hhmm(Math.max(0, p.wake - now)/36e5)})}</div>`;
+  return `<div class="note td-sleep${late ? ' late' : ''}">${gi(GI.moon)}${t(late ? 'sl_late' : 'sl_line', {h: p.h, b: localHM(p.bed, st), w: localHM(p.wake, st), n: hhmm(Math.max(0, p.wake - now)/36e5)})}</div>`;
 }
 
 // ---------- 3. weather, sunrise / sunset, time difference ----------
@@ -392,7 +392,7 @@ function skyHtml(x, cur, pk, now, legs, st){
       ${flying || frac > 0 && frac < 1 ? `<text x="${px.toFixed(0)}" y="${(py+8).toFixed(0)}" text-anchor="middle" font-size="22" fill="#fff">✈︎</text>` : ''}</svg>` : `<svg class="sky-arc" viewBox="0 0 360 60" aria-hidden="true">${sun}</svg>`;
   const eb = (cur ? t('td_curT') : t('td_nextT')) + ' · ' + localDay(x.start, st);
   return `<div class="td-sky sky-${ph}">${ph === 'night' ? '<div class="stars"></div>' : ''}
-    <div class="sky-top"><div class="eyebrow">${eb}</div>${x.st ? `<span class="td-base">📍 ${esc(x.st)}</span>` : ''}</div>
+    <div class="sky-top"><div class="eyebrow">${eb}</div>${x.st ? `<span class="td-base">${gi(GI.pin)}${esc(x.st)}</span>` : ''}</div>
     <div class="sky-lbl">${lbl}</div><div class="sky-big"${target && target > now ? ` data-at="${target}"` : ''}>${big}</div>
     ${arc}</div>`;
 }
@@ -528,7 +528,7 @@ function renderEarn(){
     s:t('earn_perH', {v:eur.format(c.ph), h:fmtH(c.H/c.n)}) + ' · × ' + c.n})).join('');
   const ms = D.months, best = ms.reduce((a,b) => b.sum > a.sum ? b : a), low = ms.reduce((a,b) => b.sum < a.sum ? b : a);
   const mmx = best.sum || 1;
-  const mRows = ms.map(r => meterRow({t:nm(r.y, r.m, {month:'long'}) + (r === best ? ' ⭐' : ''), v:eur.format(r.sum), p:r.sum/mmx*100, tone:r === best ? 'ok' : '',
+  const mRows = ms.map(r => meterRow({t:nm(r.y, r.m, {month:'long'}) + (r === best ? ' ★' : ''), v:eur.format(r.sum), p:r.sum/mmx*100, tone:r === best ? 'ok' : '',
     s:t('earn_mLine', {d:r.duty, n:r.nights, h:fmtH(r.T), p:eur.format(r.per)})})).join('');
   const fn = D.cats.find(c => c.k === 'fn'), fd = D.cats.find(c => c.k === 'fd'), sb = D.cats.find(c => c.k === 'sb'), dn = D.cats.find(c => c.k === 'dn');
   const tips = [];

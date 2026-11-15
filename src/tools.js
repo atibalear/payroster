@@ -5,6 +5,8 @@ const TOOLS = ['map','lay','check','sim','earn','cal','ftl','fat','vac','lic','s
 let toolOpen = null, simDate = null;
 const TOOL_CATS = [['fly', ['map','lay','cal','ftl','fat']], ['money', ['check','earn','sim','year','sales','wrap']], ['me', ['vac','fam','lic','cmp','share','backup']]];
 
+const gi = d => '<svg class="gi" viewBox="0 0 24 24" aria-hidden="true">' + d + '</svg>';
+const GI = { moon:'<path d="M20 14.5A8 8 0 1 1 9.5 4a6.5 6.5 0 0 0 10.5 10.5z"/>', pin:'<path d="M12 21s-6.5-5.6-6.5-11a6.5 6.5 0 0 1 13 0c0 5.4-6.5 11-6.5 11z"/><circle cx="12" cy="10" r="2.2"/>', flag:'<path d="M6 21V4M6 5h12l-2.5 3.5L18 12H6"/>', bell:'<path d="M6 16v-5a6 6 0 0 1 12 0v5l1.5 2h-15zM10 20.5a2 2 0 0 0 4 0"/>', bag:'<rect x="4" y="7.5" width="16" height="12" rx="2.5"/><path d="M9 7.5V5.5a1.5 1.5 0 0 1 1.5-1.5h3A1.5 1.5 0 0 1 15 5.5v2"/>' };
 const TOOL_ICON = {
   map:'<path d="M9 4 3.5 6v14L9 18l6 2 5.5-2V4L15 6 9 4z"/><path d="M9 4v14M15 6v14"/>',
   lay:'<rect x="4" y="7.5" width="16" height="12" rx="2.5"/><path d="M9 7.5V5.5a1.5 1.5 0 0 1 1.5-1.5h3A1.5 1.5 0 0 1 15 5.5v2M4 12.5h16M10.5 12.5v1.5h3v-1.5"/>',
@@ -445,7 +447,7 @@ function renderBackup(msg){
     <div class="row"><button class="btn" id="bk-exp" type="button">${t('bk_export')}</button>
     <label class="btn ghost" for="bk-in" style="display:inline-block">${t('bk_import')}</label><input type="file" id="bk-in" class="sr"></div>
     <div id="bk-out">${msg||''}</div>
-    <h3 class="wh">📱 ${t('cfg_t')}</h3><p class="note">${t('cfg_intro')}</p>
+    <h3 class="wh">${t('cfg_t')}</h3><p class="note">${t('cfg_intro')}</p>
     <div class="row"><button class="btn ghost" id="cfg-make" type="button">${t('cfg_make')}</button></div><div id="cfg-out"></div>`);
 }
 let bkPending = null;

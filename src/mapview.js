@@ -440,7 +440,7 @@ function layBody(st){
 }
 function layHtml(st, extra){
   const a = AP[st], city = a ? a.city : st;
-  return `<details class="td-lay" data-lay="${esc(st)}"${layOpen[st] ? ' open' : ''}><summary>🧳 ${t('lay_title', {c: esc(city) + ' (' + st + ')'})}${extra ? ` <span class="note">${extra}</span>` : ''}${(state.notes||{})[st] ? ' 📝' : ''}</summary>${layBody(st)}</details>`;
+  return `<details class="td-lay" data-lay="${esc(st)}"${layOpen[st] ? ' open' : ''}><summary>${gi(GI.bag)}${t('lay_title', {c: esc(city) + ' (' + st + ')'})}${extra ? ` <span class="note">${extra}</span>` : ''}${(state.notes||{})[st] ? ' 📝' : ''}</summary>${layBody(st)}</details>`;
 }
 let noteTimer = null;
 document.addEventListener('input', e => {
@@ -539,7 +539,7 @@ function renderInstall(){
   const el = $('instRow'); if(!el) return;
   if(isStandalone() || (!instEvt && !isIOS())){ el.hidden = true; el.innerHTML = ''; return; }
   el.hidden = false;
-  el.innerHTML = `<b>📲 ${t('inst_t')}</b><p class="note" style="margin:6px 0">${t('inst_why')}</p>` +
+  el.innerHTML = `<b>${t('inst_t')}</b><p class="note" style="margin:6px 0">${t('inst_why')}</p>` +
     (instEvt ? `<button class="btn" id="inst-go" type="button">${t('inst_btn')}</button>` : `<p class="note" style="margin:0">${t('inst_ios')}</p>`);
 }
 addEventListener('beforeinstallprompt', e => { e.preventDefault(); instEvt = e; renderInstall(); });

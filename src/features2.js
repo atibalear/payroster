@@ -50,7 +50,7 @@ function renderLic(){
       <label class="note">${t('lic_add')}<select id="lic-pre"><option value="">—</option>${LIC_PRESETS.filter(k => !used.has(k)).map(k => `<option value="${k}">${t(k)}</option>`).join('')}<option value="_">${t('lic_other')}</option></select></label>
       <input type="text" id="lic-name" placeholder="${t('lic_otherPh')}" hidden>
       <button class="btn" id="lic-addb" type="button">+</button></div>
-    <div class="row" style="margin-top:12px"><button class="btn ghost" id="lic-ics" type="button">📅 ${t('lic_ics')}</button></div>
+    <div class="row" style="margin-top:12px"><button class="btn ghost" id="lic-ics" type="button">${t('lic_ics')}</button></div>
     <p class="note">${t('lic_note')}</p>`);
 }
 function licIcs(){

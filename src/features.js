@@ -80,10 +80,10 @@ function renderToday(){
   const steps = [];
   if(cur){
     steps.push({ ic:'✓', lb: t('td_ci'), ms: x.start });
-    if(x.end) steps.push({ ic:'🏁', lb: t('td_co'), ms: x.end, st: x.endSt || st });
+    if(x.end) steps.push({ ic:gi(GI.flag), lb: t('td_co'), ms: x.end, st: x.endSt || st });
   } else {
     const sp = sleepPlan(x.start, pk);
-    if(sp.bed - now < 20*36e5){ steps.push({ ic:'😴', lb: t('td_bed'), ms: sp.bed, warn: now > sp.bed && now < sp.wake }); steps.push({ ic:'⏰', lb: t('td_alarm'), ms: sp.wake }); }
+    if(sp.bed - now < 20*36e5){ steps.push({ ic:gi(GI.moon), lb: t('td_bed'), ms: sp.bed, warn: now > sp.bed && now < sp.wake }); steps.push({ ic:gi(GI.bell), lb: t('td_alarm'), ms: sp.wake }); }
     if(pk) steps.push({ ic:'🚐', lb: t('td_pk'), ms: pk });
     steps.push({ ic:'✓', lb: t('td_ci'), ms: x.start });
   }
