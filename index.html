@@ -546,7 +546,7 @@ html.glass[data-theme="dark"]{--card2:rgba(255,255,255,.06);--card2-brd:rgba(255
 .tabbar,html.glass .tabbar{left:max(12px, env(safe-area-inset-left, 0px));right:max(12px, env(safe-area-inset-right, 0px));bottom:calc(8px + env(safe-area-inset-bottom, 0px));
   max-width:560px;margin:0 auto;display:flex;justify-content:space-between;align-items:center;gap:8px;padding:6px 6px 6px 8px;border-radius:32px;border:1px solid var(--line);background:var(--surface);box-shadow:0 10px 30px rgba(20,30,80,.16)}
 html.glass .tabbar{border:1px solid var(--glass-brd);background:var(--glass);backdrop-filter:blur(26px) saturate(1.9);-webkit-backdrop-filter:blur(26px) saturate(1.9);box-shadow:inset 0 1px 0 var(--glass-hi),0 12px 34px rgba(20,30,80,.18)}
-.tabbar,html.glass .tabbar{left:50%!important;right:auto!important;transform:translateX(-50%);width:fit-content;max-width:calc(100vw - 24px);margin:0!important;justify-content:center;padding:6px}
+.tabbar,html.glass .tabbar{left:50%!important;right:auto!important;transform:translateX(-50%);width:fit-content;max-width:calc(100vw - 24px);margin:0!important;justify-content:center;padding:7px 14px}
 .share{min-width:0;max-width:100%}.share select,.share input{max-width:100%;min-width:0;box-sizing:border-box}.share .opts label{flex-wrap:wrap}
 .monthrow{padding:4px 6px!important}
 .monthrow .monthnav{width:100%;justify-content:space-between}
@@ -561,15 +561,17 @@ html.glass .tabbar{border:1px solid var(--glass-brd);background:var(--glass);bac
 .payback{align-self:flex-start;border:0;background:none;color:var(--accent);font:700 17px var(--f-body);padding:6px 2px;cursor:pointer}
 body[data-pv="list"] .payback,body[data-pv="list"] .herowrap[data-tab="pay"],body[data-pv="list"] .slippanel,body[data-pv="list"] #aheadWrap{display:none!important}
 body:not([data-pv="list"]) #payList{display:none!important}
-body[data-pv="now"] #hero>.panel:not(.hnow),body[data-pv="next"] #hero>.panel.hnow,body[data-pv="ahead"] .herowrap[data-tab="pay"],body[data-pv="now"] #aheadWrap,body[data-pv="next"] #aheadWrap{display:none!important}
-body[data-pv="ahead"] .hahead .ahead{display:none}
+body[data-pv="now"] #hero>.panel:not(.hnow),body[data-pv="next"] #hero>.panel.hnow,body[data-pv="ahead"] .herowrap:not(.aheadwrap)[data-tab="pay"],body[data-pv="now"] #aheadWrap,body[data-pv="next"] #aheadWrap{display:none!important}
+body[data-pv="ahead"] .hahead:not([data-pvk="ahead"]),body[data-pv="prev"] .hahead:not([data-pvk="prev"]),body[data-pv="now"] .hahead,body[data-pv="next"] .hahead{display:none!important}
+body[data-pv="prev"] .herowrap:not(.aheadwrap)[data-tab="pay"]{display:none!important}
+.hahead{margin-bottom:14px}
 body:not([data-pv="list"]) .hero{grid-template-columns:1fr}
 .tabbar .monthnav{display:flex;align-items:center;gap:0;min-width:0}
 .tabbar .mlabel{font-weight:750;font-size:16px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;letter-spacing:-.01em;padding:0 2px}
 .tabbar .monthnav .iconbtn{width:32px;height:40px;min-width:0;border:0;background:none;box-shadow:none;font-size:20px;color:var(--accent);padding:0;backdrop-filter:none;-webkit-backdrop-filter:none}
 .tabbar .monthnav .iconbtn:disabled{opacity:.25}
-.tabbar .tb{display:flex;gap:5px;flex:none}
-.tabbar .tb button,html.glass .tabbar .tb button{flex:none;max-width:none;width:44px;height:44px;padding:0;border-radius:50%;display:grid;place-items:center;background:color-mix(in srgb,var(--muted) 12%,transparent);color:var(--muted);transition:background .2s,color .2s,transform .15s}
+.tabbar .tb{display:flex;gap:14px;flex:none}
+.tabbar .tb button,html.glass .tabbar .tb button{flex:none;max-width:none;width:46px;height:46px;padding:0;border-radius:50%;display:grid;place-items:center;background:color-mix(in srgb,var(--muted) 12%,transparent);color:var(--muted);transition:background .2s,color .2s,transform .15s}
 html.glass .tabbar .tb button{background:rgba(255,255,255,.55)}
 @media (prefers-color-scheme: dark){ html.glass:not([data-theme="light"]) .tabbar .tb button{background:rgba(255,255,255,.08)} }
 html.glass[data-theme="dark"] .tabbar .tb button{background:rgba(255,255,255,.08)}
@@ -815,12 +817,12 @@ body.scrolled .topbar{opacity:1;transform:none;pointer-events:auto}
   <button type="button" class="payback" id="payBackBtn" data-tab="pay">‹ <span data-i18n="tab_pay"></span></button>
   <div class="paylist" id="payList" data-tab="pay"></div>
   <div class="herowrap" data-tab="pay"><section class="hero" id="hero"></section></div>
+  <div class="herowrap aheadwrap" id="aheadWrap" data-tab="pay" hidden></div>
   <section class="panel slippanel" data-tab="pay"><button class="privbtn" type="button" data-priv="1" aria-pressed="false"></button>
     <h2 style="margin-top:0" id="slipH"></h2>
     <p class="note" id="slipNote"></p>
     <div class="tablewrap"><table class="slip" id="slip"></table></div>
   </section>
-  <div class="herowrap aheadwrap" id="aheadWrap" data-tab="pay" hidden></div>
 
   <section data-tab="tools">
     <h2 data-i18n="toolsT" class="tools-h"></h2>
@@ -14373,7 +14375,7 @@ document.addEventListener('change', e => { if(e.target && e.target.id === 'earn-
 <script>
 const SEED = null;
 const SEED_SETTINGS = null;
-const APP_VERSION = '2026.11.15-0819';
+const APP_VERSION = '2026.11.15-0823';
 const IS_PWA_BUILD = true;
 const LS = 'payroster.v1';
 const KC = { sick:'--warn', flight:'--k-flight', deadhead:'--k-dh', training:'--k-train', standby:'--k-sby', reserve:'--k-sby', ground:'--k-ground', off:'--k-off', empty:'--k-off', other:'--k-ground' };
@@ -14647,6 +14649,8 @@ function render(){
   c._nextKey = nx[0]+'-'+String(nx[1]).padStart(2,'0');
   c._pv = { now:{P:slipNow, mNow:monthName(ro.year,ro.month), mPrev:monthName(ro.year,ro.month-1), R:(cPrev||c).rates, rk:key(ro)},
             next:{P:slipNext, mNow:monthName(ro.year,ro.month+1), mPrev:monthName(ro.year,ro.month), R:c.rates, rk:c._nextKey} };
+  { const [py,pm] = pk.split('-').map(Number), roP2 = state.months[prevKey(py,pm)], cP2 = roP2 ? PR.compute(roP2, s, state.extras) : null;
+    c._pv.prev = {P:slipFor(cP2, s, py, pm), mNow:monthName(py,pm), mPrev:monthName(py,pm-1), R:(cP2||c).rates, rk:pk, ok:!!roP2}; }
   _payC = {c, ro};
   const mDate = new Date(ro.year, ro.month-1, 1);
   $('mLabel').textContent = mDate.toLocaleDateString(LOC,{month:'short',year:'numeric'}).replace('.','');
@@ -14657,6 +14661,19 @@ function render(){
 let _payC = null;
 function showPay(v){ document.body.dataset.pv = v; if(_payC) renderSlip(_payC.c, _payC.ro); window.scrollTo(0,0); }
 document.addEventListener('click', e => { const g = e.target.closest('[data-pvgo]'); if(g){ showPay(g.dataset.pvgo); return; } if(e.target.closest('#payBackBtn')){ document.body.dataset.pv = 'list'; window.scrollTo(0,0); } });
+function sumPanel(k, eb, SN, mA, mR){
+  return `<div class="panel hahead" data-pvk="${k}"><button class="privbtn" type="button" aria-pressed="${PRIV}" title="${t(PRIV?'priv_show':'priv_hide')}">${privIcon()}</button>
+      <div class="eyebrow">${eb}</div>
+      <div class="netfig num" style="color:var(--pay)">${eur.format(SN.net)}</div>
+      <div class="sub">${t('nextPaySub',{m:mA,p:mR})}</div>
+      <dl class="sumbox">
+        <dt><span class="op"> </span>${t('fixedOf',{m:mA})}</dt><dd>${eur.format(SN.fixed)}</dd>
+        <dt><span class="op">+</span>${t('variableOf',{p:mR})}</dt><dd>${eur.format(SN.variable)}</dd>
+        <dt><span class="op">=</span>${t('grossTotal')}</dt><dd>${eur.format(SN.gross)}</dd>
+        <dt><span class="op">−</span>${t('deductions')}</dt><dd>${eur.format(SN.ded)}</dd>
+        <dt class="netrow"><span class="op">=</span>${t('youGet')}</dt><dd class="netrow">${eur.format(SN.net)}</dd>
+      </dl></div>`;
+}
 function renderHero(c, ro){
   const [L1,L2] = c.rates.limits;
   const max = Math.max(L2+20, Math.ceil((c.T+10)/10)*10);
@@ -14677,23 +14694,18 @@ function renderHero(c, ro){
   if(roN && !roN.to){ try{ const cN = PR.compute(roN, state.settings, state.extras), y2 = roN.month===12 ? roN.year+1 : roN.year, m2 = roN.month===12 ? 1 : roN.month+1;
     const SN = slipFor(cN, state.settings, y2, m2);
     const mA = monthName(y2,m2,{month:'long'}), mR = monthName(roN.year,roN.month,{month:'long'});
-    ahead = `<div class="panel hahead"><button class="privbtn" type="button" aria-pressed="${PRIV}" title="${t(PRIV?'priv_show':'priv_hide')}">${privIcon()}</button>
-      <div class="eyebrow">${t('aheadT',{m:mA,r:mR})}</div>
-      <div class="netfig num" style="color:var(--pay)">${eur.format(SN.net)}</div>
-      <div class="sub">${t('nextPaySub',{m:mA,p:mR})}</div>
-      <dl class="sumbox">
-        <dt><span class="op"> </span>${t('fixedOf',{m:mA})}</dt><dd>${eur.format(SN.fixed)}</dd>
-        <dt><span class="op">+</span>${t('variableOf',{p:mR})}</dt><dd>${eur.format(SN.variable)}</dd>
-        <dt><span class="op">=</span>${t('grossTotal')}</dt><dd>${eur.format(SN.gross)}</dd>
-        <dt><span class="op">−</span>${t('deductions')}</dt><dd>${eur.format(SN.ded)}</dd>
-        <dt class="netrow"><span class="op">=</span>${t('youGet')}</dt><dd class="netrow">${eur.format(SN.net)}</dd>
-      </dl></div>`;
+    ahead = sumPanel('ahead', t('aheadT',{m:mA,r:mR}), SN, mA, mR);
     c._pv.ahead = {P:SN, mNow:mA, mPrev:mR, R:cN.rates, rk:y2+'-'+String(m2).padStart(2,'0')}; }catch(e){} }
-  { const w = $('aheadWrap'); if(w){ w.innerHTML = ahead; w.hidden = !ahead; } }
+  { const PV = c._pv.prev, pvPanel = PV && PV.ok ? sumPanel('prev', t('slipOf',{m:PV.mNow}), PV.P, PV.mNow, PV.mPrev) : '';
+    const w = $('aheadWrap'); if(w){ w.innerHTML = pvPanel + ahead; w.hidden = !(pvPanel || ahead); } }
   { const pc = (v, eb, net, sub, can, col) => `<div class="panel paycard"><button class="privbtn" type="button" aria-pressed="${PRIV}" title="${t(PRIV?'priv_show':'priv_hide')}">${privIcon()}</button>
       <div class="eyebrow">${eb}</div><div class="netfig num"${col?` style="color:${col}"`:''}>${net}</div><div class="sub">${sub}</div>
       ${can?`<button type="button" class="ahead" data-pvgo="${v}"><span>${t('pay_more')}</span><b>›</b></button>`:''}</div>`;
-    let L = ok ? pc('now', t('slipOf',{m:mNow}), eur.format(P.net), t('slipOfSub',{m:mNow,p:mPrev}), true)
+    const PV2 = c._pv.prev, realPrev = slips[PV2.rk];
+    let L = PV2.ok ? pc('prev', t('slipOf',{m:PV2.mNow}), eur.format(PV2.P.net), t('slipOfSub',{m:PV2.mNow,p:PV2.mPrev}), true)
+      : realPrev && realPrev.net!=null ? pc('prev', t('slipOf',{m:PV2.mNow}), eur.format(realPrev.net), t('realOnly',{p:PV2.mPrev}), false)
+      : pc('prev', t('slipOf',{m:PV2.mNow}), '—', t('needPrev2',{m:PV2.mNow,p:PV2.mPrev}), false, 'var(--muted)');
+    L += ok ? pc('now', t('slipOf',{m:mNow}), eur.format(P.net), t('slipOfSub',{m:mNow,p:mPrev}), true)
       : realNow && realNow.net!=null ? pc('now', t('slipOf',{m:mNow}), eur.format(realNow.net), t('realOnly',{p:mPrev}), false)
       : pc('now', t('slipOf',{m:mNow}), '—', t('needPrev2',{m:mNow,p:mPrev}), false, 'var(--muted)');
     L += pc('next', t('nextPayHead',{m:mNext}), eur.format(N.net), t('nextPaySub',{m:mNext,p:mNow}), true, 'var(--pay)');
