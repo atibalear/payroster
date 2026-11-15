@@ -1,9 +1,9 @@
 // ---- Payroster tools: payslip check, what-if, calendar, FTL, days off, year summary, backup ----
 // Shares the page's globals (state, t, eur, n2, hhmm, PR, monthName, key, prevKey, save, render…).
 
-const TOOLS = ['map','lay','check','sim','earn','cal','ftl','fat','vac','lic','sales','year','wrap','cmp','fam','backup'];
+const TOOLS = ['map','lay','check','sim','earn','cal','ftl','fat','vac','lic','sales','year','wrap','cmp','share','fam','backup'];
 let toolOpen = null, simDate = null;
-const TOOL_CATS = [['fly', ['map','lay','cal','ftl','fat']], ['money', ['check','earn','sim','year','sales','wrap']], ['me', ['vac','fam','lic','cmp','backup']]];
+const TOOL_CATS = [['fly', ['map','lay','cal','ftl','fat']], ['money', ['check','earn','sim','year','sales','wrap']], ['me', ['vac','fam','lic','cmp','share','backup']]];
 
 const TOOL_ICON = {
   map:'<path d="M9 4 3.5 6v14L9 18l6 2 5.5-2V4L15 6 9 4z"/><path d="M9 4v14M15 6v14"/>',
@@ -21,6 +21,7 @@ const TOOL_ICON = {
   lic:'<rect x="4" y="5" width="16" height="14" rx="2.5"/><circle cx="9" cy="11" r="2"/><path d="M6.5 16c.5-1.5 1.4-2.2 2.5-2.2s2 .7 2.5 2.2M14 10h3.5M14 13.5h3.5"/>',
   fat:'<path d="M20 14.5A8 8 0 1 1 9.5 4a6.5 6.5 0 0 0 10.5 10.5z"/>',
   sales:'<path d="M5 7h14l-1.4 9.2a2 2 0 0 1-2 1.8H8.4a2 2 0 0 1-2-1.8z"/><path d="M9 7V5.5a3 3 0 0 1 6 0V7"/>',
+  share:'<path d="M12 15V4M8.5 7.5 12 4l3.5 3.5"/><path d="M7 11H6a1.5 1.5 0 0 0-1.5 1.5v6A1.5 1.5 0 0 0 6 20h12a1.5 1.5 0 0 0 1.5-1.5v-6A1.5 1.5 0 0 0 18 11h-1"/>',
   backup:'<path d="M7 18.5a4.5 4.5 0 0 1-.6-9A6 6 0 0 1 18 8.6a4 4 0 0 1-.5 9.9H7z"/><path d="m12 11v5M9.8 13.2 12 11l2.2 2.2"/>'
 };
 function renderToolbar(){
@@ -32,7 +33,7 @@ function renderToolbar(){
   bar.innerHTML = cats.filter(c => c[1].length).map(([c, ks]) => `<div class="tcat"><h3>${t('tc_'+c)}</h3><p>${t('tc_'+c+'S')}</p><div class="toolgrid">${ks.map(tile).join('')}</div></div>`).join('');
 }
 function setTab(tab){
-  document.body.dataset.tab = tab;
+  document.body.dataset.tab = tab; if(tab !== 'pay') document.body.dataset.pv = 'list';
   document.querySelectorAll('[data-tabgo]').forEach(b => b.classList.toggle('on', b.dataset.tabgo === tab));
   try{ sessionStorage.setItem('pr.tab', tab); }catch(e){}
   // the 3D route map only draws while it can be seen
@@ -58,7 +59,8 @@ function closeTool(){
 }
 window.addEventListener('popstate', () => { if(toolOpen) closeTool(); });
 function refreshTool(){ if(toolOpen) TOOL_FN()[toolOpen](); }
-const TOOL_FN = () => ({check:renderCheck, sim:renderSim, earn:renderEarn, cal:renderCal, ftl:renderFtl, vac:renderVac, year:renderYear, wrap:renderWrap, map:renderMap, lay:renderLay, lic:renderLic, fat:renderFat, sales:renderSales, cmp:renderCmp, fam:renderFam, backup:renderBackup});
+const TOOL_FN = () => ({check:renderCheck, sim:renderSim, earn:renderEarn, cal:renderCal, ftl:renderFtl, vac:renderVac, year:renderYear, wrap:renderWrap, map:renderMap, lay:renderLay, lic:renderLic, fat:renderFat, sales:renderSales, cmp:renderCmp, share:renderShare, fam:renderFam, backup:renderBackup});
+function renderShare(){ pnl(hdr('share') + '<div class="share" id="sharePanel"></div>'); renderSharePanel(); }
 const pnl = html => { $('toolPanel').innerHTML = html; };
 const hdr = (k, sub) => `<div class="eyebrow">${t('tool_'+k)}</div>${sub?`<p class="note" style="margin:6px 0 12px">${sub}</p>`:''}`;
 const fmtH = h => hhmm(Math.max(0,h||0));
@@ -470,7 +472,7 @@ document.addEventListener('change', async e=>{
 document.addEventListener('click', async e=>{
   const tb = e.target.closest('[data-tool]'); if(tb){ openTool(tb.dataset.tool); return; }
   if(e.target.closest('#toolBack')){ if(history.state && history.state.tool) history.back(); else closeTool(); return; }
-  const tg = e.target.closest('[data-tabgo]'); if(tg){ if(tg.dataset.tabgo === 'tools' && toolOpen && document.body.dataset.tab === 'tools'){ if(history.state && history.state.tool) history.back(); else closeTool(); return; } setTab(tg.dataset.tabgo); window.scrollTo(0,0); return; }
+  const tg = e.target.closest('[data-tabgo]'); if(tg){ if(tg.dataset.tabgo === 'tools' && toolOpen && document.body.dataset.tab === 'tools'){ if(history.state && history.state.tool) history.back(); else closeTool(); return; } if(tg.dataset.tabgo === 'pay') document.body.dataset.pv = 'list'; setTab(tg.dataset.tabgo); window.scrollTo(0,0); return; }
   const sd = e.target.closest('[data-sim]'); if(sd){ simDate = sd.dataset.sim; toolOpen = null; openTool('sim'); return; }
   const id = e.target.id;
   if(id==='sim-go'){ runSim(); return; }
