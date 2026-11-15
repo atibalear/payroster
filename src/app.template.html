@@ -732,6 +732,7 @@ body.scrolled .topbar{opacity:1;transform:none;pointer-events:auto}
 .today .qa{padding:7px 2px 6px;gap:3px;border-radius:15px;font-size:11px}
 .today .qa .qi3{width:32px;height:32px;border-radius:11px}.today .qa .qi3 svg{width:18px;height:18px}
 .today .stub .sbd{padding:5px 9px;min-width:46px}
+.aheadwrap>.panel{position:relative}.hahead>.eyebrow{padding-right:52px}
 </style>
 
 <div class="wrap">
@@ -761,6 +762,7 @@ body.scrolled .topbar{opacity:1;transform:none;pointer-events:auto}
     <p class="note" id="slipNote"></p>
     <div class="tablewrap"><table class="slip" id="slip"></table></div>
   </section>
+  <div class="herowrap aheadwrap" id="aheadWrap" data-tab="roster" hidden></div>
   </div><div class="rcolB">
 
   <section data-tab="roster">
@@ -1137,7 +1139,20 @@ function renderHero(c, ro){
   const roN = state.months[c._nextKey];
   if(roN && !roN.to){ try{ const cN = PR.compute(roN, state.settings, state.extras), y2 = roN.month===12 ? roN.year+1 : roN.year, m2 = roN.month===12 ? 1 : roN.month+1;
     const SN = slipFor(cN, state.settings, y2, m2);
-    ahead = `<button type="button" class="ahead" data-gom="${c._nextKey}"><span>${t('aheadT',{m:monthName(y2,m2,{month:'long'}),r:monthName(roN.year,roN.month,{month:'long'})})}</span><b class="num">${eur.format(SN.net)} ›</b></button>`; }catch(e){} }
+    const mA = monthName(y2,m2,{month:'long'}), mR = monthName(roN.year,roN.month,{month:'long'});
+    ahead = `<div class="panel hahead"><button class="privbtn" type="button" aria-pressed="${PRIV}" title="${t(PRIV?'priv_show':'priv_hide')}">${privIcon()}</button>
+      <div class="eyebrow">${t('aheadT',{m:mA,r:mR})}</div>
+      <div class="netfig num" style="color:var(--pay)">${eur.format(SN.net)}</div>
+      <div class="sub">${t('nextPaySub',{m:mA,p:mR})}</div>
+      <dl class="sumbox">
+        <dt><span class="op"> </span>${t('fixedOf',{m:mA})}</dt><dd>${eur.format(SN.fixed)}</dd>
+        <dt><span class="op">+</span>${t('variableOf',{p:mR})}</dt><dd>${eur.format(SN.variable)}</dd>
+        <dt><span class="op">=</span>${t('grossTotal')}</dt><dd>${eur.format(SN.gross)}</dd>
+        <dt><span class="op">−</span>${t('deductions')}</dt><dd>${eur.format(SN.ded)}</dd>
+        <dt class="netrow"><span class="op">=</span>${t('youGet')}</dt><dd class="netrow">${eur.format(SN.net)}</dd>
+      </dl>
+      <button type="button" class="ahead" data-gom="${c._nextKey}"><span>${t('aheadMore',{m:mR})}</span><b>›</b></button></div>`; }catch(e){} }
+  { const w = $('aheadWrap'); if(w){ w.innerHTML = ahead; w.hidden = !ahead; } }
   $('hero').innerHTML = `
   <div class="panel"><button class="privbtn" type="button" aria-pressed="${PRIV}" title="${t(PRIV?'priv_show':'priv_hide')}">${privIcon()}</button>
     <div class="eyebrow">${t('nextPayHead',{m:mNext})}</div>
@@ -1151,7 +1166,6 @@ function renderHero(c, ro){
       <dt class="netrow"><span class="op">=</span>${t('youGet')}</dt><dd class="netrow">${eur.format(N.net)}</dd>
       ${cmp(N.net, realNext)}
     </dl>
-    ${ahead}
     ${salesInput(key(ro), mNow)}
     ${oneOffInput(N.year, N.month)}
     ${N.month===12 && !state.settings.joined ? `<div class="askj"><span>${t('askJoined')}</span><label class="askjin">${t('f_joinedShort')}<input type="date" id="q-joined"></label><button class="btn" id="q-joined-save" type="button" style="align-self:flex-start">${t('saveDate')}</button></div>` : ''}
