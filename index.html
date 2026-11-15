@@ -547,6 +547,9 @@ html.glass[data-theme="dark"]{--card2:rgba(255,255,255,.06);--card2-brd:rgba(255
   max-width:560px;margin:0 auto;display:flex;justify-content:space-between;align-items:center;gap:8px;padding:6px 6px 6px 8px;border-radius:32px;border:1px solid var(--line);background:var(--surface);box-shadow:0 10px 30px rgba(20,30,80,.16)}
 html.glass .tabbar{border:1px solid var(--glass-brd);background:var(--glass);backdrop-filter:blur(26px) saturate(1.9);-webkit-backdrop-filter:blur(26px) saturate(1.9);box-shadow:inset 0 1px 0 var(--glass-hi),0 12px 34px rgba(20,30,80,.18)}
 .tabbar,html.glass .tabbar{left:50%!important;right:auto!important;transform:translateX(-50%);width:fit-content;max-width:calc(100vw - 24px);margin:0!important;justify-content:center;padding:7px 14px}
+.gi{width:1.05em;height:1.05em;vertical-align:-.17em;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;margin-right:.35em}
+body[data-tab="tools"] #importMsg.stale,body[data-tab="more"] #importMsg.stale{display:none}
+.row{align-items:center}
 .share{min-width:0;max-width:100%}.share select,.share input{max-width:100%;min-width:0;box-sizing:border-box}.share .opts label{flex-wrap:wrap}
 .monthrow{padding:4px 6px!important}
 .monthrow .monthnav{width:100%;justify-content:space-between}
@@ -11784,6 +11787,8 @@ const TOOLS = ['map','lay','check','sim','earn','cal','ftl','fat','vac','lic','s
 let toolOpen = null, simDate = null;
 const TOOL_CATS = [['fly', ['map','lay','cal','ftl','fat']], ['money', ['check','earn','sim','year','sales','wrap']], ['me', ['vac','fam','lic','cmp','share','backup']]];
 
+const gi = d => '<svg class="gi" viewBox="0 0 24 24" aria-hidden="true">' + d + '</svg>';
+const GI = { moon:'<path d="M20 14.5A8 8 0 1 1 9.5 4a6.5 6.5 0 0 0 10.5 10.5z"/>', pin:'<path d="M12 21s-6.5-5.6-6.5-11a6.5 6.5 0 0 1 13 0c0 5.4-6.5 11-6.5 11z"/><circle cx="12" cy="10" r="2.2"/>', flag:'<path d="M6 21V4M6 5h12l-2.5 3.5L18 12H6"/>', bell:'<path d="M6 16v-5a6 6 0 0 1 12 0v5l1.5 2h-15zM10 20.5a2 2 0 0 0 4 0"/>', bag:'<rect x="4" y="7.5" width="16" height="12" rx="2.5"/><path d="M9 7.5V5.5a1.5 1.5 0 0 1 1.5-1.5h3A1.5 1.5 0 0 1 15 5.5v2"/>' };
 const TOOL_ICON = {
   map:'<path d="M9 4 3.5 6v14L9 18l6 2 5.5-2V4L15 6 9 4z"/><path d="M9 4v14M15 6v14"/>',
   lay:'<rect x="4" y="7.5" width="16" height="12" rx="2.5"/><path d="M9 7.5V5.5a1.5 1.5 0 0 1 1.5-1.5h3A1.5 1.5 0 0 1 15 5.5v2M4 12.5h16M10.5 12.5v1.5h3v-1.5"/>',
@@ -12224,7 +12229,7 @@ function renderBackup(msg){
     <div class="row"><button class="btn" id="bk-exp" type="button">${t('bk_export')}</button>
     <label class="btn ghost" for="bk-in" style="display:inline-block">${t('bk_import')}</label><input type="file" id="bk-in" class="sr"></div>
     <div id="bk-out">${msg||''}</div>
-    <h3 class="wh">📱 ${t('cfg_t')}</h3><p class="note">${t('cfg_intro')}</p>
+    <h3 class="wh">${t('cfg_t')}</h3><p class="note">${t('cfg_intro')}</p>
     <div class="row"><button class="btn ghost" id="cfg-make" type="button">${t('cfg_make')}</button></div><div id="cfg-out"></div>`);
 }
 let bkPending = null;
@@ -12365,10 +12370,10 @@ function renderToday(){
   const steps = [];
   if(cur){
     steps.push({ ic:'✓', lb: t('td_ci'), ms: x.start });
-    if(x.end) steps.push({ ic:'🏁', lb: t('td_co'), ms: x.end, st: x.endSt || st });
+    if(x.end) steps.push({ ic:gi(GI.flag), lb: t('td_co'), ms: x.end, st: x.endSt || st });
   } else {
     const sp = sleepPlan(x.start, pk);
-    if(sp.bed - now < 20*36e5){ steps.push({ ic:'😴', lb: t('td_bed'), ms: sp.bed, warn: now > sp.bed && now < sp.wake }); steps.push({ ic:'⏰', lb: t('td_alarm'), ms: sp.wake }); }
+    if(sp.bed - now < 20*36e5){ steps.push({ ic:gi(GI.moon), lb: t('td_bed'), ms: sp.bed, warn: now > sp.bed && now < sp.wake }); steps.push({ ic:gi(GI.bell), lb: t('td_alarm'), ms: sp.wake }); }
     if(pk) steps.push({ ic:'🚐', lb: t('td_pk'), ms: pk });
     steps.push({ ic:'✓', lb: t('td_ci'), ms: x.start });
   }
@@ -13264,7 +13269,7 @@ function layBody(st){
 }
 function layHtml(st, extra){
   const a = AP[st], city = a ? a.city : st;
-  return `<details class="td-lay" data-lay="${esc(st)}"${layOpen[st] ? ' open' : ''}><summary>🧳 ${t('lay_title', {c: esc(city) + ' (' + st + ')'})}${extra ? ` <span class="note">${extra}</span>` : ''}${(state.notes||{})[st] ? ' 📝' : ''}</summary>${layBody(st)}</details>`;
+  return `<details class="td-lay" data-lay="${esc(st)}"${layOpen[st] ? ' open' : ''}><summary>${gi(GI.bag)}${t('lay_title', {c: esc(city) + ' (' + st + ')'})}${extra ? ` <span class="note">${extra}</span>` : ''}${(state.notes||{})[st] ? ' 📝' : ''}</summary>${layBody(st)}</details>`;
 }
 let noteTimer = null;
 document.addEventListener('input', e => {
@@ -13363,7 +13368,7 @@ function renderInstall(){
   const el = $('instRow'); if(!el) return;
   if(isStandalone() || (!instEvt && !isIOS())){ el.hidden = true; el.innerHTML = ''; return; }
   el.hidden = false;
-  el.innerHTML = `<b>📲 ${t('inst_t')}</b><p class="note" style="margin:6px 0">${t('inst_why')}</p>` +
+  el.innerHTML = `<b>${t('inst_t')}</b><p class="note" style="margin:6px 0">${t('inst_why')}</p>` +
     (instEvt ? `<button class="btn" id="inst-go" type="button">${t('inst_btn')}</button>` : `<p class="note" style="margin:0">${t('inst_ios')}</p>`);
 }
 addEventListener('beforeinstallprompt', e => { e.preventDefault(); instEvt = e; renderInstall(); });
@@ -13480,7 +13485,7 @@ function renderLic(){
       <label class="note">${t('lic_add')}<select id="lic-pre"><option value="">—</option>${LIC_PRESETS.filter(k => !used.has(k)).map(k => `<option value="${k}">${t(k)}</option>`).join('')}<option value="_">${t('lic_other')}</option></select></label>
       <input type="text" id="lic-name" placeholder="${t('lic_otherPh')}" hidden>
       <button class="btn" id="lic-addb" type="button">+</button></div>
-    <div class="row" style="margin-top:12px"><button class="btn ghost" id="lic-ics" type="button">📅 ${t('lic_ics')}</button></div>
+    <div class="row" style="margin-top:12px"><button class="btn ghost" id="lic-ics" type="button">${t('lic_ics')}</button></div>
     <p class="note">${t('lic_note')}</p>`);
 }
 function licIcs(){
@@ -13856,7 +13861,7 @@ function sleepHtml(x, pk, now){
   const p = sleepPlan(x.start, pk);
   if(now > p.wake || p.bed - now > 20*36e5) return '';
   const st = x.st || state.settings.base || 'PMI', late = now > p.bed;
-  return `<div class="note td-sleep${late ? ' late' : ''}">😴 ${t(late ? 'sl_late' : 'sl_line', {h: p.h, b: localHM(p.bed, st), w: localHM(p.wake, st), n: hhmm(Math.max(0, p.wake - now)/36e5)})}</div>`;
+  return `<div class="note td-sleep${late ? ' late' : ''}">${gi(GI.moon)}${t(late ? 'sl_late' : 'sl_line', {h: p.h, b: localHM(p.bed, st), w: localHM(p.wake, st), n: hhmm(Math.max(0, p.wake - now)/36e5)})}</div>`;
 }
 
 // ---------- 3. weather, sunrise / sunset, time difference ----------
@@ -14230,7 +14235,7 @@ function skyHtml(x, cur, pk, now, legs, st){
       ${flying || frac > 0 && frac < 1 ? `<text x="${px.toFixed(0)}" y="${(py+8).toFixed(0)}" text-anchor="middle" font-size="22" fill="#fff">✈︎</text>` : ''}</svg>` : `<svg class="sky-arc" viewBox="0 0 360 60" aria-hidden="true">${sun}</svg>`;
   const eb = (cur ? t('td_curT') : t('td_nextT')) + ' · ' + localDay(x.start, st);
   return `<div class="td-sky sky-${ph}">${ph === 'night' ? '<div class="stars"></div>' : ''}
-    <div class="sky-top"><div class="eyebrow">${eb}</div>${x.st ? `<span class="td-base">📍 ${esc(x.st)}</span>` : ''}</div>
+    <div class="sky-top"><div class="eyebrow">${eb}</div>${x.st ? `<span class="td-base">${gi(GI.pin)}${esc(x.st)}</span>` : ''}</div>
     <div class="sky-lbl">${lbl}</div><div class="sky-big"${target && target > now ? ` data-at="${target}"` : ''}>${big}</div>
     ${arc}</div>`;
 }
@@ -14366,7 +14371,7 @@ function renderEarn(){
     s:t('earn_perH', {v:eur.format(c.ph), h:fmtH(c.H/c.n)}) + ' · × ' + c.n})).join('');
   const ms = D.months, best = ms.reduce((a,b) => b.sum > a.sum ? b : a), low = ms.reduce((a,b) => b.sum < a.sum ? b : a);
   const mmx = best.sum || 1;
-  const mRows = ms.map(r => meterRow({t:nm(r.y, r.m, {month:'long'}) + (r === best ? ' ⭐' : ''), v:eur.format(r.sum), p:r.sum/mmx*100, tone:r === best ? 'ok' : '',
+  const mRows = ms.map(r => meterRow({t:nm(r.y, r.m, {month:'long'}) + (r === best ? ' ★' : ''), v:eur.format(r.sum), p:r.sum/mmx*100, tone:r === best ? 'ok' : '',
     s:t('earn_mLine', {d:r.duty, n:r.nights, h:fmtH(r.T), p:eur.format(r.per)})})).join('');
   const fn = D.cats.find(c => c.k === 'fn'), fd = D.cats.find(c => c.k === 'fd'), sb = D.cats.find(c => c.k === 'sb'), dn = D.cats.find(c => c.k === 'dn');
   const tips = [];
@@ -14391,7 +14396,7 @@ document.addEventListener('change', e => { if(e.target && e.target.id === 'earn-
 <script>
 const SEED = null;
 const SEED_SETTINGS = null;
-const APP_VERSION = '2026.11.15-0846';
+const APP_VERSION = '2026.11.15-0917';
 const IS_PWA_BUILD = true;
 const LS = 'payroster.v1';
 const KC = { sick:'--warn', flight:'--k-flight', deadhead:'--k-dh', training:'--k-train', standby:'--k-sby', reserve:'--k-sby', ground:'--k-ground', off:'--k-off', empty:'--k-off', other:'--k-ground' };
@@ -15423,7 +15428,7 @@ if('serviceWorker' in navigator){ addEventListener('load',()=>navigator.serviceW
 syncStore();
 try{ renderInstall(); }catch(e){}
 checkHash();
-if(state.stale && state.stale.length) showMsg(t('staleMsg',{m:state.stale.map(k=>{const [y,m]=k.split('-');return monthName(+y,+m,{month:'long',year:'numeric'});}).join(', ')}), true);
+if(state.stale && state.stale.length) { showMsg(t('staleMsg',{m:state.stale.map(k=>{const [y,m]=k.split('-');return monthName(+y,+m,{month:'long',year:'numeric'});}).join(', ')}), true); $('importMsg').classList.add('stale'); }
 // ---- updates (installed webapp) ----
 async function latestVersion(){
   const r = await fetch('version.json?t='+Date.now(), {cache:'no-store'});
