@@ -547,7 +547,10 @@ html.glass .tabbar{border:1px solid var(--glass-brd);background:var(--glass);bac
 .paycard .netfig{font-size:36px}
 .payback{align-self:flex-start;border:0;background:none;color:var(--accent);font:700 17px var(--f-body);padding:6px 2px;cursor:pointer}
 body[data-pv="list"] .payback,body[data-pv="list"] .herowrap[data-tab="pay"],body[data-pv="list"] .slippanel,body[data-pv="list"] #aheadWrap{display:none!important}
-body:not([data-pv="list"]) #payList{display:none!important}
+body:not([data-pv="list"]) #payList,body:not([data-pv="list"]) #payPick,body:not([data-pv="pick"]) #pickCard{display:none!important}
+body[data-pv="pick"] .herowrap[data-tab="pay"],body[data-pv="pick"] #aheadWrap{display:none!important}
+.paypick h3{margin:0 0 10px;font-size:15px}.pk-y{font-weight:800;font-size:13px;color:var(--muted);margin:10px 2px 6px}.pk-g{display:flex;flex-wrap:wrap;gap:8px}
+.pk-m{border:1px solid var(--line);background:color-mix(in srgb,var(--muted) 10%,transparent);color:var(--ink);padding:9px 14px;border-radius:999px;font:600 14px var(--f-body);cursor:pointer;text-transform:capitalize}.pk-m:active{transform:scale(.95)}
 body[data-pv="now"] #hero>.panel:not(.hnow),body[data-pv="next"] #hero>.panel.hnow,body[data-pv="ahead"] .herowrap:not(.aheadwrap)[data-tab="pay"],body[data-pv="now"] #aheadWrap,body[data-pv="next"] #aheadWrap{display:none!important}
 body[data-pv="ahead"] .hahead:not([data-pvk="ahead"]),body[data-pv="prev"] .hahead:not([data-pvk="prev"]),body[data-pv="now"] .hahead,body[data-pv="next"] .hahead{display:none!important}
 body[data-pv="prev"] .herowrap:not(.aheadwrap)[data-tab="pay"]{display:none!important}
@@ -801,6 +804,8 @@ body.scrolled .topbar{opacity:1;transform:none;pointer-events:auto}
 
   <button type="button" class="payback" id="payBackBtn" data-tab="pay">‹ <span data-i18n="tab_pay"></span></button>
   <div class="paylist" id="payList" data-tab="pay"></div>
+  <section class="panel paypick" id="payPick" data-tab="pay"></section>
+  <div id="pickCard" data-tab="pay"></div>
   <div class="herowrap" data-tab="pay"><section class="hero" id="hero"></section></div>
   <div class="herowrap aheadwrap" id="aheadWrap" data-tab="pay" hidden></div>
   <section class="panel slippanel" data-tab="pay"><button class="privbtn" type="button" data-priv="1" aria-pressed="false"></button>
@@ -1149,6 +1154,7 @@ function render(){
             next:{P:slipNext, mNow:monthName(ro.year,ro.month+1), mPrev:monthName(ro.year,ro.month), R:c.rates, rk:c._nextKey} };
   { const [py,pm] = pk.split('-').map(Number), roP2 = state.months[prevKey(py,pm)], cP2 = roP2 ? PR.compute(roP2, s, state.extras) : null;
     c._pv.prev = {P:slipFor(cP2, s, py, pm), mNow:monthName(py,pm), mPrev:monthName(py,pm-1), R:(cP2||c).rates, rk:pk, ok:!!roP2}; }
+  buildPick(c); renderPayPick();
   _payC = {c, ro};
   const mDate = new Date(ro.year, ro.month-1, 1);
   $('mLabel').textContent = mDate.toLocaleDateString(LOC,{month:'short',year:'numeric'}).replace('.','');
@@ -1156,7 +1162,24 @@ function render(){
   if(typeof renderToolbar==='function'){ renderToolbar(); if(['check','ftl','vac','year'].includes(toolOpen)) refreshTool(); }
 }
 
-let _payC = null;
+let _payC = null, PICKK = null;
+function buildPick(c){
+  const box = $('pickCard'); if(!box) return;
+  if(!PICKK){ box.innerHTML = ''; return; }
+  const [y,m] = PICKK.split('-').map(Number), s = state.settings, roP = state.months[prevKey(y,m)], cP = roP ? PR.compute(roP, s, state.extras) : null;
+  const P = slipFor(cP, s, y, m), mN = monthName(y,m), mP = monthName(y,m-1);
+  c._pv.pick = {P, mNow:mN, mPrev:mP, R:(cP||c).rates, rk:PICKK};
+  box.innerHTML = sumPanel('pick', t('slipOf',{m:mN}), P, mN, mP) + (roP ? '' : `<p class="note">${t('needPrev2',{m:mN,p:mP})}</p>`);
+}
+function renderPayPick(){
+  const box = $('payPick'); if(!box) return;
+  const ks = new Set(Object.keys(state.slips||{}));
+  Object.keys(state.months).forEach(k => { const [y,m] = k.split('-').map(Number); ks.add(m===12 ? (y+1)+'-01' : y+'-'+String(m+1).padStart(2,'0')); });
+  const list = [...ks].sort(); if(!list.length){ box.innerHTML = ''; return; }
+  const byY = {}; list.forEach(k => (byY[k.slice(0,4)] = byY[k.slice(0,4)] || []).push(k));
+  box.innerHTML = `<h3>${t('pay_pick')}</h3>` + Object.keys(byY).sort().map(y => `<div class="pk-y">${y}</div><div class="pk-g">${byY[y].map(k => `<button type="button" class="pk-m" data-pvm="${k}">${new Date(+y, +k.slice(5)-1, 1).toLocaleDateString(LOC,{month:'short'}).replace('.','')}</button>`).join('')}</div>`).join('');
+}
+document.addEventListener('click', e => { const g = e.target.closest('[data-pvm]'); if(g){ PICKK = g.dataset.pvm; if(_payC){ buildPick(_payC.c); } showPay('pick'); } });
 function showPay(v){ document.body.dataset.pv = v; if(_payC) renderSlip(_payC.c, _payC.ro); window.scrollTo(0,0); }
 document.addEventListener('click', e => { const g = e.target.closest('[data-pvgo]'); if(g){ showPay(g.dataset.pvgo); return; } if(e.target.closest('#payBackBtn')){ document.body.dataset.pv = 'list'; window.scrollTo(0,0); } });
 function sumPanel(k, eb, SN, mA, mR){

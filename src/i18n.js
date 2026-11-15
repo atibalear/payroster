@@ -3,6 +3,7 @@ var I18N = {
   names: { es: 'Español', ca: 'Català', en: 'English', de: 'Deutsch', fr: 'Français', it: 'Italiano', pt: 'Português', ro: 'Română', hu: 'Magyar', sk: 'Slovenčina', cs: 'Čeština' },
   locales: { es: 'es-ES', ca: 'ca-ES', en: 'en-GB', de: 'de-DE', fr: 'fr-FR', it: 'it-IT', pt: 'pt-PT', ro: 'ro-RO', hu: 'hu-HU', sk: 'sk-SK', cs: 'cs-CZ' },
   es: {
+    pay_pick: 'Ir a otra nómina',
     tool_share: 'Compartir roster',
     pay_more: 'Ver desglose',
     portal_b: 'Abrir portal del roster ↗',
@@ -680,6 +681,7 @@ var I18N = {
     e_noPeriod: 'No encuentro el periodo del roster. ¿Es el «Individual duty plan» de IDP en PDF?'
   },
   ca: {
+    pay_pick: 'Anar a una altra nòmina',
     tool_share: 'Compartir roster',
     pay_more: 'Veure desglossament',
     portal_b: 'Obrir portal del roster ↗',
@@ -1358,6 +1360,7 @@ var I18N = {
     e_noPeriod: 'No trobo el període del roster. És l’«Individual duty plan» d’IDP en PDF?'
   },
   en: {
+    pay_pick: 'Jump to another payslip',
     tool_share: 'Share roster',
     pay_more: 'See breakdown',
     portal_b: 'Open roster portal ↗',
@@ -2036,6 +2039,7 @@ var I18N = {
     e_noPeriod: 'I can’t find the roster period. Is this the IDP “Individual duty plan” PDF?'
   },
   de: {
+    pay_pick: 'Zu einer anderen Abrechnung',
     tool_share: 'Dienstplan teilen',
     pay_more: 'Aufschlüsselung ansehen',
     portal_b: 'Dienstplan-Portal öffnen ↗',
@@ -2714,6 +2718,7 @@ var I18N = {
     e_noPeriod: 'Ich finde den Zeitraum des Dienstplans nicht. Ist das der „Individual duty plan“ aus IDP als PDF?'
   },
   fr: {
+    pay_pick: 'Aller à une autre paie',
     tool_share: 'Partager le planning',
     pay_more: 'Voir le détail',
     portal_b: 'Ouvrir le portail ↗',
@@ -3392,6 +3397,7 @@ var I18N = {
     e_noPeriod: 'Je ne trouve pas la période du planning. Est-ce bien l’« Individual duty plan » d’IDP en PDF ?'
   },
   hu: {
+    pay_pick: 'Ugrás másik fizetési jegyzékre',
     tool_share: 'Beosztás megosztása',
     pay_more: 'Részletek',
     portal_b: 'Portál megnyitása ↗',
@@ -4070,6 +4076,7 @@ var I18N = {
     e_noPeriod: 'Nem találom a beosztás időszakát. Ez az IDP „Individual duty plan” PDF-je?'
   },
   sk: {
+    pay_pick: 'Prejsť na inú výplatu',
     tool_share: 'Zdieľať rozpis',
     pay_more: 'Zobraziť rozpis',
     portal_b: 'Otvoriť portál ↗',
@@ -4748,6 +4755,7 @@ var I18N = {
     e_noPeriod: 'Nenachádzam obdobie rozpisu. Je to „Individual duty plan“ z IDP v PDF?'
   },
   cs: {
+    pay_pick: 'Přejít na jinou výplatu',
     tool_share: 'Sdílet rozpis',
     pay_more: 'Zobrazit rozpis',
     portal_b: 'Otevřít portál ↗',
@@ -5426,6 +5434,7 @@ var I18N = {
     e_noPeriod: 'Nenacházím období rozpisu. Je to „Individual duty plan“ z IDP v PDF?'
   },
   it: {
+    "pay_pick": "Vai a un’altra busta paga",
     "tool_share": "Condividi turno",
     "pay_more": "Vedi il dettaglio",
     "portal_b": "Apri il portale roster ↗",
@@ -6209,6 +6218,7 @@ var I18N = {
     "e_noPeriod": "Non trovo il periodo del turno. È l’«Individual duty plan» di IDP in PDF?"
   },
   pt: {
+    "pay_pick": "Ir para outro recibo",
     "tool_share": "Partilhar escala",
     "pay_more": "Ver detalhe",
     "portal_b": "Abrir portal do roster ↗",
@@ -6992,6 +7002,7 @@ var I18N = {
     "e_noPeriod": "Não encontro o período da escala. É o «Individual duty plan» do IDP em PDF?"
   },
   ro: {
+    "pay_pick": "Mergi la alt fluturaș",
     "tool_share": "Distribuie planificarea",
     "pay_more": "Vezi detaliile",
     "portal_b": "Deschide portalul ↗",
