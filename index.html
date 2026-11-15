@@ -14391,7 +14391,7 @@ document.addEventListener('change', e => { if(e.target && e.target.id === 'earn-
 <script>
 const SEED = null;
 const SEED_SETTINGS = null;
-const APP_VERSION = '2026.11.15-0834';
+const APP_VERSION = '2026.11.15-0844';
 const IS_PWA_BUILD = true;
 const LS = 'payroster.v1';
 const KC = { sick:'--warn', flight:'--k-flight', deadhead:'--k-dh', training:'--k-train', standby:'--k-sby', reserve:'--k-sby', ground:'--k-ground', off:'--k-off', empty:'--k-off', other:'--k-ground' };
@@ -14552,9 +14552,10 @@ function oneOffOf(y,m){
   const sl = (state.slips||{})[k];
   const v = sl && sl.lines ? sl.lines.filter(l=>isOneOff(l) && !l.retro).reduce((a,l)=>a+(+l.dev||0),0) : 0;
   if(v > 0) return {v: PR.r2(v), fromSlip: true};
+  if(sl && sl.lines) return {v: 0};   // a real payslip is there and has no one-off: it wins over any estimate
   // new CLA: one-off payment for 2026 (PU 1.750 €, CA 1.500 € gross, prorated by contract) on the payslip the user expects it
   const s = state.settings;
-  if(s.cla27 !== false && s.claOneOff === k) return {v: PR.r2((s.rank === 'PU' ? 1750 : 1500) * s.contract / 100), cla: true};
+  if(s.cla27 !== false && s.claOneOff === k && k >= '2026-11') return {v: PR.r2((s.rank === 'PU' ? 1750 : 1500) * s.contract / 100), cla: true};
   return {v: 0};
 }
 // Sales commission read from an uploaded payslip (5128 «Comisión de Ventas»): it is paid with the
