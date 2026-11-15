@@ -1035,7 +1035,10 @@ function pruneRaws(s){
 function isOneOff(l){ return l.code==='5196' || /pago [uú]nico|pago extraordinario|gratificaci/i.test(l.label||''); }
 function oneOffOf(y,m){
   const k = y+'-'+String(m).padStart(2,'0'), ex = (state.extras[k]||{}).oneOff;
-  if(ex!=null) return {v:+ex||0, manual:true};
+  { const st = state.settings, cv = PR.r2((st.rank === 'PU' ? 1750 : 1500) * st.contract / 100);
+    // a copy of the estimate saved as "manual" before November 2026 is a leftover, not something the user wrote
+    if(ex!=null && k < '2026-11' && Math.abs((+ex||0) - cv) < 0.01) { /* ignore */ }
+    else if(ex!=null) return {v:+ex||0, manual:true}; }
   const sl = (state.slips||{})[k];
   const v = sl && sl.lines ? sl.lines.filter(l=>isOneOff(l) && !l.retro).reduce((a,l)=>a+(+l.dev||0),0) : 0;
   if(v > 0) return {v: PR.r2(v), fromSlip: true};
@@ -1557,6 +1560,7 @@ document.addEventListener('change', e=>{
   const el = e.target;
   if(el.id==='q-joined') return;   // iOS fires change on every wheel move: wait for the Save button
   if(el.dataset.moneoff){ const k = el.dataset.moneoff; const v = String(el.value).trim();
+    { const cur = oneOffOf(+k.slice(0,4), +k.slice(5)), nv = v==='' ? null : (parseFloat(/,/.test(v) ? v.replace(/\./g,'').replace(',','.') : v)||0); if(!cur.manual && nv!=null && Math.abs(nv - cur.v) < 0.01) return; }   // tapping the field must not turn the estimate into a manual entry
     state.extras[k] = state.extras[k]||{}; state.extras[k].oneOff = v==='' ? null : (parseFloat(/,/.test(v) ? v.replace(/\./g,'').replace(',','.') : v)||0); save(); render(); return; }
   if(el.dataset.msales){ const k = el.dataset.msales; const v = String(el.value).trim();
     state.extras[k] = state.extras[k]||{}; state.extras[k].sales = v==='' ? null : (parseFloat(/,/.test(v) ? v.replace(/\./g,'').replace(',','.') : v)||0); state.extras[k].salesSlip = false; state.extras[k].salesLog = false; save(); render(); return; }
