@@ -182,7 +182,8 @@ function buildMail(k, L){
 
 // ================= 2. what-if simulator =================
 const parseHM = s => { s = String(s||'').trim().replace(',', '.'); if(!s) return 0; const m = /^(\d{1,2}):(\d{2})$/.exec(s); return m ? +m[1] + m[2]/60 : (parseFloat(s)||0); };
-function renderSim(result){
+let simAct = 'off';
+function renderSim(){
   const ro = state.months[state.current]; if(!ro){ pnl(hdr('sim')+`<p class="msg">${t('startText')}</p>`); return; }
   const s = state.settings, c = PR.compute(ro, s, state.extras);
   if(!simDate || !c.days.find(d=>d.date===simDate)) simDate = (c.days.find(d=>d.date>=todayISO()) || c.days[0]).date;
@@ -191,20 +192,23 @@ function renderSim(result){
   const dv = (id, v) => `value="${esc(v)}" id="${id}"`;
   pnl(hdr('sim', t('sim_intro')) + `<div class="form" style="margin-top:0">
       <label>${t('sim_day')}<select id="sim-date">${opt}</select></label>
-      <label>${t('sim_now')}<input type="text" readonly value="${esc((d.route||d.label||kind(d.kind).n) + ' · ' + hhmm(d.H)+' h · '+eur.format(d.total))}"></label>
-      <label>${t('sim_action')}<select id="sim-act"><option value="off">${t('sim_off')}</option><option value="duty">${t('sim_duty')}</option></select></label>
+      <div class="simnow wide"><span class="sn-k">${t('sim_now')}</span><b>${esc(d.route||d.label||kind(d.kind).n)}</b><span class="sn-v">${hhmm(d.H)} h · ${eur.format(d.total)}</span></div>
+      <div class="wide"><div class="seg" role="group" aria-label="${esc(t('sim_action'))}"><button type="button" data-simact="off" class="${simAct==='off'?'on':''}">${t('sim_off')}</button><button type="button" data-simact="duty" class="${simAct==='duty'?'on':''}">${t('sim_duty')}</button></div>
+        <select id="sim-act" hidden><option value="off"${simAct==='off'?' selected':''}></option><option value="duty"${simAct==='duty'?' selected':''}></option></select></div>
+      <div class="wide simduty" id="sim-duty" style="display:${simAct==='duty'?'grid':'none'}">
       <label>FDP (h:mm)<input type="text" inputmode="decimal" placeholder="8:30" ${dv('sim-F', hhmm(d.F))}></label>
       <label>${t('addDuty')} (h:mm)<input type="text" inputmode="decimal" placeholder="0:30" ${dv('sim-A', hhmm(d.A))}></label>
       <label>${t('perDiems')}<select id="sim-d"><option value="">${t('no')}</option>${['intlDay','intlNight','natDay','natNight'].map(k=>`<option value="${k}"${d.dietaType===k?' selected':''}>${t('d_'+k)} · ${n2.format(PR.DIETA[k])} €</option>`).join('')}</select></label>
       <label>${t('dayBought')}<select id="sim-b"><option value="">${t('no')}</option><option value="full"${d.buy==='full'?' selected':''}>${t('full')}</option><option value="half"${d.buy==='half'?' selected':''}>${t('half')}</option></select></label>
       <label class="chk"><input type="checkbox" id="sim-e"${d.early?' checked':''}> ${t('earlyOff')} (${eur.format(s.earlyCheckin)})</label>
       ${s.isTrainer?`<label class="chk"><input type="checkbox" id="sim-t"${d.isTrain?' checked':''}> ${t('sim_train')}</label>`:''}
-      <div class="wide"><button class="btn" id="sim-go" type="button">${t('sim_calc')}</button></div>
-    </div><div id="sim-out">${result||''}</div>`);
+      </div>
+    </div><div id="sim-out"></div>`);
+  runSim();
 }
 function runSim(){
-  const ro = state.months[state.current], s = state.settings;
-  const act = $('sim-act').value;
+  const ro = state.months[state.current], s = state.settings, out = $('sim-out'); if(!ro || !out) return;
+  const act = simAct;
   const sim = act==='off' ? { F:0, A:0, dieta:null, early:false, buy:null, train:false }
     : { F:parseHM($('sim-F').value), A:parseHM($('sim-A').value), dieta:$('sim-d').value||null, early:$('sim-e').checked, buy:$('sim-b').value||null, train: $('sim-t') ? $('sim-t').checked : false };
   const ex2 = JSON.parse(JSON.stringify(state.extras||{})); ex2[simDate] = Object.assign({}, ex2[simDate]||{}, {sim});
@@ -212,11 +216,16 @@ function runSim(){
   const [ny,nmn] = nextYM(ro.year, ro.month), Na = slipFor(a, s, ny, nmn), Nb = slipFor(b, s, ny, nmn);
   const tier = x => x.T>110?3:x.T>70?2:1, dv = b.variable-a.variable, dn = Nb.net-Na.net;
   const sign = x => (x>=0?'+':'−')+eur.format(Math.abs(x));
-  $('sim-out').innerHTML = `<dl class="sumbox" style="margin-top:14px">
-    <dt>${t('variableIn',{m:nm(ro.year,ro.month,{month:'long'})})}</dt><dd>${eur.format(a.variable)} → <b>${eur.format(b.variable)}</b></dd>
-    <dt>${t('dutyTime',{h:fmtH(a.T)})} → ${fmtH(b.T)} h</dt><dd>${t('tierN',{n:tier(a)})} → ${t('tierN',{n:tier(b)})}</dd>
-    <dt class="netrow">${t('sim_net',{m:nm(ny,nmn,{month:'long'})})}</dt><dd class="netrow">${sign(dn)}</dd></dl>
-    <p class="note">${t('sim_result',{v:sign(dv),n:sign(dn)})}${tier(a)!==tier(b)?' '+t('sim_tier',{a:tier(a),b:tier(b)}):''}</p>`;
+  const L2 = a.rates.limits[1], mx = Math.max(L2+20, Math.ceil((Math.max(a.T,b.T)+10)/10)*10);
+  out.innerHTML = `<div class="panel simres"><button class="privbtn" type="button" aria-pressed="${PRIV}" title="${t(PRIV?'priv_show':'priv_hide')}">${privIcon()}</button>
+    <div class="eyebrow">${t('sim_net',{m:nm(ny,nmn,{month:'long'})})}</div>
+    <div class="big num" style="color:${Math.abs(dn)<0.005?'var(--muted)':dn>0?'var(--pay)':'var(--warn)'}">${Math.abs(dn)<0.005?eur.format(0):sign(dn)}</div>
+    <div class="sub">${t('sim_result',{v:sign(dv),n:sign(dn)})}</div>
+    <dl class="sumbox">
+      <dt>${t('variableIn',{m:nm(ro.year,ro.month,{month:'long'})})}</dt><dd>${eur.format(a.variable)} → <b>${eur.format(b.variable)}</b></dd>
+      <dt>${t('dutyTime',{h:fmtH(a.T)})} → ${fmtH(b.T)} h</dt><dd>${t('tierN',{n:tier(a)})} → ${t('tierN',{n:tier(b)})}</dd></dl>
+    <div class="mg" style="margin-top:12px">${meterRow({t:t('mt_hours'), v:fmtH(b.T)+' h', p:b.T/mx*100, tone:b.T>L2?'over':'', s:fmtH(a.T)+' h → '+fmtH(b.T)+' h'})}</div>
+    ${tier(a)!==tier(b)?`<p class="note" style="margin:10px 0 0">${t('sim_tier',{a:tier(a),b:tier(b)})}</p>`:''}</div>`;
 }
 
 // ================= 3. calendar (.ics) =================
@@ -388,7 +397,7 @@ function renderVac(){
     return `<span class="chip c-vac">${p.a===p.b ? dshort(p.a) : dshort(p.a)+' – '+dshort(p.b)} <b>${n}</b></span>`; }).join('');
   pnl(hdr('vac', t('vac_intro',{y:year})) +
     `<div class="mg" style="margin-bottom:12px">${meterRow({t:t('mt_vac'), v:t('mt_of', {a:tot.vac, b:have}), p:have ? tot.vac/have*100 : 0, tone:over>0?'over':'ok',
-      s:t('vac_sum',{u:tot.vac,e:have,l:Math.max(0,have-tot.vac)})+(over>0?' '+t('vac_over',{x:over,e:have}):'')+(ent.known?'':' '+t('vac_noJoined'))})}</div>
+      s:t('vac_left',{l:Math.max(0,have-tot.vac)})+(over>0?' '+t('vac_over',{x:over,e:have}):'')+(ent.known?'':' '+t('vac_noJoined'))})}</div>
     <label class="note salesm" style="margin:0 0 10px"><span>${t('vac_carry',{y:year-1,e:ent.days})}</span><input type="text" inputmode="numeric" id="vac-carry" data-y="${year}" value="${carry||''}" placeholder="0"></label>
     ${per.length ? `<div class="mrow"><div class="mh">${t('vac_periods')}</div><div class="chips">${perTxt}</div></div>` : ''}
     ${sickDays.length ? `<div class="mrow"><div class="mh">${t('vac_sickT', {n: sickDays.length})}</div><div class="chips">${sickTxt}</div><p class="note" style="margin:6px 0 0">${t('vac_sickNote')}</p></div>` : ''}
@@ -466,6 +475,7 @@ document.addEventListener('change', async e=>{
     e.target.value = ''; return;
   }
   if(e.target.id==='sim-date'){ simDate = e.target.value; renderSim(); return; }
+  if(e.target.id && e.target.id.startsWith('sim-') && toolOpen==='sim'){ runSim(); return; }
   if(e.target.id==='chk-k'){ renderCheck(e.target.value); return; }
   if(e.target.id==='yr-y'){ renderYear(); return; }
   if(e.target.id==='vac-carry'){ const y = e.target.dataset.y, v = parseInt(e.target.value,10);
@@ -477,7 +487,7 @@ document.addEventListener('click', async e=>{
   const tg = e.target.closest('[data-tabgo]'); if(tg){ if(tg.dataset.tabgo === 'tools' && toolOpen && document.body.dataset.tab === 'tools'){ if(history.state && history.state.tool) history.back(); else closeTool(); return; } if(tg.dataset.tabgo === 'pay') document.body.dataset.pv = 'list'; setTab(tg.dataset.tabgo); window.scrollTo(0,0); return; }
   const sd = e.target.closest('[data-sim]'); if(sd){ simDate = sd.dataset.sim; toolOpen = null; openTool('sim'); return; }
   const id = e.target.id;
-  if(id==='sim-go'){ runSim(); return; }
+  const sa = e.target.closest('[data-simact]'); if(sa){ simAct = sa.dataset.simact; renderSim(); return; }
   if(id==='mail-go'){
     const {subject, body} = buildMail(e.target.dataset.k, $('mail-l').value);
     $('mail-out').innerHTML = `<label class="note">${t('mail_subj')}<input type="text" id="mail-s" value="${esc(subject)}"></label>

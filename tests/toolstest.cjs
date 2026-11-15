@@ -11,7 +11,7 @@ for(const k of ['check','ftl','vac','year','backup','cal']){ await p.click(`.til
 // calendar export
 await p.click('.tile[data-tool=cal]'); const [dl]=await Promise.all([p.waitForEvent('download'),p.click('#cal-go')]); const path=await dl.path(); const ics=fs.readFileSync(path,'utf8'); console.log('ics events',(ics.match(/BEGIN:VEVENT/g)||[]).length); console.log(ics.split('\r\n').slice(6,22).join('\n'));
 // simulator from a day
-await p.evaluate(()=>setTab('roster')); await p.click('#d-2026-11-09 > summary'); await p.click('[data-sim="2026-11-09"]'); await p.click('#sim-go'); console.log('== sim',(await txt()).slice(-260));
+await p.evaluate(()=>setTab('roster')); await p.click('#d-2026-11-09 > summary'); await p.click('[data-sim="2026-11-09"]'); await p.click('[data-simact=duty]'); console.log('== sim',(await txt()).slice(-260));
 await (await p.$('#toolPanel')).screenshot({path:'tool_sim.png'});
 // backup export
 await p.click('#toolBack').catch(()=>{}); await p.click('.tile[data-tool=backup]'); const [d2]=await Promise.all([p.waitForEvent('download'),p.click('#bk-exp')]); const bj=JSON.parse(fs.readFileSync(await d2.path(),'utf8')); console.log('backup months',Object.keys(bj.state.months));

@@ -465,7 +465,7 @@ function renderLay(msg){
   all.sort((a, b) => (nights[b] || 0) - (nights[a] || 0) || (visits[b] || 0) - (visits[a] || 0) || a.localeCompare(b));
   pnl(hdr('lay', t('lay_intro')) + `<div class="row" style="align-items:flex-end;gap:8px">
       <label class="note" style="display:grid;gap:4px">${t('lay_add')}<input type="text" id="lay-in" maxlength="3" autocapitalize="characters" placeholder="RAK" style="width:90px;text-transform:uppercase"></label>
-      <button class="btn ghost" type="button" id="lay-go">＋</button></div>${msg || ''}
+      <button class="btn plusb" type="button" id="lay-go" aria-label="+">+</button></div>${msg || ''}
     ${all.length ? `<div class="laylist">${all.map(st => layHtml(st, nights[st] ? t('lay_n', {n: nights[st]}) : '')).join('')}</div>` : `<p class="msg">${t('lay_none')}</p>`}`);
   fxFill();
 }
