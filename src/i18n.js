@@ -3,6 +3,9 @@ var I18N = {
   names: { es: 'Español', ca: 'Català', en: 'English', de: 'Deutsch', fr: 'Français', it: 'Italiano', pt: 'Português', ro: 'Română', hu: 'Magyar', sk: 'Slovenčina', cs: 'Čeština' },
   locales: { es: 'es-ES', ca: 'ca-ES', en: 'en-GB', de: 'de-DE', fr: 'fr-FR', it: 'it-IT', pt: 'pt-PT', ro: 'ro-RO', hu: 'hu-HU', sk: 'sk-SK', cs: 'cs-CZ' },
   es: {
+    portal_b: 'Abrir portal del roster ↗',
+    portal_n: 'Abre el portal de tripulación, descarga tu roster en PDF y vuelve aquí para pulsar «+ PDF». La app no puede descargarlo sola ni guardar tu contraseña.',
+    portal_t: 'Roster desde el portal',
     tab_pay: 'Nómina',
     aheadMore: 'Ver {m} en detalle',
     td_gnd: '¿Aún en tierra? Añade el retraso:',
@@ -675,6 +678,9 @@ var I18N = {
     e_noPeriod: 'No encuentro el periodo del roster. ¿Es el «Individual duty plan» de IDP en PDF?'
   },
   ca: {
+    portal_b: 'Obrir portal del roster ↗',
+    portal_n: 'Obre el portal de tripulació, descarrega el teu roster en PDF i torna aquí per prémer «+ PDF». L’app no el pot descarregar sola ni desar la teva contrasenya.',
+    portal_t: 'Roster des del portal',
     tab_pay: 'Nòmina',
     aheadMore: 'Veure {m} en detall',
     td_gnd: 'Encara a terra? Afegeix el retard:',
@@ -1348,6 +1354,9 @@ var I18N = {
     e_noPeriod: 'No trobo el període del roster. És l’«Individual duty plan» d’IDP en PDF?'
   },
   en: {
+    portal_b: 'Open roster portal ↗',
+    portal_n: 'Open the crew portal, download your roster as a PDF and come back to tap “+ PDF”. The app can’t download it by itself or store your password.',
+    portal_t: 'Roster from the portal',
     tab_pay: 'Payslip',
     aheadMore: 'See {m} in detail',
     td_gnd: 'Still on the ground? Add the delay:',
@@ -2021,6 +2030,9 @@ var I18N = {
     e_noPeriod: 'I can’t find the roster period. Is this the IDP “Individual duty plan” PDF?'
   },
   de: {
+    portal_b: 'Dienstplan-Portal öffnen ↗',
+    portal_n: 'Öffne das Crew-Portal, lade deinen Dienstplan als PDF herunter und tippe hier auf „+ PDF“. Die App kann ihn nicht selbst laden und speichert dein Passwort nicht.',
+    portal_t: 'Dienstplan vom Portal',
     tab_pay: 'Gehalt',
     aheadMore: '{m} im Detail',
     td_gnd: 'Noch am Boden? Verspätung eintragen:',
@@ -2694,6 +2706,9 @@ var I18N = {
     e_noPeriod: 'Ich finde den Zeitraum des Dienstplans nicht. Ist das der „Individual duty plan“ aus IDP als PDF?'
   },
   fr: {
+    portal_b: 'Ouvrir le portail ↗',
+    portal_n: 'Ouvre le portail équipage, télécharge ton planning en PDF et reviens appuyer sur « + PDF ». L’app ne peut pas le télécharger seule ni garder ton mot de passe.',
+    portal_t: 'Planning depuis le portail',
     tab_pay: 'Paie',
     aheadMore: 'Voir {m} en détail',
     td_gnd: 'Toujours au sol ? Ajoute le retard :',
@@ -3367,6 +3382,9 @@ var I18N = {
     e_noPeriod: 'Je ne trouve pas la période du planning. Est-ce bien l’« Individual duty plan » d’IDP en PDF ?'
   },
   hu: {
+    portal_b: 'Portál megnyitása ↗',
+    portal_n: 'Nyisd meg a személyzeti portált, töltsd le a beosztást PDF-ben, majd térj vissza és koppints a „+ PDF” gombra. Az app nem tudja egyedül letölteni, és a jelszavadat sem tárolja.',
+    portal_t: 'Beosztás a portálról',
     tab_pay: 'Fizetés',
     aheadMore: '{m} részletesen',
     td_gnd: 'Még a földön? Add meg a késést:',
@@ -4040,6 +4058,9 @@ var I18N = {
     e_noPeriod: 'Nem találom a beosztás időszakát. Ez az IDP „Individual duty plan” PDF-je?'
   },
   sk: {
+    portal_b: 'Otvoriť portál ↗',
+    portal_n: 'Otvor portál posádky, stiahni si roster ako PDF a vráť sa sem stlačiť „+ PDF“. Aplikácia ho nevie stiahnuť sama ani uložiť tvoje heslo.',
+    portal_t: 'Roster z portálu',
     tab_pay: 'Výplata',
     aheadMore: 'Zobraziť {m} podrobne',
     td_gnd: 'Stále na zemi? Pridaj meškanie:',
@@ -4713,6 +4734,9 @@ var I18N = {
     e_noPeriod: 'Nenachádzam obdobie rozpisu. Je to „Individual duty plan“ z IDP v PDF?'
   },
   cs: {
+    portal_b: 'Otevřít portál ↗',
+    portal_n: 'Otevři portál posádky, stáhni si roster jako PDF a vrať se sem klepnout na „+ PDF“. Aplikace ho neumí stáhnout sama ani uložit tvé heslo.',
+    portal_t: 'Roster z portálu',
     tab_pay: 'Výplata',
     aheadMore: 'Zobrazit {m} podrobně',
     td_gnd: 'Stále na zemi? Přidej zpoždění:',
@@ -5386,6 +5410,9 @@ var I18N = {
     e_noPeriod: 'Nenacházím období rozpisu. Je to „Individual duty plan“ z IDP v PDF?'
   },
   it: {
+    "portal_b": "Apri il portale roster ↗",
+    "portal_n": "Apri il portale equipaggio, scarica il roster in PDF e torna qui per toccare «+ PDF». L’app non può scaricarlo da sola né salvare la tua password.",
+    "portal_t": "Roster dal portale",
     "tab_pay": "Busta paga",
     "aheadMore": "Vedi {m} nel dettaglio",
     "td_gnd": "Ancora a terra? Aggiungi il ritardo:",
@@ -6164,6 +6191,9 @@ var I18N = {
     "e_noPeriod": "Non trovo il periodo del turno. È l’«Individual duty plan» di IDP in PDF?"
   },
   pt: {
+    "portal_b": "Abrir portal do roster ↗",
+    "portal_n": "Abre o portal da tripulação, descarrega o roster em PDF e volta aqui para tocar em «+ PDF». A app não o consegue descarregar sozinha nem guardar a tua palavra-passe.",
+    "portal_t": "Roster do portal",
     "tab_pay": "Recibo",
     "aheadMore": "Ver {m} em detalhe",
     "td_gnd": "Ainda em terra? Junta o atraso:",
@@ -6942,6 +6972,9 @@ var I18N = {
     "e_noPeriod": "Não encontro o período da escala. É o «Individual duty plan» do IDP em PDF?"
   },
   ro: {
+    "portal_b": "Deschide portalul ↗",
+    "portal_n": "Deschide portalul echipajului, descarcă rosterul ca PDF și revino aici să apeși „+ PDF”. Aplicația nu îl poate descărca singură și nu salvează parola ta.",
+    "portal_t": "Roster din portal",
     "tab_pay": "Fluturaș",
     "aheadMore": "Vezi {m} în detaliu",
     "td_gnd": "Încă la sol? Adaugă întârzierea:",
