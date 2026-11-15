@@ -3,6 +3,7 @@ var I18N = {
   names: { es: 'Español', ca: 'Català', en: 'English', de: 'Deutsch', fr: 'Français', it: 'Italiano', pt: 'Português', ro: 'Română', hu: 'Magyar', sk: 'Slovenčina', cs: 'Čeština' },
   locales: { es: 'es-ES', ca: 'ca-ES', en: 'en-GB', de: 'de-DE', fr: 'fr-FR', it: 'it-IT', pt: 'pt-PT', ro: 'ro-RO', hu: 'hu-HU', sk: 'sk-SK', cs: 'cs-CZ' },
   es: {
+    tab_pay: 'Nómina',
     aheadMore: 'Ver {m} en detalle',
     td_gnd: '¿Aún en tierra? Añade el retraso:',
     mm_dlyOn: 'Retraso de {m} min aplicado. ¿Más?',
@@ -674,6 +675,7 @@ var I18N = {
     e_noPeriod: 'No encuentro el periodo del roster. ¿Es el «Individual duty plan» de IDP en PDF?'
   },
   ca: {
+    tab_pay: 'Nòmina',
     aheadMore: 'Veure {m} en detall',
     td_gnd: 'Encara a terra? Afegeix el retard:',
     mm_dlyOn: 'Retard de {m} min aplicat. Més?',
@@ -1346,6 +1348,7 @@ var I18N = {
     e_noPeriod: 'No trobo el període del roster. És l’«Individual duty plan» d’IDP en PDF?'
   },
   en: {
+    tab_pay: 'Payslip',
     aheadMore: 'See {m} in detail',
     td_gnd: 'Still on the ground? Add the delay:',
     mm_dlyOn: '{m} min delay applied. More?',
@@ -2018,6 +2021,7 @@ var I18N = {
     e_noPeriod: 'I can’t find the roster period. Is this the IDP “Individual duty plan” PDF?'
   },
   de: {
+    tab_pay: 'Gehalt',
     aheadMore: '{m} im Detail',
     td_gnd: 'Noch am Boden? Verspätung eintragen:',
     mm_dlyOn: '{m} min Verspätung eingetragen. Mehr?',
@@ -2690,6 +2694,7 @@ var I18N = {
     e_noPeriod: 'Ich finde den Zeitraum des Dienstplans nicht. Ist das der „Individual duty plan“ aus IDP als PDF?'
   },
   fr: {
+    tab_pay: 'Paie',
     aheadMore: 'Voir {m} en détail',
     td_gnd: 'Toujours au sol ? Ajoute le retard :',
     mm_dlyOn: 'Retard de {m} min appliqué. Plus ?',
@@ -3362,6 +3367,7 @@ var I18N = {
     e_noPeriod: 'Je ne trouve pas la période du planning. Est-ce bien l’« Individual duty plan » d’IDP en PDF ?'
   },
   hu: {
+    tab_pay: 'Fizetés',
     aheadMore: '{m} részletesen',
     td_gnd: 'Még a földön? Add meg a késést:',
     mm_dlyOn: '{m} perc késés beállítva. Több?',
@@ -4034,6 +4040,7 @@ var I18N = {
     e_noPeriod: 'Nem találom a beosztás időszakát. Ez az IDP „Individual duty plan” PDF-je?'
   },
   sk: {
+    tab_pay: 'Výplata',
     aheadMore: 'Zobraziť {m} podrobne',
     td_gnd: 'Stále na zemi? Pridaj meškanie:',
     mm_dlyOn: 'Meškanie {m} min použité. Viac?',
@@ -4706,6 +4713,7 @@ var I18N = {
     e_noPeriod: 'Nenachádzam obdobie rozpisu. Je to „Individual duty plan“ z IDP v PDF?'
   },
   cs: {
+    tab_pay: 'Výplata',
     aheadMore: 'Zobrazit {m} podrobně',
     td_gnd: 'Stále na zemi? Přidej zpoždění:',
     mm_dlyOn: 'Zpoždění {m} min použito. Víc?',
@@ -5378,6 +5386,7 @@ var I18N = {
     e_noPeriod: 'Nenacházím období rozpisu. Je to „Individual duty plan“ z IDP v PDF?'
   },
   it: {
+    "tab_pay": "Busta paga",
     "aheadMore": "Vedi {m} nel dettaglio",
     "td_gnd": "Ancora a terra? Aggiungi il ritardo:",
     "mm_dlyOn": "Ritardo di {m} min applicato. Di più?",
@@ -6155,6 +6164,7 @@ var I18N = {
     "e_noPeriod": "Non trovo il periodo del turno. È l’«Individual duty plan» di IDP in PDF?"
   },
   pt: {
+    "tab_pay": "Recibo",
     "aheadMore": "Ver {m} em detalhe",
     "td_gnd": "Ainda em terra? Junta o atraso:",
     "mm_dlyOn": "Atraso de {m} min aplicado. Mais?",
@@ -6932,6 +6942,7 @@ var I18N = {
     "e_noPeriod": "Não encontro o período da escala. É o «Individual duty plan» do IDP em PDF?"
   },
   ro: {
+    "tab_pay": "Fluturaș",
     "aheadMore": "Vezi {m} în detaliu",
     "td_gnd": "Încă la sol? Adaugă întârzierea:",
     "mm_dlyOn": "Întârziere de {m} min aplicată. Mai mult?",

@@ -30,7 +30,8 @@ body{color:var(--ink);font-family:var(--f-body);font-size:15px;line-height:1.45;
   padding-left:max(16px, env(safe-area-inset-left, 0px));padding-right:max(16px, env(safe-area-inset-right, 0px));padding-block:0 40px}
 body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top, 0px);z-index:10;background:var(--bg)}
 .wrap{max-width:760px;margin:0 auto;display:flex;flex-direction:column;gap:18px;padding-bottom:calc(84px + env(safe-area-inset-bottom, 0px))}
-body:not([data-tab="tools"]):not([data-tab="more"]) [data-tab]:not([data-tab="roster"]),
+body:not([data-tab="tools"]):not([data-tab="more"]):not([data-tab="pay"]) [data-tab]:not([data-tab="roster"]),
+body[data-tab="pay"] [data-tab]:not([data-tab="pay"]),
 body[data-tab="tools"] [data-tab]:not([data-tab="tools"]),
 body[data-tab="more"] [data-tab]:not([data-tab="more"]){display:none!important}
 .tabbar{position:fixed;left:0;right:0;bottom:0;z-index:20;display:flex;justify-content:center;gap:4px;
@@ -536,13 +537,13 @@ html.glass .tabbar{border:1px solid var(--glass-brd);background:var(--glass);bac
 .tabbar .mlabel{font-weight:750;font-size:16px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;letter-spacing:-.01em;padding:0 2px}
 .tabbar .monthnav .iconbtn{width:32px;height:40px;min-width:0;border:0;background:none;box-shadow:none;font-size:20px;color:var(--accent);padding:0;backdrop-filter:none;-webkit-backdrop-filter:none}
 .tabbar .monthnav .iconbtn:disabled{opacity:.25}
-.tabbar .tb{display:flex;gap:6px;flex:none}
-.tabbar .tb button,html.glass .tabbar .tb button{flex:none;max-width:none;width:48px;height:48px;padding:0;border-radius:50%;display:grid;place-items:center;background:color-mix(in srgb,var(--muted) 12%,transparent);color:var(--muted);transition:background .2s,color .2s,transform .15s}
+.tabbar .tb{display:flex;gap:5px;flex:none}
+.tabbar .tb button,html.glass .tabbar .tb button{flex:none;max-width:none;width:44px;height:44px;padding:0;border-radius:50%;display:grid;place-items:center;background:color-mix(in srgb,var(--muted) 12%,transparent);color:var(--muted);transition:background .2s,color .2s,transform .15s}
 html.glass .tabbar .tb button{background:rgba(255,255,255,.55)}
 @media (prefers-color-scheme: dark){ html.glass:not([data-theme="light"]) .tabbar .tb button{background:rgba(255,255,255,.08)} }
 html.glass[data-theme="dark"] .tabbar .tb button{background:rgba(255,255,255,.08)}
 .tabbar .tb button span{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
-.tabbar .tb button svg{width:23px;height:23px}
+.tabbar .tb button svg{width:22px;height:22px}
 .tabbar .tb button.on,html.glass .tabbar .tb button.on{background:var(--accent);color:#fff;box-shadow:0 6px 16px color-mix(in srgb,var(--accent) 40%,transparent)}
 .tabbar .tb button:active{transform:scale(.92)}
 .bar .brand{flex:1}
@@ -756,13 +757,6 @@ body.scrolled .topbar{opacity:1;transform:none;pointer-events:auto}
   <div class="rgrid" data-tab="roster"><div class="rcolA">
   <section class="panel today" id="today" hidden data-tab="roster"></section>
   <div class="panel chg" id="chgCard" hidden data-tab="roster"></div>
-  <div class="herowrap" data-tab="roster"><section class="hero" id="hero"></section></div>
-  <section class="panel slippanel" data-tab="roster"><button class="privbtn" type="button" data-priv="1" aria-pressed="false"></button>
-    <h2 style="margin-top:0" id="slipH"></h2>
-    <p class="note" id="slipNote"></p>
-    <div class="tablewrap"><table class="slip" id="slip"></table></div>
-  </section>
-  <div class="herowrap aheadwrap" id="aheadWrap" data-tab="roster" hidden></div>
   </div><div class="rcolB">
 
   <section data-tab="roster">
@@ -778,6 +772,14 @@ body.scrolled .topbar{opacity:1;transform:none;pointer-events:auto}
     <div class="days" id="days"></div>
   </section>
   </div></div>
+
+  <div class="herowrap" data-tab="pay"><section class="hero" id="hero"></section></div>
+  <section class="panel slippanel" data-tab="pay"><button class="privbtn" type="button" data-priv="1" aria-pressed="false"></button>
+    <h2 style="margin-top:0" id="slipH"></h2>
+    <p class="note" id="slipNote"></p>
+    <div class="tablewrap"><table class="slip" id="slip"></table></div>
+  </section>
+  <div class="herowrap aheadwrap" id="aheadWrap" data-tab="pay" hidden></div>
 
   <section data-tab="tools">
     <h2 data-i18n="toolsT" class="tools-h"></h2>
@@ -818,6 +820,7 @@ body.scrolled .topbar{opacity:1;transform:none;pointer-events:auto}
   </div>
   <div class="tb">
   <button type="button" data-tabgo="roster" aria-label="" data-i18n-aria="tab_roster"><svg viewBox="0 0 24 24"><rect x="3.5" y="5" width="17" height="15" rx="2.5"/><path d="M3.5 10h17M8 3v4M16 3v4"/></svg><span data-i18n="tab_roster"></span></button>
+  <button type="button" data-tabgo="pay" aria-label="" data-i18n-aria="tab_pay"><svg viewBox="0 0 24 24"><path d="M6 3.5h12v17l-2.4-1.6-1.8 1.6-1.8-1.6-1.8 1.6-1.8-1.6L6 20.5z"/><path d="M9 8.5h6M9 12h6M9 15.5h3.5"/></svg><span data-i18n="tab_pay"></span></button>
   <button type="button" data-tabgo="tools" aria-label="" data-i18n-aria="toolsT"><svg viewBox="0 0 24 24"><rect x="4" y="4" width="6.5" height="6.5" rx="1.6"/><rect x="13.5" y="4" width="6.5" height="6.5" rx="1.6"/><rect x="4" y="13.5" width="6.5" height="6.5" rx="1.6"/><rect x="13.5" y="13.5" width="6.5" height="6.5" rx="1.6"/></svg><span data-i18n="toolsT"></span></button>
   <button type="button" data-tabgo="more" aria-label="" data-i18n-aria="tab_more"><svg viewBox="0 0 24 24"><path d="M4 7h10M18 7h2M4 17h2M10 17h10"/><circle cx="16" cy="7" r="2.2"/><circle cx="8" cy="17" r="2.2"/></svg><span data-i18n="tab_more"></span></button>
   </div>
